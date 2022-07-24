@@ -50,9 +50,6 @@ public abstract class DatabaseManager {
     @NotNull
     public abstract DatabaseInitializationFunction getDatabaseInitializationFunction();
 
-    @NotNull
-    public abstract DatabaseDriver getDatabaseDriver();
-
     /**
      * Gets the {@link DatabaseDriver} used to initialize the database
      *
@@ -74,6 +71,8 @@ public abstract class DatabaseManager {
         else{
             throw new CoreDatabaseInitializationException("Database encountered an exception when initializing... please reach out to the developer of the " + plugin.getName() + " plugin.");
         }
+
+        createTables();
     }
 
     /**

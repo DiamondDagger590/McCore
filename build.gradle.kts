@@ -19,7 +19,7 @@ apply {
 }
 
 //RECODE.RELEASE.PATCH.DEVELOPMENT
-version = "1.0.0.1-SNAPSHOT"
+version = "1.0.0.2-SNAPSHOT"
 group = "com.diamonddagger590"
 
 java {
@@ -29,30 +29,53 @@ java {
 
 repositories {
     mavenCentral()
+    maven("https://jitpack.io")
 
     //Spigot
     maven("https://oss.sonatype.org/content/repositories/snapshots/")
     maven("https://repo.md-5.net/content/repositories/snapshots/")
     maven("https://repo.md-5.net/content/repositories/releases/")
     maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
+
 }
 
 dependencies {
 
     val intellijAnnotationVersion = "12.0"
-    implementation("com.intellij:annotations:$intellijAnnotationVersion")
+    compileOnly("com.intellij:annotations:$intellijAnnotationVersion")
 
     val spigotVersion = "1.18.2-R0.1-SNAPSHOT"
     compileOnly("org.spigotmc:spigot-api:$spigotVersion")
+
+    val cloudVersion = "1.7.0"
+    implementation("cloud.commandframework:cloud-bukkit:$cloudVersion")
+    implementation("cloud.commandframework:cloud-annotations:$cloudVersion")
 }
 
-tasks.withType<JavaCompile> {
-    options.encoding = "UTF-8"
-}
+tasks {
 
-tasks.withType<ProcessResources> {
-    filesMatching("**/*.yml") {
-        expand(project.properties)
+    shadowJar {
+        minimize()
+        relocate("cloud.commandframework", "com.diamonddagger590.mccore.cloud")
+        archiveClassifier.set("")
+    }
+
+    build {
+        dependsOn(shadowJar )
+    }
+
+    compileJava {
+        options.encoding = "UTF-8"
+    }
+
+    processResources{
+        filesMatching("**/*.yml") {
+            expand(project.properties)
+        }
+    }
+
+    publish {
+        dependsOn(compileJava)
     }
 }
 

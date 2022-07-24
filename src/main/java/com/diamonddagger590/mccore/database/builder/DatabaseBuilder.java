@@ -30,10 +30,10 @@ import java.sql.SQLException;
 
 public abstract class DatabaseBuilder {
 
-    private String path;
-    private String driverName;
+    protected String path;
+    protected String driverName;
 
-    private String connectionURL;
+    protected String connectionURL;
 
     public DatabaseBuilder(@NotNull DatabaseDriver databaseDriver) {
         path = "";
@@ -48,7 +48,7 @@ public abstract class DatabaseBuilder {
         return this;
     }
 
-    private void tryDriverName(@NotNull String driverName) {
+    protected void tryDriverName(@NotNull String driverName) {
 
         try {
             Class.forName(driverName).newInstance();

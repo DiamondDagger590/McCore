@@ -4,13 +4,14 @@ import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * This event is called before any database tables are updated.
+ */
 public class PreTablesUpdateEvent extends Event {
 
     private static final HandlerList handlers = new HandlerList();
 
-    public PreTablesUpdateEvent() {
-
-    }
+    public PreTablesUpdateEvent() {}
 
     @Override
     @NotNull

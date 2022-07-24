@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public interface Database {
+
     Optional<ResultSet> executeQuery(@Language ("SQL") String query, String... replacements);
 
     int executeUpdate(@Language ("SQL") String sql, String... replacements);

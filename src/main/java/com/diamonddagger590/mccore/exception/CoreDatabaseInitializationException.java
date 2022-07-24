@@ -2,13 +2,16 @@ package com.diamonddagger590.mccore.exception;
 
 import org.jetbrains.annotations.NotNull;
 
-public class CoreDatabaseInitializationException extends RuntimeException{
+/**
+ * This exception is fired whenever there is an issue initializing the core database.
+ */
+public class CoreDatabaseInitializationException extends RuntimeException {
 
-    public CoreDatabaseInitializationException(){
+    public CoreDatabaseInitializationException() {
         super();
     }
 
-    public CoreDatabaseInitializationException(@NotNull String exceptionMessage){
+    public CoreDatabaseInitializationException(@NotNull String exceptionMessage) {
         super(exceptionMessage);
     }
 

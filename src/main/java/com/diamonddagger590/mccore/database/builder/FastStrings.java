@@ -51,14 +51,14 @@ public class FastStrings {
      * @return if the {@link CharSequence} is blank.
      */
     public static boolean isBlank(CharSequence charSequence) {
-      if (isEmpty(charSequence)) {
-        return true;
-      }
-      for (int i = 0; i < charSequence.length(); i++) {
-        if (!isGhostChars((int) charSequence.charAt(i))) {
-          return false;
+        if (isEmpty(charSequence)) {
+            return true;
         }
-      }
+        for (int i = 0; i < charSequence.length(); i++) {
+            if (!isGhostChars((int) charSequence.charAt(i))) {
+                return false;
+            }
+        }
         return true;
     }
 
@@ -75,21 +75,21 @@ public class FastStrings {
      * @return if the {@link CharSequence} is numeric.
      */
     public static boolean isNumeric(CharSequence charSequence) {
-      if (isBlank(charSequence)) {
-        return false;
-      }
-        for (int i = 0; i < charSequence.length(); i++) {
-          if (!charIsNumeric((int) charSequence.charAt(i))) {
+        if (isBlank(charSequence)) {
             return false;
-          }
+        }
+        for (int i = 0; i < charSequence.length(); i++) {
+            if (!charIsNumeric((int) charSequence.charAt(i))) {
+                return false;
+            }
         }
         return true;
     }
 
     public static boolean charIsNumeric(int codepoint) {
-      if (!Character.isValidCodePoint(codepoint)) {
-        return false;
-      }
+        if (!Character.isValidCodePoint(codepoint)) {
+            return false;
+        }
         return codepoint >= 0x0030 && codepoint <= 0x0039;
     }
 
@@ -103,9 +103,9 @@ public class FastStrings {
      * @return returns true if code point is an escape sequence or a space.
      */
     public static boolean isGhostChars(int codepoint) {
-      if (!Character.isValidCodePoint(codepoint)) {
-        return false;
-      }
+        if (!Character.isValidCodePoint(codepoint)) {
+            return false;
+        }
         return codepoint == 0x0020 // space
                    || codepoint == 0x000D // carriage-return
                    || codepoint == 0x000A // new-line
@@ -127,23 +127,23 @@ public class FastStrings {
      * @return How many times the argument occurred in the parameter original.
      */
     public static int countOccurrences(CharSequence original, char argument) {
-      if (isBlank(original)) {
-        return 0;
-      }
-        int count = 0;
-      for (int i = 0; i < original.length(); ++i) {
-        if (argument == original.charAt(i)) {
-          count++;
+        if (isBlank(original)) {
+            return 0;
         }
-      }
+        int count = 0;
+        for (int i = 0; i < original.length(); ++i) {
+            if (argument == original.charAt(i)) {
+                count++;
+            }
+        }
         return count;
     }
 
     public static String join(Object[] array, CharSequence delimiter) {
         StringJoiner joiner = new StringJoiner(delimiter);
-      for (Object obj : array) {
-        joiner.add(String.valueOf(obj));
-      }
+        for (Object obj : array) {
+            joiner.add(String.valueOf(obj));
+        }
         return joiner.toString();
     }
 
@@ -161,9 +161,9 @@ public class FastStrings {
     }
 
     public static String removeNonPlaneChar(String str) {
-      if (isBlank(str)) {
-        return "";
-      }
+        if (isBlank(str)) {
+            return "";
+        }
 
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < str.length(); ) {
@@ -180,22 +180,22 @@ public class FastStrings {
     }
 
     public static List<Integer> getIndexOfNonPlaneChars(String str) {
-      if (isBlank(str)) {
-        return Collections.emptyList();
-      }
+        if (isBlank(str)) {
+            return Collections.emptyList();
+        }
 
         ImmutableList.Builder<Integer> builder = new ImmutableList.Builder<>();
         int npCount = 0;
         for (int i = 0; i < str.length(); ) {
             int c = str.codePointAt(i);
-          if (!isPlaneChar(c)) {
-            i += 2;
-            builder.add(i - 2 - npCount);
-            npCount++;
-          }
-          else {
-            i++;
-          }
+            if (!isPlaneChar(c)) {
+                i += 2;
+                builder.add(i - 2 - npCount);
+                npCount++;
+            }
+            else {
+                i++;
+            }
         }
         return builder.build();
     }
