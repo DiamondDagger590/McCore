@@ -11,6 +11,7 @@ import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
 
 import java.sql.Connection;
+import java.util.logging.Level;
 
 /**
  * This task will load the player data
@@ -50,7 +51,6 @@ public abstract class PlayerLoadTask extends ExpireableCoreTask {
                 if (loadPlayer()) {
                     corePlayer.lock();
                     MutexDAO.updateUserMutex(connection, corePlayer);
-
                     onPlayerLoadSuccessfully();
                 }
                 else {
