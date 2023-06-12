@@ -6,14 +6,14 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class RepeatableCoreTask extends MultiExecutionCoreTask {
 
-    protected final long taskDelay;
-    protected final long taskFrequency;
+    protected final double taskDelay;
+    protected final double taskFrequency;
     protected int currentInterval = 0;
-    private boolean delayExpired;
+    protected boolean delayExpired;
     protected long intervalStartTime;
     protected boolean paused;
 
-    public RepeatableCoreTask(@NotNull Plugin plugin, long taskDelay, long taskFrequency) {
+    public RepeatableCoreTask(@NotNull Plugin plugin, double taskDelay, double taskFrequency) {
         super(plugin);
         this.taskDelay = taskDelay;
         this.taskFrequency = taskFrequency;
@@ -35,9 +35,6 @@ public abstract class RepeatableCoreTask extends MultiExecutionCoreTask {
         taskStartTime = System.currentTimeMillis();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void run() {
 
@@ -52,7 +49,6 @@ public abstract class RepeatableCoreTask extends MultiExecutionCoreTask {
             if (currentTime >= taskStartTime + (taskDelay * 1000)) {
                 delayExpired = true;
                 onDelayComplete();
-                onIntervalComplete();
                 startInterval();
             }
 
@@ -72,11 +68,11 @@ public abstract class RepeatableCoreTask extends MultiExecutionCoreTask {
         onIntervalStart();
     }
 
-    public long getTaskDelay() {
+    public double getTaskDelay() {
         return taskDelay;
     }
 
-    public long getTaskFrequency() {
+    public double getTaskFrequency() {
         return taskFrequency;
     }
 

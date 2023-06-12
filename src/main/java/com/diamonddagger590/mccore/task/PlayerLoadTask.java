@@ -11,7 +11,6 @@ import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
 
 import java.sql.Connection;
-import java.util.logging.Level;
 
 /**
  * This task will load the player data
@@ -21,7 +20,7 @@ public abstract class PlayerLoadTask extends ExpireableCoreTask {
     private final CorePlayer corePlayer;
 
     public PlayerLoadTask(@NotNull CorePlugin plugin, @NotNull CorePlayer corePlayer) {
-        super(plugin, 0L, 20L, 120L);
+        super(plugin, 0L, 2, 120L);
         this.corePlayer = corePlayer;
     }
 

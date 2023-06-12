@@ -12,7 +12,7 @@ public abstract class CancellableCoreTask extends RepeatableCoreTask {
 
     protected boolean cancelled;
 
-    public CancellableCoreTask(@NotNull Plugin plugin, long taskDelay, long taskFrequency) {
+    public CancellableCoreTask(@NotNull Plugin plugin, double taskDelay, double taskFrequency) {
         super(plugin, taskDelay, taskFrequency);
     }
 

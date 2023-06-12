@@ -9,6 +9,8 @@ import cloud.commandframework.execution.CommandExecutionCoordinator;
 import cloud.commandframework.meta.CommandMeta;
 import com.diamonddagger590.mccore.database.DatabaseManager;
 import com.diamonddagger590.mccore.player.PlayerManager;
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +28,8 @@ public abstract class CorePlugin extends JavaPlugin {
 
     private BukkitCommandManager<CommandSender> bukkitCommandManager;
     private AnnotationParser<CommandSender> annotationParser;
+    private BukkitAudiences adventure;
+    private MiniMessage miniMessage;
 
     protected DatabaseManager databaseManager;
     protected PlayerManager playerManager;
@@ -33,28 +37,33 @@ public abstract class CorePlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
+        adventure = BukkitAudiences.create(this);
+        miniMessage = MiniMessage.miniMessage();
+        setupCloud();
+    }
 
+    @Override
+    public void onDisable() {
+        databaseManager.getDatabaseExecutorService().shutdown();
+        adventure.close();
+    }
+
+    private void setupCloud() {
         Function<CommandTree<CommandSender>, CommandExecutionCoordinator<CommandSender>> executionCoordinatorFunction = CommandExecutionCoordinator.simpleCoordinator();
         Function<CommandSender, CommandSender> mapperFunction = Function.identity();
 
         try {
             bukkitCommandManager = new BukkitCommandManager<>(this, executionCoordinatorFunction, mapperFunction, mapperFunction);
             bukkitCommandManager.createCommandHelpHandler();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             this.getLogger().log(Level.SEVERE, "Failed to initialize command manager");
         }
 
         final Function<ParserParameters, CommandMeta> commandMetaFunction =
-            p -> CommandMeta.simple()
-                     .with(CommandMeta.DESCRIPTION, p.get(StandardParameters.DESCRIPTION, "No description")).build();
+                p -> CommandMeta.simple()
+                        .with(CommandMeta.DESCRIPTION, p.get(StandardParameters.DESCRIPTION, "No description")).build();
 
         annotationParser = new AnnotationParser<CommandSender>(bukkitCommandManager, CommandSender.class, commandMetaFunction);
-    }
-
-    @Override
-    public void onDisable() {
-        databaseManager.getDatabaseExecutorService().shutdown();
     }
 
     /**
@@ -111,6 +120,26 @@ public abstract class CorePlugin extends JavaPlugin {
     @NotNull
     public AnnotationParser<CommandSender> getAnnotationParser() {
         return annotationParser;
+    }
+
+    /**
+     * Gets the {@link BukkitAudiences} used by {@link net.kyori.adventure.Adventure}
+     *
+     * @return The {@link BukkitAudiences} used by {@link net.kyori.adventure.Adventure}
+     */
+    @NotNull
+    public BukkitAudiences getAdventure() {
+        return adventure;
+    }
+
+    /**
+     * Gets the centralized {@link MiniMessage} for deserializing chat messages
+     *
+     * @return The centralized {@link MiniMessage} for deserializing chat messages
+     */
+    @NotNull
+    public MiniMessage getMiniMessage() {
+        return miniMessage;
     }
 
     /**

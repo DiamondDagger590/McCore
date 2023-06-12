@@ -13,7 +13,7 @@ public abstract class DelayableCoreTask extends CoreTask {
 
     /**
      * @param plugin    The {@link Plugin} initializing the task
-     * @param taskDelay The delay in ticks before execution whenever {@link #runTask(boolean)} is called.
+     * @param taskDelay The delay in seconds before execution whenever {@link #runTask(boolean)} is called.
      */
     public DelayableCoreTask(@NotNull Plugin plugin, int taskDelay) {
         super(plugin);
@@ -24,11 +24,11 @@ public abstract class DelayableCoreTask extends CoreTask {
     public void runTask(boolean runAsync) {
 
         if (runAsync) {
-            bukkitTaskId = Bukkit.getScheduler().runTaskLaterAsynchronously(getPlugin(), this, taskDelay).getTaskId();
+            bukkitTaskId = Bukkit.getScheduler().runTaskLaterAsynchronously(getPlugin(), this, taskDelay * 20L).getTaskId();
             taskRunningAsync = true;
         }
         else {
-            bukkitTaskId = Bukkit.getScheduler().runTaskLater(getPlugin(), this, taskDelay).getTaskId();
+            bukkitTaskId = Bukkit.getScheduler().runTaskLater(getPlugin(), this, taskDelay * 20L).getTaskId();
             taskRunningAsync = false;
         }
 

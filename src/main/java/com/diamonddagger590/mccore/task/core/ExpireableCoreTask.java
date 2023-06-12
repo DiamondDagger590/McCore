@@ -12,22 +12,22 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class ExpireableCoreTask extends CancellableCoreTask {
 
-    private long maxTaskDuration;
-    private int maxIntervals;
+    protected long maxTaskDuration;
+    protected int maxIntervals;
 
-    public ExpireableCoreTask(@NotNull Plugin plugin, long taskDelay, long taskFrequency, long maxTaskDurationSeconds) {
+    public ExpireableCoreTask(@NotNull Plugin plugin, double taskDelay, double taskFrequency, long maxTaskDurationSeconds) {
         super(plugin, taskDelay, taskFrequency);
         this.maxTaskDuration = System.currentTimeMillis() + (maxTaskDurationSeconds * 1000);
         this.maxIntervals = -1;
     }
 
-    public ExpireableCoreTask(@NotNull Plugin plugin, long taskDelay, long taskFrequency, int maxIntervals) {
+    public ExpireableCoreTask(@NotNull Plugin plugin, double taskDelay, double taskFrequency, int maxIntervals) {
         super(plugin, taskDelay, taskFrequency);
         this.maxIntervals = Math.max(1, maxIntervals);
         this.maxTaskDuration = -1;
     }
 
-    public ExpireableCoreTask(@NotNull Plugin plugin, long taskDelay, long taskFrequency, long maxTaskDurationSeconds, int maxIntervals) {
+    public ExpireableCoreTask(@NotNull Plugin plugin, double taskDelay, double taskFrequency, long maxTaskDurationSeconds, int maxIntervals) {
         super(plugin, taskDelay, taskFrequency);
         this.maxTaskDuration = System.currentTimeMillis() + (maxTaskDurationSeconds * 1000);
         this.maxIntervals = Math.max(1, maxIntervals);
@@ -80,6 +80,7 @@ public abstract class ExpireableCoreTask extends CancellableCoreTask {
         currentInterval++;
 
         if (maxIntervals != -1 && currentInterval >= maxIntervals) {
+            Bukkit.broadcastMessage("Expiring task with id: " + getBukkitTaskId());
             expireTask();
             return;
         }
