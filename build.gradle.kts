@@ -57,8 +57,8 @@ dependencies {
     compileOnly("org.spigotmc:spigot-api:$spigotVersion")
 
     val cloudVersion = "1.7.0"
-    implementation("cloud.commandframework:cloud-bukkit:$cloudVersion")
-    implementation("cloud.commandframework:cloud-annotations:$cloudVersion")
+    api("cloud.commandframework:cloud-bukkit:$cloudVersion")
+    api("cloud.commandframework:cloud-annotations:$cloudVersion")
 
     val adventureVersion = "4.14.0"
     implementation("net.kyori:adventure-api:$adventureVersion")
@@ -75,33 +75,10 @@ dependencies {
 
 tasks {
 
-    named<ShadowJar>("shadowJar") {
-
-        //My gheto solution to get the commit hash on the shadow'd jar
-
-        // Open git
-        val git = org.ajoberstar.grgit.Grgit.open(file("."))
-        // Use abbreviated id from git head
-        archiveAppendix.set(git.head().abbreviatedId)
-
-        // check if classifier is present before adding an unnecessary '-'.
-        val classifier = archiveClassifier.get()
-
-        // Set our desired formatting for the file name
-        archiveFileName.set("${archiveBaseName.get()}-${archiveVersion.get()}-${archiveAppendix.get()}${if (classifier.isEmpty()) "" else "-$classifier"}.${archiveExtension.get()}")
-
-        mergeServiceFiles()
+    shadowJar {
         relocate("cloud.commandframework", "com.diamonddagger590.mccore.cloud")
-        relocate("net.kyori", "com.diamonddagger590.mccore.adventure")
-        relocate("ch.jalu.configme", "com.diamonddagger590.mccore.configme")
+        archiveClassifier.set("")
     }
-//    shadowJar {
-//        minimize()
-//        relocate("cloud.commandframework", "com.diamonddagger590.mccore.cloud")
-//        relocate("net.kyori", "com.diamonddagger590.mccore.adventure")
-//        relocate("ch.jalu.configme", "com.diamonddagger590.mccore.configme")
-//        archiveClassifier.set("")
-//    }
 
     build {
         dependsOn(compileJava)
@@ -138,7 +115,7 @@ publishing {
             version = project.version.toString()
 
             from(components["java"])
-            artifact(tasks["shadowJar"])
+            //artifact(tasks["shadowJar"])
         }
 
     }
