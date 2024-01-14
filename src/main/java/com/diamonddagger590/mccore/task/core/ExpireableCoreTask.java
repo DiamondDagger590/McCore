@@ -80,7 +80,6 @@ public abstract class ExpireableCoreTask extends CancellableCoreTask {
         currentInterval++;
 
         if (maxIntervals != -1 && currentInterval >= maxIntervals) {
-            Bukkit.broadcastMessage("Expiring task with id: " + getBukkitTaskId());
             expireTask();
             return;
         }

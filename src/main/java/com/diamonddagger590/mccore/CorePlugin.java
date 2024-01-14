@@ -8,9 +8,12 @@ import cloud.commandframework.bukkit.BukkitCommandManager;
 import cloud.commandframework.execution.CommandExecutionCoordinator;
 import cloud.commandframework.meta.CommandMeta;
 import com.diamonddagger590.mccore.database.DatabaseManager;
+import com.diamonddagger590.mccore.gui.GuiTracker;
+import com.diamonddagger590.mccore.listener.GuiCloseListener;
 import com.diamonddagger590.mccore.player.PlayerManager;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -33,12 +36,14 @@ public abstract class CorePlugin extends JavaPlugin {
 
     protected DatabaseManager databaseManager;
     protected PlayerManager playerManager;
+    protected GuiTracker guiTracker;
 
     @Override
     public void onEnable() {
         instance = this;
         adventure = BukkitAudiences.create(this);
         miniMessage = MiniMessage.miniMessage();
+        guiTracker = new GuiTracker(this);
         setupCloud();
     }
 
@@ -79,6 +84,10 @@ public abstract class CorePlugin extends JavaPlugin {
     protected void constructCommands() {
     }
 
+    protected void registerListeners() {
+        Bukkit.getPluginManager().registerEvents(new GuiCloseListener(), this);
+    }
+
     /**
      * Get the {@link DatabaseManager} used by the plugin
      *
@@ -99,6 +108,11 @@ public abstract class CorePlugin extends JavaPlugin {
     @NotNull
     public PlayerManager getPlayerManager() {
         return playerManager;
+    }
+
+    @NotNull
+    public GuiTracker getGuiTracker() {
+        return guiTracker;
     }
 
     /**

@@ -24,10 +24,11 @@ apply {
 }
 
 //RECODE.RELEASE.PATCH.DEVELOPMENT
-version = "1.0.0.5-SNAPSHOT"
+version = "1.0.0.6-SNAPSHOT"
 group = "com.diamonddagger590"
 
 java {
+    toolchain.languageVersion.set(JavaLanguageVersion.of(17))
     withJavadocJar()
     withSourcesJar()
 }
@@ -45,32 +46,28 @@ repositories {
     maven("https://repo.md-5.net/content/repositories/snapshots/")
     maven("https://repo.md-5.net/content/repositories/releases/")
     maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
+    maven("https://repo.papermc.io/repository/maven-public/")
 
 }
 
 dependencies {
 
     val intellijAnnotationVersion = "12.0"
-    compileOnly("com.intellij:annotations:$intellijAnnotationVersion")
+    api("com.intellij:annotations:$intellijAnnotationVersion")
 
-    val spigotVersion = "1.19.3-R0.1-SNAPSHOT"
-    compileOnly("org.spigotmc:spigot-api:$spigotVersion")
+    val paperVersion = "1.20.4-R0.1-SNAPSHOT"
+    api("io.papermc.paper:paper-api:$paperVersion")
+
 
     val cloudVersion = "1.7.0"
     api("cloud.commandframework:cloud-bukkit:$cloudVersion")
     api("cloud.commandframework:cloud-annotations:$cloudVersion")
 
-    val adventureVersion = "4.14.0"
-    implementation("net.kyori:adventure-api:$adventureVersion")
-
     val adventureBukkitVersion = "4.3.0"
-    implementation("net.kyori:adventure-platform-bukkit:$adventureBukkitVersion")
-
-    val adventureMiniMessageVersion = "4.14.0"
-    implementation("net.kyori:adventure-text-minimessage:$adventureMiniMessageVersion")
+    api("net.kyori:adventure-platform-bukkit:$adventureBukkitVersion")
 
     val configMeVersion = "1.3.0"
-    implementation("ch.jalu:configme:$configMeVersion")
+    api("ch.jalu:configme:$configMeVersion")
 }
 
 tasks {

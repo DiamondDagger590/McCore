@@ -13,28 +13,14 @@ public interface Lockable {
     public boolean isLocked();
 
     /**
-     * Sets this object's lock state to that of the provided boolean.
-     *
-     * @param locked The new lock state for the object.
-     * @return {@code true} if the lock was successfully updated.
-     */
-    public boolean setLocked(boolean locked);
-
-    /**
      * Locks this object.
      *
-     * @return {@code true} if this object was successfully locked.
      */
-    public default boolean lock() {
-        return setLocked(true);
-    }
+    public void lock();
 
     /**
      * Unlocks this object.
      *
-     * @return {@code true} if this object was successfully unlocked.
      */
-    public default boolean unlock() {
-        return setLocked(false);
-    }
+    public void unlock();
 }

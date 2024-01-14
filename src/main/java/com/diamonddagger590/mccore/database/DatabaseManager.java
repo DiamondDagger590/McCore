@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -37,7 +38,7 @@ public abstract class DatabaseManager {
     protected Plugin plugin;
     private Database database;
     private final ThreadPoolExecutor databaseExecutorService =
-        new ThreadPoolExecutor(1, 4, 30, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
+            new ThreadPoolExecutor(1, 4, 30, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
     private final List<CreateTableFunction> createTableFunctions;
     private final List<UpdateTableFunction> updateTableFunctions;
 
@@ -65,10 +66,9 @@ public abstract class DatabaseManager {
 
         Optional<Database> databaseOptional = getDatabaseInitializationFunction().initialize(getDriver());
 
-        if(databaseOptional.isPresent()){
+        if (databaseOptional.isPresent()) {
             this.database = databaseOptional.get();
-        }
-        else{
+        } else {
             throw new CoreDatabaseInitializationException("Database encountered an exception when initializing... please reach out to the developer of the " + plugin.getName() + " plugin.");
         }
 
@@ -111,26 +111,43 @@ public abstract class DatabaseManager {
         PreTablesCreateEvent preTablesCreateEvent = new PreTablesCreateEvent();
         Bukkit.getPluginManager().callEvent(preTablesCreateEvent);
 
-        CompletableFuture<Void>[] completableFutures = new CompletableFuture[createTableFunctions.size()];
+        if (blockMainThreadOnStart()) {
+            try {
+                CreateCoreTablesFunction.getCreateCoreTablesFunction().createTables(this).get();
 
-        //Force-create the table history table first
-        CreateCoreTablesFunction.getCreateCoreTablesFunction().createTables(this).thenAccept(unused -> {
+                CompletableFuture<Void>[] completableFutures = new CompletableFuture[createTableFunctions.size()];
+                for (int i = 0; i < createTableFunctions.size(); i++) {
+                    completableFutures[i] = createTableFunctions.get(i).createTables(this);
+                }
+                CompletableFuture.allOf(completableFutures).get();
 
-            for (int i = 0; i < createTableFunctions.size(); i++) {
-                completableFutures[i] = createTableFunctions.get(i).createTables(this);
-            }
-
-            CompletableFuture<Void> allFuture = CompletableFuture.allOf(completableFutures);
-
-            allFuture.thenAccept(unused1 -> {
-
-                //Call a post event whenever all tables are created so then the plugins know that their tables now exist
+                // Call a post event whenever all tables are created so then the plugins know that their tables now exist
                 TablesCreatedEvent tablesCreatedEvent = new TablesCreatedEvent();
                 Bukkit.getPluginManager().callEvent(tablesCreatedEvent);
-
                 updateTables();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+
+            CompletableFuture<Void>[] completableFutures = new CompletableFuture[createTableFunctions.size()];
+
+            // Force-create the table history table first
+            CreateCoreTablesFunction.getCreateCoreTablesFunction().createTables(this).thenAccept(unused -> {
+                for (int i = 0; i < createTableFunctions.size(); i++) {
+                    completableFutures[i] = createTableFunctions.get(i).createTables(this);
+                }
+                CompletableFuture<Void> allFuture = CompletableFuture.allOf(completableFutures);
+
+                allFuture.thenAccept(unused1 -> {
+
+                    // Call a post event whenever all tables are created so then the plugins know that their tables now exist
+                    TablesCreatedEvent tablesCreatedEvent = new TablesCreatedEvent();
+                    Bukkit.getPluginManager().callEvent(tablesCreatedEvent);
+                    updateTables();
+                });
             });
-        });
+        }
     }
 
     /**
@@ -148,25 +165,50 @@ public abstract class DatabaseManager {
         PreTablesUpdateEvent preTablesUpdateEvent = new PreTablesUpdateEvent();
         Bukkit.getPluginManager().callEvent(preTablesUpdateEvent);
 
-        CompletableFuture<Void>[] completableFutures = new CompletableFuture[updateTableFunctions.size()];
+        if (blockMainThreadOnStart()) {
+            try {
+                // Block thread
+                UpdateCoreTablesFunction.getUpdateCoreTablesFunction().updateTables(this).get();
 
-        //Force-update the table history table first
-        UpdateCoreTablesFunction.getUpdateCoreTablesFunction().updateTables(this).thenAccept(unused -> {
+                // Run updates async
+                CompletableFuture<Void>[] completableFutures = new CompletableFuture[updateTableFunctions.size()];
+                for (int i = 0; i < updateTableFunctions.size(); i++) {
+                    completableFutures[i] = updateTableFunctions.get(i).updateTables(this);
+                }
 
-            for (int i = 0; i < updateTableFunctions.size(); i++) {
-                completableFutures[i] = updateTableFunctions.get(i).updateTables(this);
-            }
+                // Block till all are done
+                CompletableFuture.allOf(completableFutures).get();
 
-            CompletableFuture<Void> allFuture = CompletableFuture.allOf(completableFutures);
-
-            allFuture.thenAccept(unused1 -> {
-
-                //Call a post event whenever all tables are updated so then the plugins know that their tables now updated
+                // Call a post event whenever all tables are updated so then the plugins know that their tables now updated
                 TablesUpdatedEvent tablesUpdatedEvent = new TablesUpdatedEvent();
                 Bukkit.getPluginManager().callEvent(tablesUpdatedEvent);
-            });
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
 
-        });
+            CompletableFuture<Void>[] completableFutures = new CompletableFuture[updateTableFunctions.size()];
+
+            // Force-update the table history table first
+            UpdateCoreTablesFunction.getUpdateCoreTablesFunction().updateTables(this).thenAccept(unused -> {
+
+                for (int i = 0; i < updateTableFunctions.size(); i++) {
+                    completableFutures[i] = updateTableFunctions.get(i).updateTables(this);
+                }
+                CompletableFuture<Void> allFuture = CompletableFuture.allOf(completableFutures);
+
+                allFuture.thenAccept(unused1 -> {
+
+                    // Call a post event whenever all tables are updated so then the plugins know that their tables now updated
+                    TablesUpdatedEvent tablesUpdatedEvent = new TablesUpdatedEvent();
+                    Bukkit.getPluginManager().callEvent(tablesUpdatedEvent);
+                });
+            });
+        }
+    }
+
+    protected boolean blockMainThreadOnStart() {
+        return true;
     }
 
     /**

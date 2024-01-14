@@ -70,6 +70,20 @@ public class PlayerManager {
     }
 
     /**
+     * Check to see if the {@link CorePlayer} associated with the
+     * provided {@link UUID} is locked.
+     *
+     * @param uuid The {@link UUID} of the player to check
+     * @return {@code true} if the associated {@link CorePlayer} is locked.
+     */
+    public boolean isPlayerLocked(@NotNull UUID uuid) {
+        if (playerMap.containsKey(uuid)) {
+            return playerMap.get(uuid).isLocked();
+        }
+        return false;
+    }
+
+    /**
      * Gets all {@link CorePlayer CorePlayers} stored by this player manager.
      *
      * @return A cloned {@link Set} containing all the {@link CorePlayer CorePlayers} stored
@@ -86,8 +100,8 @@ public class PlayerManager {
      */
     public Set<Player> getAllBukkitPlayers() {
         return playerMap.values().stream()
-                   .filter(corePlayer -> corePlayer.getAsBukkitPlayer().isPresent())
-                   .map(corePlayer -> corePlayer.getAsBukkitPlayer().get())
-                   .collect(Collectors.toSet());
+                .filter(corePlayer -> corePlayer.getAsBukkitPlayer().isPresent())
+                .map(corePlayer -> corePlayer.getAsBukkitPlayer().get())
+                .collect(Collectors.toSet());
     }
 }

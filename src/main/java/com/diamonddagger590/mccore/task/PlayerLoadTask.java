@@ -11,6 +11,7 @@ import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
 
 import java.sql.Connection;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * This task will load the player data
@@ -18,10 +19,14 @@ import java.sql.Connection;
 public abstract class PlayerLoadTask extends ExpireableCoreTask {
 
     private final CorePlayer corePlayer;
+    private final CompletableFuture<Boolean> result;
+    private boolean completed;
 
     public PlayerLoadTask(@NotNull CorePlugin plugin, @NotNull CorePlayer corePlayer) {
-        super(plugin, 0L, 2, 120L);
+        super(plugin, 0L, 2, 10L);
         this.corePlayer = corePlayer;
+        this.result = new CompletableFuture<>();
+        completed = false;
     }
 
     private void runLoadPlayerTask() {
@@ -34,33 +39,48 @@ public abstract class PlayerLoadTask extends ExpireableCoreTask {
             pauseTask();
             Connection connection = database.getConnection();
 
-            MutexDAO.isUserMutexLocked(connection, corePlayer.getUUID()).thenAccept(mutexLocked -> {
+            if (corePlayer.useMutex()) {
+                MutexDAO.isUserMutexLocked(connection, corePlayer.getUUID()).thenAccept(mutexLocked -> {
 
-                //If the mutex is locked, resume task to continue ticking
-                if (mutexLocked) {
-                    resumeTask();
-                    startInterval(); //Start the next interval giving time for the mutex to possibly unlock
-                    return;
-                }
+                    // If the mutex is locked, resume task to continue ticking
+                    if (mutexLocked) {
+                        resumeTask();
+                        startInterval(); // Start the next interval giving time for the mutex to possibly unlock
+                        return;
+                    }
 
-                //If mutex isn't locked, then cancel task.
-                cancelTask();
+                    // We are completing the task one way or another, in this case we want to
+                    // allow externally cancelling to be treated as a failure but not when we do it here
+                    completed = true;
+                    // If mutex isn't locked, then cancel task
+                    cancelTask();
 
-                //Attempt to load the player, if it works, lock their mutex since we are now using it.
+                    // Attempt to load the player, if it works, lock their mutex since we are now using it.
+                    if (loadPlayer()) {
+                        corePlayer.lock();
+                        MutexDAO.updateUserMutex(connection, corePlayer)
+                                .exceptionally(throwable -> {
+                                    throwable.printStackTrace();
+                                    return null;
+                                });
+                        onPlayerLoadSuccessfully();
+                    } else {
+                        onPlayerLoadFail();
+                    }
+                }).exceptionally(throwable -> {
+                    throwable.printStackTrace();
+                    completed = false;
+                    cancelTask();
+                    return null;
+                });
+            }
+            else {
                 if (loadPlayer()) {
-                    corePlayer.lock();
-                    MutexDAO.updateUserMutex(connection, corePlayer);
                     onPlayerLoadSuccessfully();
-                }
-                else {
+                } else {
                     onPlayerLoadFail();
                 }
-            }).exceptionally(throwable -> {
-                throwable.printStackTrace();
-                cancelTask();
-                onPlayerLoadFail();
-                return null;
-            });
+            }
         }
     }
 
@@ -71,7 +91,10 @@ public abstract class PlayerLoadTask extends ExpireableCoreTask {
 
     @Override
     protected void onCancel() {
-        onPlayerLoadFail();
+        // If we are cancelling and we didn't complete
+        if (!completed) {
+            onPlayerLoadFail();
+        }
     }
 
     /**
@@ -86,19 +109,28 @@ public abstract class PlayerLoadTask extends ExpireableCoreTask {
      */
     protected void onPlayerLoadSuccessfully() {
 
-        new CoreTask(getPlugin()) {
-
-            @Override
-            public void run() {
-                Bukkit.getPluginManager().callEvent(new PlayerLoadEvent(corePlayer));
-            }
-        };
+        result.complete(true);
+        // Throw event on main thread
+        Bukkit.getScheduler().scheduleSyncDelayedTask(CorePlugin.getInstance(),
+                new CoreTask(getPlugin()) {
+                    @Override
+                    public void run() {
+                        Bukkit.getPluginManager().callEvent(new PlayerLoadEvent(corePlayer));
+                    }
+                }
+        );
     }
 
     /**
      * A callback that is called whenever the player data fails to load.
      */
-    protected abstract void onPlayerLoadFail();
+    protected void onPlayerLoadFail() {
+        result.complete(false);
+    }
+
+    public CompletableFuture<Boolean> getResult() {
+        return result;
+    }
 
     /**
      * Gets the {@link CorePlayer} that is being loaded.

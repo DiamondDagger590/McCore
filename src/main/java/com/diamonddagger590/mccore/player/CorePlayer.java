@@ -44,6 +44,8 @@ public abstract class CorePlayer extends Mutexable {
         return Optional.ofNullable(Bukkit.getPlayer(uuid));
     }
 
+    public abstract boolean useMutex();
+
     @Override
     public int hashCode() {
         int hash = 7;

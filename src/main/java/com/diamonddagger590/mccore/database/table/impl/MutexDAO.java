@@ -129,7 +129,7 @@ public class MutexDAO {
                         result = resultSet.getBoolean("mutex"); //TODO actually use mutex
                     }
 
-                    mutexFuture.complete(false);
+                    mutexFuture.complete(result);
                 }
             }
             catch (SQLException e) {
@@ -160,6 +160,34 @@ public class MutexDAO {
 
                 preparedStatement.executeUpdate();
                 updatedMutexFuture.complete(corePlayer.isLocked());
+            }
+            catch (SQLException e) {
+                updatedMutexFuture.completeExceptionally(e);
+            }
+        });
+
+        return updatedMutexFuture;
+    }
+
+    @NotNull
+    public static CompletableFuture<Boolean> updateUserMutex(@NotNull Connection connection, @NotNull UUID uuid, boolean locked) {
+
+        DatabaseManager databaseManager = CorePlugin.getInstance().getDatabaseManager();
+        DatabaseDriver databaseDriver = databaseManager.getDriver();
+        CompletableFuture<Boolean> updatedMutexFuture = new CompletableFuture<>();
+
+        databaseManager.getDatabaseExecutorService().submit(() -> {
+
+            try (PreparedStatement preparedStatement = databaseDriver == DatabaseDriver.H2 ? connection.prepareStatement("INSERT INTO " + TABLE_NAME + " (uuid, mutex)" +
+                    "VALUES(?, ?) ON DUPLICATE KEY UPDATE " +
+                    "mutex = VALUES(mutex);")
+                    : connection.prepareStatement("REPLACE INTO " + TABLE_NAME + " (uuid, mutex) VALUES(?, ?);")) {
+
+                preparedStatement.setString(1, uuid.toString());
+                preparedStatement.setBoolean(2, locked);
+
+                preparedStatement.executeUpdate();
+                updatedMutexFuture.complete(locked);
             }
             catch (SQLException e) {
                 updatedMutexFuture.completeExceptionally(e);
