@@ -6,18 +6,22 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 public class GuiTracker {
 
     private final CorePlugin plugin;
     private final Map<UUID, Gui> playersWithOpenGuis;
+    private final Map<UUID, Set<UUID>> openGuis;
 
     public GuiTracker(@NotNull CorePlugin plugin) {
         this.plugin = plugin;
         playersWithOpenGuis = new HashMap<>();
+        openGuis = new HashMap<>();
     }
 
     public boolean doesPlayerHaveGui(@NotNull CorePlayer corePlayer) {
@@ -38,13 +42,18 @@ public class GuiTracker {
 
     public void stopTrackingPlayer(@NotNull Player player) {
         stopTrackingPlayer(player.getUniqueId());
-
     }
 
     public void stopTrackingPlayer(@NotNull UUID uuid) {
         Gui gui = playersWithOpenGuis.remove(uuid);
         if (gui != null) {
-            gui.unregisterListeners();
+            UUID guiUUID = gui.getUUID();
+            openGuis.get(guiUUID).remove(uuid);
+            // If no other players are listening to this GUI
+            if (openGuis.get(guiUUID).isEmpty()) {
+                openGuis.remove(guiUUID);
+                gui.unregisterListeners();
+            }
         }
     }
 
@@ -57,8 +66,20 @@ public class GuiTracker {
     }
 
     public void trackPlayerGui(@NotNull UUID uuid, @NotNull Gui gui) {
+        // Check if the player is currently being tracked, if so then cancel before tracking them again
+        if (playersWithOpenGuis.containsKey(uuid)) {
+            stopTrackingPlayer(uuid);
+        }
         playersWithOpenGuis.put(uuid, gui);
-        gui.registerListeners();
+        if (!openGuis.containsKey(gui.getUUID())) {
+            gui.registerListeners();
+            Set<UUID> players = new HashSet<>();
+            players.add(uuid);
+            openGuis.put(gui.getUUID(), players);
+        }
+        else {
+            openGuis.get(gui.getUUID()).add(uuid);
+        }
     }
 
     @NotNull

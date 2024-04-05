@@ -1,23 +1,29 @@
 package com.diamonddagger590.mccore.gui;
 
+import com.diamonddagger590.mccore.CorePlugin;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.Inventory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
-public abstract class Gui implements Listener {
+public interface Gui extends Listener {
 
-    protected final UUID guiUUID = UUID.randomUUID();
-    protected GuiFillerFunction guiFillerFunction = (inventory -> {});
+    UUID guiUUID = UUID.randomUUID();
+
+    void registerListeners();
+    void unregisterListeners();
 
     @NotNull
-    public abstract Inventory getInventory();
+    Inventory getInventory();
 
-    public abstract void registerListeners();
-    public abstract void unregisterListeners();
-    public void executeFillerFunction() {
-        guiFillerFunction.fillGui(getInventory());
+    default UUID getUUID() {
+        return guiUUID;
     }
 
+    default boolean canProcessEvent(@NotNull Player player, @NotNull Inventory inventory) {
+        GuiTracker guiTracker = CorePlugin.getInstance().getGuiTracker();
+        return inventory == getInventory() && guiTracker.getOpenedGui(player).isPresent() && guiTracker.getOpenedGui(player).get() == this;
+    }
 }

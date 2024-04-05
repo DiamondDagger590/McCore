@@ -3,7 +3,7 @@ package com.diamonddagger590.mccore.task;
 import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.database.builder.Database;
 import com.diamonddagger590.mccore.database.table.impl.MutexDAO;
-import com.diamonddagger590.mccore.event.player.PlayerLoadEvent;
+import com.diamonddagger590.mccore.event.player.PlayerUnloadEvent;
 import com.diamonddagger590.mccore.player.CorePlayer;
 import com.diamonddagger590.mccore.task.core.CoreTask;
 import com.diamonddagger590.mccore.task.core.ExpireableCoreTask;
@@ -13,67 +13,55 @@ import org.jetbrains.annotations.NotNull;
 import java.sql.Connection;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * This task will load the player data
- */
-public abstract class PlayerLoadTask extends ExpireableCoreTask {
+public abstract class PlayerUnloadTask extends ExpireableCoreTask {
 
     private final CorePlayer corePlayer;
     private final CompletableFuture<Boolean> result;
     private boolean completed;
 
-    public PlayerLoadTask(@NotNull CorePlugin plugin, @NotNull CorePlayer corePlayer) {
+    public PlayerUnloadTask(@NotNull CorePlugin plugin, @NotNull CorePlayer corePlayer) {
         super(plugin, 0L, 2, 10L);
         this.corePlayer = corePlayer;
         this.result = new CompletableFuture<>();
         completed = false;
     }
 
-    private void runLoadPlayerTask() {
+    private void runUnloadPlayerTask() {
 
         Database database = getPlugin().getDatabaseManager().getDatabase();
-        if (database != null) {
 
-            /*
-             If the player is already in the player manager, then that means they logged out then back in.
-             We need to check for that and don't load their data until they are removed from the manager.
-             */
-            if (CorePlugin.getInstance().getPlayerManager().getPlayer(corePlayer.getUUID()).isPresent()) {
-                resumeTask();
-                startInterval();
-                return;
-            }
+        if (database != null) {
 
             //pause the task to prevent future iterations
             pauseTask();
             Connection connection = database.getConnection();
+
             if (corePlayer.useMutex()) {
                 MutexDAO.isUserMutexLocked(connection, corePlayer.getUUID()).thenAccept(mutexLocked -> {
 
-                    // If the mutex is locked, resume task to continue ticking
-                    if (mutexLocked) {
+                    // If the mutex isn't locked, resume task to continue ticking
+                    if (!mutexLocked) {
                         resumeTask();
-                        startInterval(); // Start the next interval giving time for the mutex to possibly unlock
+                        startInterval(); // Start the next interval giving time for the mutex to possibly lock
                         return;
                     }
 
                     // We are completing the task one way or another, in this case we want to
                     // allow externally cancelling to be treated as a failure but not when we do it here
                     completed = true;
-                    // If mutex isn't locked, then cancel task
                     cancelTask();
 
                     // Attempt to load the player, if it works, lock their mutex since we are now using it.
-                    if (loadPlayer()) {
+                    if (unloadPlayer()) {
                         corePlayer.lock();
                         MutexDAO.updateUserMutex(connection, corePlayer)
                                 .exceptionally(throwable -> {
                                     throwable.printStackTrace();
                                     return null;
                                 });
-                        onPlayerLoadSuccessfully();
+                        onPlayerUnloadSuccessfully();
                     } else {
-                        onPlayerLoadFail();
+                        onPlayerUnloadFail();
                     }
                 }).exceptionally(throwable -> {
                     throwable.printStackTrace();
@@ -83,10 +71,10 @@ public abstract class PlayerLoadTask extends ExpireableCoreTask {
                 });
             }
             else {
-                if (loadPlayer()) {
-                    onPlayerLoadSuccessfully();
+                if (unloadPlayer()) {
+                    onPlayerUnloadSuccessfully();
                 } else {
-                    onPlayerLoadFail();
+                    onPlayerUnloadFail();
                 }
             }
         }
@@ -94,14 +82,14 @@ public abstract class PlayerLoadTask extends ExpireableCoreTask {
 
     @Override
     protected void onIntervalComplete() {
-        runLoadPlayerTask();
+        runUnloadPlayerTask();
     }
 
     @Override
     protected void onCancel() {
         // If we are cancelling and we didn't complete
         if (!completed) {
-            onPlayerLoadFail();
+            onPlayerUnloadFail();
         }
     }
 
@@ -110,12 +98,12 @@ public abstract class PlayerLoadTask extends ExpireableCoreTask {
      *
      * @return {@code true} if the data was successfully loaded.
      */
-    protected abstract boolean loadPlayer();
+    protected abstract boolean unloadPlayer();
 
     /**
      * A callback that is called whenever the player data loads successfully.
      */
-    protected void onPlayerLoadSuccessfully() {
+    protected void onPlayerUnloadSuccessfully() {
 
         result.complete(true);
         // Throw event on main thread
@@ -123,7 +111,7 @@ public abstract class PlayerLoadTask extends ExpireableCoreTask {
                 new CoreTask(getPlugin()) {
                     @Override
                     public void run() {
-                        Bukkit.getPluginManager().callEvent(new PlayerLoadEvent(corePlayer));
+                        Bukkit.getPluginManager().callEvent(new PlayerUnloadEvent(corePlayer));
                     }
                 }
         );
@@ -132,7 +120,7 @@ public abstract class PlayerLoadTask extends ExpireableCoreTask {
     /**
      * A callback that is called whenever the player data fails to load.
      */
-    protected void onPlayerLoadFail() {
+    protected void onPlayerUnloadFail() {
         result.complete(false);
     }
 

@@ -1,5 +1,6 @@
-package com.diamonddagger590.mccore.gui;
+package com.diamonddagger590.mccore.gui.function;
 
+import com.diamonddagger590.mccore.gui.Gui;
 import com.diamonddagger590.mccore.player.CorePlayer;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.jetbrains.annotations.NotNull;

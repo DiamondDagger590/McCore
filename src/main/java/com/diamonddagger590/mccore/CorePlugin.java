@@ -1,12 +1,5 @@
 package com.diamonddagger590.mccore;
 
-import cloud.commandframework.CommandTree;
-import cloud.commandframework.annotations.AnnotationParser;
-import cloud.commandframework.arguments.parser.ParserParameters;
-import cloud.commandframework.arguments.parser.StandardParameters;
-import cloud.commandframework.bukkit.BukkitCommandManager;
-import cloud.commandframework.execution.CommandExecutionCoordinator;
-import cloud.commandframework.meta.CommandMeta;
 import com.diamonddagger590.mccore.database.DatabaseManager;
 import com.diamonddagger590.mccore.gui.GuiTracker;
 import com.diamonddagger590.mccore.listener.GuiCloseListener;
@@ -16,10 +9,12 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.incendo.cloud.CommandManager;
+import org.incendo.cloud.annotations.AnnotationParser;
+import org.incendo.cloud.bukkit.CloudBukkitCapabilities;
+import org.incendo.cloud.execution.ExecutionCoordinator;
+import org.incendo.cloud.paper.PaperCommandManager;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.Function;
-import java.util.logging.Level;
 
 /**
  * The abstract version of a plugin that provides some common logic for plugins
@@ -29,7 +24,7 @@ public abstract class CorePlugin extends JavaPlugin {
 
     private static CorePlugin instance;
 
-    private BukkitCommandManager<CommandSender> bukkitCommandManager;
+    private PaperCommandManager<CommandSender> commandManager;
     private AnnotationParser<CommandSender> annotationParser;
     private BukkitAudiences adventure;
     private MiniMessage miniMessage;
@@ -54,21 +49,17 @@ public abstract class CorePlugin extends JavaPlugin {
     }
 
     private void setupCloud() {
-        Function<CommandTree<CommandSender>, CommandExecutionCoordinator<CommandSender>> executionCoordinatorFunction = CommandExecutionCoordinator.simpleCoordinator();
-        Function<CommandSender, CommandSender> mapperFunction = Function.identity();
-
-        try {
-            bukkitCommandManager = new BukkitCommandManager<>(this, executionCoordinatorFunction, mapperFunction, mapperFunction);
-            bukkitCommandManager.createCommandHelpHandler();
-        } catch (Exception e) {
-            this.getLogger().log(Level.SEVERE, "Failed to initialize command manager");
+        commandManager = PaperCommandManager.createNative(
+                this,
+                ExecutionCoordinator.simpleCoordinator()
+        );
+        if (commandManager.hasCapability(CloudBukkitCapabilities.NATIVE_BRIGADIER)) {
+            commandManager.registerBrigadier();
+        } else if (commandManager.hasCapability(CloudBukkitCapabilities.ASYNCHRONOUS_COMPLETION)) {
+            commandManager.registerAsynchronousCompletions();
         }
 
-        final Function<ParserParameters, CommandMeta> commandMetaFunction =
-                p -> CommandMeta.simple()
-                        .with(CommandMeta.DESCRIPTION, p.get(StandardParameters.DESCRIPTION, "No description")).build();
-
-        annotationParser = new AnnotationParser<CommandSender>(bukkitCommandManager, CommandSender.class, commandMetaFunction);
+        annotationParser = new AnnotationParser<>(commandManager, CommandSender.class);
     }
 
     /**
@@ -116,14 +107,13 @@ public abstract class CorePlugin extends JavaPlugin {
     }
 
     /**
-     * Gets
-     * the {@link BukkitCommandManager} used by this plugin.
+     * Gets the {@link CommandManager} used by this plugin.
      *
-     * @return The {@link BukkitCommandManager} used by this plugin.
+     * @return The {@link CommandManager} used by this plugin.
      */
     @NotNull
-    public BukkitCommandManager<CommandSender> getBukkitCommandManager() {
-        return bukkitCommandManager;
+    public CommandManager<CommandSender> getCommandManager() {
+        return commandManager;
     }
 
     /**

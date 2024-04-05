@@ -6,22 +6,22 @@ import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This event is called whenever a {@link CorePlayer} is loaded
+ * This event is called whenever a {@link CorePlayer} is unloaded
  */
-public class PlayerLoadEvent extends Event {
+public class PlayerUnloadEvent extends Event {
 
     private static final HandlerList handlers = new HandlerList();
 
     private final CorePlayer corePlayer;
 
-    public PlayerLoadEvent(@NotNull CorePlayer corePlayer) {
+    public PlayerUnloadEvent(@NotNull CorePlayer corePlayer) {
         this.corePlayer = corePlayer;
     }
 
     /**
-     * Gets the {@link CorePlayer} that was loaded.
+     * Gets the {@link CorePlayer} that was unloaded.
      *
-     * @return The {@link CorePlayer} that was loaded.
+     * @return The {@link CorePlayer} that was unloaded.
      */
     public CorePlayer getCorePlayer() {
         return corePlayer;

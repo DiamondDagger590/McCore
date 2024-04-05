@@ -24,7 +24,7 @@ apply {
 }
 
 //RECODE.RELEASE.PATCH.DEVELOPMENT
-version = "1.0.0.6-SNAPSHOT"
+version = "1.0.0.7-SNAPSHOT"
 group = "com.diamonddagger590"
 
 java {
@@ -59,11 +59,13 @@ dependencies {
     api("io.papermc.paper:paper-api:$paperVersion")
 
 
-    val cloudVersion = "1.7.0"
-    api("cloud.commandframework:cloud-bukkit:$cloudVersion")
-    api("cloud.commandframework:cloud-annotations:$cloudVersion")
+    val cloudMinecraftVersion = "2.0.0-beta.5"
+    api("org.incendo:cloud-paper:$cloudMinecraftVersion")
+    val cloudVersion = "2.0.0-beta.4"
+    api("org.incendo:cloud-annotations:$cloudVersion")
+    api("org.incendo:cloud-minecraft-extras:$cloudVersion")
 
-    val adventureBukkitVersion = "4.3.0"
+    val adventureBukkitVersion = "4.3.2"
     api("net.kyori:adventure-platform-bukkit:$adventureBukkitVersion")
 
     val configMeVersion = "1.3.0"
@@ -73,7 +75,7 @@ dependencies {
 tasks {
 
     shadowJar {
-        relocate("cloud.commandframework", "com.diamonddagger590.mccore.cloud")
+        relocate("org.incendo", "com.diamonddagger590.mccore.cloud")
         archiveClassifier.set("")
     }
 

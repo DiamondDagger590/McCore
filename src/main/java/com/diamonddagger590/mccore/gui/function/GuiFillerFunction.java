@@ -1,4 +1,4 @@
-package com.diamonddagger590.mccore.gui;
+package com.diamonddagger590.mccore.gui.function;
 
 import org.bukkit.inventory.Inventory;
 import org.jetbrains.annotations.NotNull;
