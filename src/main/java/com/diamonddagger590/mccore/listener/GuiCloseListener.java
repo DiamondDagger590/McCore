@@ -11,6 +11,9 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 
 import java.util.Optional;
 
+/**
+ * A listener that manages removing a player's tracked GUI from the {@link GuiTracker}
+ */
 public class GuiCloseListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)

@@ -58,7 +58,6 @@ dependencies {
     val paperVersion = "1.20.4-R0.1-SNAPSHOT"
     api("io.papermc.paper:paper-api:$paperVersion")
 
-
     val cloudMinecraftVersion = "2.0.0-beta.5"
     api("org.incendo:cloud-paper:$cloudMinecraftVersion")
     val cloudVersion = "2.0.0-beta.4"

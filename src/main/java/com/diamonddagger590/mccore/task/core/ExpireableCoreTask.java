@@ -58,7 +58,7 @@ public abstract class ExpireableCoreTask extends CancellableCoreTask {
 
         //Expire task before passing it back up to check for cancellation state
         long currentTime = System.currentTimeMillis();
-        if (maxTaskDuration != -1 && currentTime >= maxTaskDuration) {
+        if (getMaxTaskDuration() != -1 && currentTime >= getMaxTaskDuration()) {
             expireTask();
             return;
         }

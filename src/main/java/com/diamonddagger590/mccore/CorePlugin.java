@@ -15,6 +15,9 @@ import org.incendo.cloud.bukkit.CloudBukkitCapabilities;
 import org.incendo.cloud.execution.ExecutionCoordinator;
 import org.incendo.cloud.paper.PaperCommandManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
+
+import java.util.logging.Level;
 
 /**
  * The abstract version of a plugin that provides some common logic for plugins
@@ -39,13 +42,19 @@ public abstract class CorePlugin extends JavaPlugin {
         adventure = BukkitAudiences.create(this);
         miniMessage = MiniMessage.miniMessage();
         guiTracker = new GuiTracker(this);
-        setupCloud();
+
+        // We can't setup cloud when mocking so ignore if we are in unit test mode
+        if (!isUnitTest()) {
+            setupCloud();
+        }
     }
 
     @Override
     public void onDisable() {
-        databaseManager.getDatabaseExecutorService().shutdown();
         adventure.close();
+        if (!isUnitTest()) {
+            databaseManager.getDatabaseExecutorService().shutdown();
+        }
     }
 
     private void setupCloud() {
@@ -144,6 +153,14 @@ public abstract class CorePlugin extends JavaPlugin {
     @NotNull
     public MiniMessage getMiniMessage() {
         return miniMessage;
+    }
+
+    /**
+     * Checks to see if we are running in unit test mode
+     * @return {@code true} if we are running in unit test mode
+     */
+    public boolean isUnitTest() {
+        return  (getClassLoader().getClass().getPackageName().startsWith("be.seeseemelk.mockbukkit"));
     }
 
     /**
