@@ -20,11 +20,10 @@ public class Methods {
         }
     }
 
-    public static Component getProgressBar(double progress, int barMultiplier) {
+    public static Component getProgressBar(double progress, int barCount) {
         if (progress < 0.0 || progress > 1.0) {
             throw new IllegalArgumentException("Percentage must be between 0.0 and 1.0");
         }
-        int barCount = 10 * barMultiplier;
         int greenSegments = (int) (progress * barCount);
         int redSegments = (barCount - greenSegments);
         double remainder = progress % barCount;
@@ -32,16 +31,18 @@ public class Methods {
         MiniMessage miniMessage = CorePlugin.getInstance().getMiniMessage();
         TextComponent.Builder builder = Component.text();
         builder.append(miniMessage.deserialize("<green>" + "|".repeat(Math.max(0, greenSegments)) + "</green>"));
-        if (remainder != 0 && remainder != 1) {
-            if (remainder <= 0.25) {
+        if (remainder > 0.0f && remainder < 1.0f) {
+            if (remainder <= 0.25f) {
                 builder.append(miniMessage.deserialize("<color:#c9ff29>|</color>"));
-            } else if (remainder <= 0.50) {
+            } else if (remainder <= 0.50f) {
                 builder.append(miniMessage.deserialize("<color:#ffcb21>|</color>"));
-            } else if (remainder <= 0.75) {
+            } else if (remainder <= 0.75f) {
                 builder.append(miniMessage.deserialize("<color:#ff822e>|</color>"));
             } else {
                 builder.append(miniMessage.deserialize("<color:#ff6417>|</color>"));
             }
+            // Remove a red segment since we are doing fun colors
+            redSegments--;
         }
         builder.append(miniMessage.deserialize("<color:#ff1418>" + "|".repeat(Math.max(0, redSegments)) + "</color>"));
         return builder.build();

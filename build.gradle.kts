@@ -24,7 +24,7 @@ apply {
 }
 
 //RECODE.RELEASE.PATCH.DEVELOPMENT
-version = "1.0.0.7-SNAPSHOT"
+version = "1.0.0.8-SNAPSHOT"
 group = "com.diamonddagger590"
 
 java {
@@ -53,10 +53,10 @@ repositories {
 dependencies {
 
     val intellijAnnotationVersion = "12.0"
-    api("com.intellij:annotations:$intellijAnnotationVersion")
+    compileOnlyApi("com.intellij:annotations:$intellijAnnotationVersion")
 
     val paperVersion = "1.20.4-R0.1-SNAPSHOT"
-    api("io.papermc.paper:paper-api:$paperVersion")
+    compileOnlyApi("io.papermc.paper:paper-api:$paperVersion")
 
     val cloudMinecraftVersion = "2.0.0-beta.5"
     api("org.incendo:cloud-paper:$cloudMinecraftVersion")
@@ -65,7 +65,7 @@ dependencies {
     api("org.incendo:cloud-minecraft-extras:$cloudVersion")
 
     val adventureBukkitVersion = "4.3.2"
-    api("net.kyori:adventure-platform-bukkit:$adventureBukkitVersion")
+    compileOnlyApi("net.kyori:adventure-platform-bukkit:$adventureBukkitVersion")
 
     val configMeVersion = "1.3.0"
     api("ch.jalu:configme:$configMeVersion")
