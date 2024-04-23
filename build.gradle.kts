@@ -65,7 +65,7 @@ dependencies {
     api("org.incendo:cloud-minecraft-extras:$cloudVersion")
 
     val adventureBukkitVersion = "4.3.2"
-    compileOnlyApi("net.kyori:adventure-platform-bukkit:$adventureBukkitVersion")
+    api("net.kyori:adventure-platform-bukkit:$adventureBukkitVersion")
 
     val configMeVersion = "1.3.0"
     api("ch.jalu:configme:$configMeVersion")
