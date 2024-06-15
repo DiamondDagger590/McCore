@@ -4,7 +4,7 @@ plugins {
     java
     `java-library`
     `maven-publish`
-    id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("io.github.goooler.shadow") version "8.1.7"
 }
 
 buildscript {
@@ -24,11 +24,11 @@ apply {
 }
 
 //RECODE.RELEASE.PATCH.DEVELOPMENT
-version = "1.0.0.8-SNAPSHOT"
+version = "1.0.0.9-SNAPSHOT"
 group = "com.diamonddagger590"
 
 java {
-    toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+    toolchain.languageVersion.set(JavaLanguageVersion.of(21))
     withJavadocJar()
     withSourcesJar()
 }
@@ -55,7 +55,7 @@ dependencies {
     val intellijAnnotationVersion = "12.0"
     compileOnlyApi("com.intellij:annotations:$intellijAnnotationVersion")
 
-    val paperVersion = "1.20.4-R0.1-SNAPSHOT"
+    val paperVersion = "1.21-R0.1-SNAPSHOT"
     compileOnlyApi("io.papermc.paper:paper-api:$paperVersion")
 
     val cloudMinecraftVersion = "2.0.0-beta.5"
