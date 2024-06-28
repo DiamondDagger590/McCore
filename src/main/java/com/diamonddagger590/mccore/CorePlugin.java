@@ -4,6 +4,7 @@ import com.diamonddagger590.mccore.database.DatabaseManager;
 import com.diamonddagger590.mccore.gui.GuiTracker;
 import com.diamonddagger590.mccore.listener.GuiCloseListener;
 import com.diamonddagger590.mccore.player.PlayerManager;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
@@ -11,13 +12,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.incendo.cloud.CommandManager;
 import org.incendo.cloud.annotations.AnnotationParser;
-import org.incendo.cloud.bukkit.CloudBukkitCapabilities;
 import org.incendo.cloud.execution.ExecutionCoordinator;
 import org.incendo.cloud.paper.PaperCommandManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.VisibleForTesting;
-
-import java.util.logging.Level;
 
 /**
  * The abstract version of a plugin that provides some common logic for plugins
@@ -27,7 +24,7 @@ public abstract class CorePlugin extends JavaPlugin {
 
     private static CorePlugin instance;
 
-    private PaperCommandManager<CommandSender> commandManager;
+    private PaperCommandManager<CommandSourceStack> commandManager;
     private AnnotationParser<CommandSender> annotationParser;
     private BukkitAudiences adventure;
     private MiniMessage miniMessage;
@@ -58,17 +55,11 @@ public abstract class CorePlugin extends JavaPlugin {
     }
 
     private void setupCloud() {
-        commandManager = PaperCommandManager.createNative(
-                this,
-                ExecutionCoordinator.simpleCoordinator()
-        );
-        if (commandManager.hasCapability(CloudBukkitCapabilities.NATIVE_BRIGADIER)) {
-            commandManager.registerBrigadier();
-        } else if (commandManager.hasCapability(CloudBukkitCapabilities.ASYNCHRONOUS_COMPLETION)) {
-            commandManager.registerAsynchronousCompletions();
-        }
+        commandManager = PaperCommandManager.builder()
+                .executionCoordinator(ExecutionCoordinator.simpleCoordinator())
+                .buildOnEnable(this);
 
-        annotationParser = new AnnotationParser<>(commandManager, CommandSender.class);
+        annotationParser = new AnnotationParser(commandManager, CommandSender.class);
     }
 
     /**
@@ -121,7 +112,7 @@ public abstract class CorePlugin extends JavaPlugin {
      * @return The {@link CommandManager} used by this plugin.
      */
     @NotNull
-    public CommandManager<CommandSender> getCommandManager() {
+    public CommandManager<CommandSourceStack> getCommandManager() {
         return commandManager;
     }
 
