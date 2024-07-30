@@ -1,5 +1,6 @@
 package com.diamonddagger590.mccore;
 
+import com.diamonddagger590.mccore.configuration.ReloadableContentRegistry;
 import com.diamonddagger590.mccore.database.DatabaseManager;
 import com.diamonddagger590.mccore.gui.GuiTracker;
 import com.diamonddagger590.mccore.listener.GuiCloseListener;
@@ -32,6 +33,7 @@ public abstract class CorePlugin extends JavaPlugin {
     protected DatabaseManager databaseManager;
     protected PlayerManager playerManager;
     protected GuiTracker guiTracker;
+    protected ReloadableContentRegistry reloadableContentRegistry;
 
     @Override
     public void onEnable() {
@@ -39,6 +41,7 @@ public abstract class CorePlugin extends JavaPlugin {
         adventure = BukkitAudiences.create(this);
         miniMessage = MiniMessage.miniMessage();
         guiTracker = new GuiTracker(this);
+        reloadableContentRegistry = new ReloadableContentRegistry();
 
         // We can't setup cloud when mocking so ignore if we are in unit test mode
         if (!isUnitTest()) {
@@ -104,6 +107,11 @@ public abstract class CorePlugin extends JavaPlugin {
     @NotNull
     public GuiTracker getGuiTracker() {
         return guiTracker;
+    }
+
+    @NotNull
+    public ReloadableContentRegistry getReloadableContentRegistry() {
+        return reloadableContentRegistry;
     }
 
     /**
