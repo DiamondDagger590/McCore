@@ -1,15 +1,19 @@
 package com.diamonddagger590.mccore.util;
 
 import com.diamonddagger590.mccore.CorePlugin;
-import com.diamonddagger590.mccore.player.CorePlayer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
-import net.kyori.adventure.text.format.Style;
-import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Optional;
+
 public class Methods {
+
+    private static final String LOCATION_DELIMITER = ";";
 
     public static boolean isInt(@NotNull String string) {
         try {
@@ -46,5 +50,21 @@ public class Methods {
         }
         builder.append(miniMessage.deserialize("<color:#ff1418>" + "|".repeat(Math.max(0, redSegments)) + "</color>"));
         return builder.build();
+    }
+
+    public static String serializeLocation(@NotNull Location location) {
+        return location.getX() + LOCATION_DELIMITER + location.getY() + LOCATION_DELIMITER + location.getZ() + LOCATION_DELIMITER + location.getWorld().getUID();
+    }
+
+    public static Optional<Location> deserializeLocation(@NotNull String serializedLocation) {
+        String[] values = serializedLocation.split(LOCATION_DELIMITER);
+        if (values.length != 4) {
+            throw new IllegalArgumentException("Expected a serialized location following the format of x;y;z;uuid, instead got " + serializedLocation);
+        }
+        int x = Integer.parseInt(values[0]);
+        int y = Integer.parseInt(values[1]);
+        int z = Integer.parseInt(values[2]);
+        World world = Bukkit.getWorld(values[3]);
+        return world == null ? Optional.empty() : Optional.of(new Location(world, x, y, z));
     }
 }
