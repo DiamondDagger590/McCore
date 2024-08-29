@@ -3,7 +3,9 @@ package com.diamonddagger590.mccore;
 import com.diamonddagger590.mccore.configuration.ReloadableContentRegistry;
 import com.diamonddagger590.mccore.database.DatabaseManager;
 import com.diamonddagger590.mccore.gui.GuiTracker;
+import com.diamonddagger590.mccore.gui.GuiTrackerv2;
 import com.diamonddagger590.mccore.listener.GuiCloseListener;
+import com.diamonddagger590.mccore.listener.GuiRefreshListener;
 import com.diamonddagger590.mccore.player.PlayerManager;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
@@ -33,6 +35,7 @@ public abstract class CorePlugin extends JavaPlugin {
     protected DatabaseManager databaseManager;
     protected PlayerManager playerManager;
     protected GuiTracker guiTracker;
+    protected GuiTrackerv2 guiTrackerv2;
     protected ReloadableContentRegistry reloadableContentRegistry;
 
     @Override
@@ -41,6 +44,7 @@ public abstract class CorePlugin extends JavaPlugin {
         adventure = BukkitAudiences.create(this);
         miniMessage = MiniMessage.miniMessage();
         guiTracker = new GuiTracker(this);
+        guiTrackerv2 = new GuiTrackerv2(this);
         reloadableContentRegistry = new ReloadableContentRegistry();
 
         // We can't setup cloud when mocking so ignore if we are in unit test mode
@@ -80,6 +84,7 @@ public abstract class CorePlugin extends JavaPlugin {
 
     protected void registerListeners() {
         Bukkit.getPluginManager().registerEvents(new GuiCloseListener(), this);
+        Bukkit.getPluginManager().registerEvents(new GuiRefreshListener(), this);
     }
 
     /**
@@ -107,6 +112,11 @@ public abstract class CorePlugin extends JavaPlugin {
     @NotNull
     public GuiTracker getGuiTracker() {
         return guiTracker;
+    }
+
+    @NotNull
+    public GuiTrackerv2 getGuiTrackerv2() {
+        return guiTrackerv2;
     }
 
     @NotNull
