@@ -90,15 +90,9 @@ public abstract class PaginatedGui extends Guiv2 {
      * <p>
      * This method checks and will error if any of the following criteria aren't met:
      * <ul>
-     *     <li>
-     *         {@link #getMaximumPage()} < 1
-     *     </li>
-     *     <li>
-     *         The provided page is > {@link #getMaximumPage()}
-     *     </li>
-     *     <li>
-     *         The provided page is < 1
-     *     </li>
+     *     <li>{@link #getMaximumPage()} {@code < 1}
+     *     <li>The provided page is {@code >} {@link #getMaximumPage()}
+     *     <li>The provided page is {@code < 1}
      * </ul>
      *
      * @param page The new page for this gui.
