@@ -1,30 +1,30 @@
 package com.diamonddagger590.mccore.exception.gui;
 
-import com.diamonddagger590.mccore.gui.Guiv2;
+import com.diamonddagger590.mccore.gui.Gui;
 import com.diamonddagger590.mccore.gui.slot.Slot;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This exception is thrown whenever a {@link Slot} is added to a {@link Guiv2} that
+ * This exception is thrown whenever a {@link Slot} is added to a {@link Gui} that
  * it isn't allowed to be added to.
  */
 public class IllegalSlotAssignmentException extends RuntimeException {
 
-    private final Guiv2 gui;
+    private final Gui gui;
     private final Slot slot;
 
-    public IllegalSlotAssignmentException(@NotNull Guiv2 gui, @NotNull Slot slot) {
+    public IllegalSlotAssignmentException(@NotNull Gui gui, @NotNull Slot slot) {
         this.gui = gui;
         this.slot = slot;
     }
 
     /**
-     * Gets the {@link Guiv2} that can't accept the {@link #getSlot() Slot}.
+     * Gets the {@link Gui} that can't accept the {@link #getSlot() Slot}.
      *
-     * @return The {@link Guiv2} that can't accept the {@link #getSlot() Slot}.
+     * @return The {@link Gui} that can't accept the {@link #getSlot() Slot}.
      */
     @NotNull
-    public Guiv2 getGui() {
+    public Gui getGui() {
         return gui;
     }
 

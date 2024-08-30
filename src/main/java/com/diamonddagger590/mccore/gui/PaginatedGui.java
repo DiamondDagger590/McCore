@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * A paginated gui is a gui that can have multiple pages of content,
  * requiring the ability to go back and forth between pages.
  */
-public abstract class PaginatedGui extends Guiv2 {
+public abstract class PaginatedGui extends Gui {
 
     protected static final PreviousPageSlot PREVIOUS_PAGE_SLOT = new PreviousPageSlot();
     protected static final NextPageSlot NEXT_PAGE_SLOT = new NextPageSlot();

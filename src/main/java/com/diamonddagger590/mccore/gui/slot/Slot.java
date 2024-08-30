@@ -1,6 +1,6 @@
 package com.diamonddagger590.mccore.gui.slot;
 
-import com.diamonddagger590.mccore.gui.Guiv2;
+import com.diamonddagger590.mccore.gui.Gui;
 import com.diamonddagger590.mccore.player.CorePlayer;
 import org.bukkit.Material;
 import org.bukkit.event.inventory.ClickType;
@@ -42,16 +42,16 @@ public abstract class Slot {
     public abstract boolean onClick(@NotNull CorePlayer corePlayer, @NotNull ClickType clickType);
 
     /**
-     * Gets a {@link Set} of all {@link Guiv2} classes that can accept this slot.
+     * Gets a {@link Set} of all {@link Gui} classes that can accept this slot.
      * If the slot should be accepted into any gui, an empty set will be returned.
      * <p>
      * This allows for making gui specific logic in {@link #onClick(CorePlayer, ClickType)} without
      * needing to worry too much about edge cases of other guis using this slot.
      *
-     * @return A {@link Set} of all {@link Guiv2} classes that can accept this slot.
+     * @return A {@link Set} of all {@link Gui} classes that can accept this slot.
      * If the slot should be accepted into any gui, an empty set will be returned.
      */
-    public Set<Class<? extends Guiv2>> getValidGuiTypes() {
+    public Set<Class<? extends Gui>> getValidGuiTypes() {
         return new HashSet<>();
     }
 

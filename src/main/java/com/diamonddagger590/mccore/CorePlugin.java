@@ -3,7 +3,6 @@ package com.diamonddagger590.mccore;
 import com.diamonddagger590.mccore.configuration.ReloadableContentRegistry;
 import com.diamonddagger590.mccore.database.DatabaseManager;
 import com.diamonddagger590.mccore.gui.GuiTracker;
-import com.diamonddagger590.mccore.gui.GuiTrackerv2;
 import com.diamonddagger590.mccore.listener.GuiCloseListener;
 import com.diamonddagger590.mccore.listener.GuiRefreshListener;
 import com.diamonddagger590.mccore.player.PlayerManager;
@@ -35,7 +34,6 @@ public abstract class CorePlugin extends JavaPlugin {
     protected DatabaseManager databaseManager;
     protected PlayerManager playerManager;
     protected GuiTracker guiTracker;
-    protected GuiTrackerv2 guiTrackerv2;
     protected ReloadableContentRegistry reloadableContentRegistry;
 
     @Override
@@ -44,7 +42,6 @@ public abstract class CorePlugin extends JavaPlugin {
         adventure = BukkitAudiences.create(this);
         miniMessage = MiniMessage.miniMessage();
         guiTracker = new GuiTracker(this);
-        guiTrackerv2 = new GuiTrackerv2(this);
         reloadableContentRegistry = new ReloadableContentRegistry();
 
         // We can't setup cloud when mocking so ignore if we are in unit test mode
@@ -109,16 +106,19 @@ public abstract class CorePlugin extends JavaPlugin {
         return playerManager;
     }
 
+    /**
+     * Gets the {@link GuiTracker} that tracks all {@link com.diamonddagger590.mccore.gui.Gui}s
+     * @return The {@link GuiTracker} that tracks all {@link com.diamonddagger590.mccore.gui.Gui}s
+     */
     @NotNull
     public GuiTracker getGuiTracker() {
         return guiTracker;
     }
 
-    @NotNull
-    public GuiTrackerv2 getGuiTrackerv2() {
-        return guiTrackerv2;
-    }
-
+    /**
+     * Gets the {@link ReloadableContentRegistry} used to manage all {@link com.diamonddagger590.mccore.configuration.ReloadableContent}.
+     * @return The {@link ReloadableContentRegistry} used to manage all {@link com.diamonddagger590.mccore.configuration.ReloadableContent}.¬
+     */
     @NotNull
     public ReloadableContentRegistry getReloadableContentRegistry() {
         return reloadableContentRegistry;
