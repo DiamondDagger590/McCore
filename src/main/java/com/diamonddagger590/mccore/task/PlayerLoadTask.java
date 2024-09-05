@@ -64,17 +64,19 @@ public abstract class PlayerLoadTask extends ExpireableCoreTask {
                     cancelTask();
 
                     // Attempt to load the player, if it works, lock their mutex since we are now using it.
-                    if (loadPlayer()) {
-                        corePlayer.lock();
-                        MutexDAO.updateUserMutex(connection, corePlayer)
-                                .exceptionally(throwable -> {
-                                    throwable.printStackTrace();
-                                    return null;
-                                });
-                        onPlayerLoadSuccessfully();
-                    } else {
-                        onPlayerLoadFail();
-                    }
+                    loadPlayer().thenAccept(result -> {
+                        if (result) {
+                            corePlayer.lock();
+                            MutexDAO.updateUserMutex(connection, corePlayer)
+                                    .exceptionally(throwable -> {
+                                        throwable.printStackTrace();
+                                        return null;
+                                    });
+                            onPlayerLoadSuccessfully();
+                        } else {
+                            onPlayerLoadFail();
+                        }
+                    });
                 }).exceptionally(throwable -> {
                     throwable.printStackTrace();
                     completed = false;
@@ -83,11 +85,18 @@ public abstract class PlayerLoadTask extends ExpireableCoreTask {
                 });
             }
             else {
-                if (loadPlayer()) {
-                    onPlayerLoadSuccessfully();
-                } else {
+                loadPlayer().thenAccept(result -> {
+                    if (result) {
+                        onPlayerLoadSuccessfully();
+                    }
+                    else {
+                        onPlayerLoadFail();
+
+                    }
+                }).exceptionally(throwable -> {
                     onPlayerLoadFail();
-                }
+                    return null;
+                });
             }
         }
     }
@@ -110,7 +119,7 @@ public abstract class PlayerLoadTask extends ExpireableCoreTask {
      *
      * @return {@code true} if the data was successfully loaded.
      */
-    protected abstract boolean loadPlayer();
+    protected abstract CompletableFuture<Boolean> loadPlayer();
 
     /**
      * A callback that is called whenever the player data loads successfully.
