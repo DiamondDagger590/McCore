@@ -20,7 +20,6 @@ buildscript {
 apply {
     plugin("java")
     plugin("maven-publish")
-
 }
 
 //RECODE.RELEASE.PATCH.DEVELOPMENT

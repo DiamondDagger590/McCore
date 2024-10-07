@@ -1,12 +1,12 @@
 package com.diamonddagger590.mccore;
 
+import com.diamonddagger590.mccore.command.CoreCommandManager;
 import com.diamonddagger590.mccore.configuration.ReloadableContentRegistry;
 import com.diamonddagger590.mccore.database.DatabaseManager;
 import com.diamonddagger590.mccore.gui.GuiTracker;
 import com.diamonddagger590.mccore.listener.GuiCloseListener;
 import com.diamonddagger590.mccore.listener.GuiRefreshListener;
 import com.diamonddagger590.mccore.player.PlayerManager;
-import io.papermc.paper.command.brigadier.CommandSourceStack;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
@@ -14,8 +14,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.incendo.cloud.CommandManager;
 import org.incendo.cloud.annotations.AnnotationParser;
-import org.incendo.cloud.execution.ExecutionCoordinator;
-import org.incendo.cloud.paper.PaperCommandManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,7 +24,7 @@ public abstract class CorePlugin extends JavaPlugin {
 
     private static CorePlugin instance;
 
-    private PaperCommandManager<CommandSourceStack> commandManager;
+    private CoreCommandManager commandManager;
     private AnnotationParser<CommandSender> annotationParser;
     private BukkitAudiences adventure;
     private MiniMessage miniMessage;
@@ -46,24 +44,16 @@ public abstract class CorePlugin extends JavaPlugin {
 
         // We can't setup cloud when mocking so ignore if we are in unit test mode
         if (!isUnitTest()) {
-            setupCloud();
+            commandManager = new CoreCommandManager(this);
         }
     }
 
     @Override
     public void onDisable() {
         adventure.close();
-        if (!isUnitTest()) {
+        if (!isUnitTest() && databaseManager != null) {
             databaseManager.getDatabaseExecutorService().shutdown();
         }
-    }
-
-    private void setupCloud() {
-        commandManager = PaperCommandManager.builder()
-                .executionCoordinator(ExecutionCoordinator.simpleCoordinator())
-                .buildOnEnable(this);
-
-        annotationParser = new AnnotationParser(commandManager, CommandSender.class);
     }
 
     /**
@@ -71,7 +61,9 @@ public abstract class CorePlugin extends JavaPlugin {
      * <p>
      * It is up to the plugin implementing this on the {@link #onEnable()} method
      */
-    public abstract void initializeDatabase();
+    public void initializeDatabase() {
+
+    }
 
     /**
      * Constructs commands for plugins
@@ -130,7 +122,7 @@ public abstract class CorePlugin extends JavaPlugin {
      * @return The {@link CommandManager} used by this plugin.
      */
     @NotNull
-    public CommandManager<CommandSourceStack> getCommandManager() {
+    public CoreCommandManager getCommandManager() {
         return commandManager;
     }
 
