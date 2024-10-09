@@ -9,6 +9,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
 
+import java.time.Duration;
 import java.util.Optional;
 
 /**
@@ -147,5 +148,50 @@ public class Methods {
         originLocation.setPitch(originLocation.getPitch() * 180f / (float) Math.PI);
 
         return originLocation;
+    }
+
+    /**
+     * Turns the provided string into a {@link Duration}. The string can be any combination of an integer following by a character denoting
+     * the time unit.
+     * <p>
+     * An example would be `15s5m1h` to represent a duration of 1 hour, 5 minutes and 15 seconds.
+     * <p>
+     * Accepted time units are:
+     * <ul>
+     *     <li>s - second</li>
+     *     <li>m - minute</li>
+     *     <li>h - hour</li>
+     *     <li>d - day</li>
+     *     <li>w - week</li>
+     *     <li>y - year</li>
+     * </ul>
+     *
+     * @param timeString The time string to parse.
+     * @return A {@link Duration} representation of the provided string.
+     */
+    @NotNull
+    public static Duration getTimeInSeconds(@NotNull String timeString) {
+        Duration duration = Duration.ZERO;
+        StringBuilder numberBuilder = new StringBuilder();
+
+        for (char c : timeString.toCharArray()) {
+            if (Character.isDigit(c)) {
+                numberBuilder.append(c);
+            } else {
+                long value = Long.parseLong(numberBuilder.toString());
+                numberBuilder.setLength(0);
+
+                duration = switch (c) {
+                    case 's' -> duration.plusSeconds(value);
+                    case 'm' -> duration.plusMinutes(value);
+                    case 'h' -> duration.plusHours(value);
+                    case 'd' -> duration.plusDays(value);
+                    case 'w' -> duration.plusDays(value * 7);
+                    case 'y' -> duration.plusDays(value * 365);
+                    default -> throw new IllegalArgumentException("Invalid time unit: " + c);
+                };
+            }
+        }
+        return duration;
     }
 }
