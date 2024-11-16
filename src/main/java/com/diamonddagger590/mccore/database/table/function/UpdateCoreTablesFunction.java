@@ -7,8 +7,8 @@ import com.diamonddagger590.mccore.database.table.impl.TableVersionHistoryDAO;
 import org.jetbrains.annotations.NotNull;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.concurrent.CompletableFuture;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -18,25 +18,18 @@ import java.util.logging.Logger;
  */
 public class UpdateCoreTablesFunction {
 
-    private static final UpdateTableFunction updateCoreTablesFunction = (databaseManager -> {
+    private static final UpdateTableFunction updateCoreTablesFunction = (database -> {
         CompletableFuture<Void> returnFuture = new CompletableFuture<>();
         Logger logger = CorePlugin.getInstance().getLogger();
-        databaseManager.getDatabaseExecutorService().submit(() -> {
-
-            if (databaseManager.getDatabase() == null) {
-                logger.log(Level.SEVERE, "Database Update - Table Version History DAO was unable to be updated as the database is null. Please report this instance to the developer.");
+        database.getDatabaseExecutorService().submit(() -> {
+            try (Connection connection = database.getConnection()) {
+                TableVersionHistoryDAO.updateTable(connection);
+                MutexDAO.updateTable(connection);
                 returnFuture.complete(null);
-                return;
             }
-
-            Connection connection = databaseManager.getDatabase().getConnection();
-            TableVersionHistoryDAO.updateTable(connection)
-                    .thenAccept(unused -> {
-
-                        MutexDAO.updateTable(connection).thenAccept(unused1 -> {
-                            returnFuture.complete(null);
-                        });
-                    });
+            catch (SQLException e) {
+                e.printStackTrace();
+            }
         });
 
         return returnFuture;

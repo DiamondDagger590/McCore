@@ -1,13 +1,13 @@
 package com.diamonddagger590.mccore.database.table.function;
 
 import com.diamonddagger590.mccore.CorePlugin;
-import com.diamonddagger590.mccore.database.DatabaseManager;
 import com.diamonddagger590.mccore.database.function.CreateTableFunction;
 import com.diamonddagger590.mccore.database.table.impl.MutexDAO;
 import com.diamonddagger590.mccore.database.table.impl.TableVersionHistoryDAO;
 import org.jetbrains.annotations.NotNull;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -19,40 +19,20 @@ import java.util.logging.Logger;
  */
 public class CreateCoreTablesFunction {
 
-    private static final CreateTableFunction createCoreTablesFunction = (@NotNull DatabaseManager databaseManager) -> {
-
+    private static final CreateTableFunction createCoreTablesFunction = database -> {
         CompletableFuture<Void> returnFuture = new CompletableFuture<>();
         Logger logger = CorePlugin.getInstance().getLogger();
-
-        databaseManager.getDatabaseExecutorService().submit(() -> {
-
-            if (databaseManager.getDatabase() == null) {
-                logger.log(Level.SEVERE, "Database Creation - Table Version History DAO was unable to be created as the database is null. Please report this instance to the developer.");
+        database.getDatabaseExecutorService().submit(() -> {
+            try (Connection connection = database.getConnection()) {
+                logger.log(Level.INFO, "Database Creation - Table Version History DAO "
+                        + (TableVersionHistoryDAO.attemptCreateTable(connection, database) ? "created a new table." : "already existed so skipping creation."));
+                logger.log(Level.INFO, "Database Creation - Mutex DAO "
+                        + (MutexDAO.attemptCreateTable(connection, database) ? "created a new table." : "already existed so skipping creation."));
                 returnFuture.complete(null);
-                return;
             }
-
-            Connection connection = databaseManager.getDatabase().getConnection();
-
-            TableVersionHistoryDAO.attemptCreateTable(connection, databaseManager)
-                    .thenAccept(tableVersionHistoryTableCreated -> {
-                        logger.log(Level.INFO, "Database Creation - Table Version History DAO "
-                                + (tableVersionHistoryTableCreated ? "created a new table." : "already existed so skipping creation."));
-
-                        MutexDAO.attemptCreateTable(connection, databaseManager).thenAccept(mutexTableCreated -> {
-                            logger.log(Level.INFO, "Database Creation - Mutex DAO "
-                                    + (tableVersionHistoryTableCreated ? "created a new table." : "already existed so skipping creation."));
-                            returnFuture.complete(null);
-                        }).exceptionally(throwable -> {
-                            returnFuture.completeExceptionally(throwable);
-                            return null;
-                        });
-
-                    }).exceptionally(throwable -> {
-                        returnFuture.completeExceptionally(throwable);
-                        return null;
-                    });
-
+            catch (SQLException e) {
+                returnFuture.completeExceptionally(e);
+            }
         });
 
 

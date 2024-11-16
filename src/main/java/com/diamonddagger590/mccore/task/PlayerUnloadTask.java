@@ -1,7 +1,7 @@
 package com.diamonddagger590.mccore.task;
 
 import com.diamonddagger590.mccore.CorePlugin;
-import com.diamonddagger590.mccore.database.builder.Database;
+import com.diamonddagger590.mccore.database.Database;
 import com.diamonddagger590.mccore.database.table.impl.MutexDAO;
 import com.diamonddagger590.mccore.event.player.PlayerUnloadEvent;
 import com.diamonddagger590.mccore.player.CorePlayer;
@@ -11,6 +11,7 @@ import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.concurrent.CompletableFuture;
 
 public abstract class PlayerUnloadTask extends ExpireableCoreTask {
@@ -24,59 +25,50 @@ public abstract class PlayerUnloadTask extends ExpireableCoreTask {
         this.corePlayer = corePlayer;
         this.result = new CompletableFuture<>();
         completed = false;
+        runTask(true);
     }
 
     private void runUnloadPlayerTask() {
-
-        Database database = getPlugin().getDatabaseManager().getDatabase();
-
-        if (database != null) {
-
+        Database database = getPlugin().getDatabase();
+        try (Connection connection = database.getConnection()) {
             //pause the task to prevent future iterations
             pauseTask();
-            Connection connection = database.getConnection();
 
             if (corePlayer.useMutex()) {
-                MutexDAO.isUserMutexLocked(connection, corePlayer.getUUID()).thenAccept(mutexLocked -> {
+                boolean mutexLocked = MutexDAO.isUserMutexLocked(connection, corePlayer.getUUID());
+                // If the mutex isn't locked, resume task to continue ticking
+                if (!mutexLocked) {
+                    resumeTask();
+                    startInterval(); // Start the next interval giving time for the mutex to possibly lock
+                    return;
+                }
 
-                    // If the mutex isn't locked, resume task to continue ticking
-                    if (!mutexLocked) {
-                        resumeTask();
-                        startInterval(); // Start the next interval giving time for the mutex to possibly lock
-                        return;
-                    }
+                // We are completing the task one way or another, in this case we want to
+                // allow externally cancelling to be treated as a failure but not when we do it here
+                completed = true;
+                cancelTask();
 
-                    // We are completing the task one way or another, in this case we want to
-                    // allow externally cancelling to be treated as a failure but not when we do it here
-                    completed = true;
-                    cancelTask();
-
-                    // Attempt to load the player, if it works, lock their mutex since we are now using it.
-                    if (unloadPlayer()) {
-                        corePlayer.lock();
-                        MutexDAO.updateUserMutex(connection, corePlayer)
-                                .exceptionally(throwable -> {
-                                    throwable.printStackTrace();
-                                    return null;
-                                });
-                        onPlayerUnloadSuccessfully();
-                    } else {
-                        onPlayerUnloadFail();
-                    }
-                }).exceptionally(throwable -> {
-                    throwable.printStackTrace();
-                    completed = false;
-                    cancelTask();
-                    return null;
-                });
-            }
-            else {
+                // Attempt to load the player, if it works, lock their mutex since we are now using it.
+                if (unloadPlayer()) {
+                    corePlayer.lock();
+                    MutexDAO.updateUserMutex(connection, corePlayer);
+                    onPlayerUnloadSuccessfully();
+                } else {
+                    onPlayerUnloadFail();
+                }
+            } else {
+                // We are completing the task one way or another, in this case we want to
+                // allow externally cancelling to be treated as a failure but not when we do it here
+                completed = true;
+                cancelTask();
                 if (unloadPlayer()) {
                     onPlayerUnloadSuccessfully();
                 } else {
                     onPlayerUnloadFail();
                 }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
@@ -104,7 +96,6 @@ public abstract class PlayerUnloadTask extends ExpireableCoreTask {
      * A callback that is called whenever the player data loads successfully.
      */
     protected void onPlayerUnloadSuccessfully() {
-
         result.complete(true);
         // Throw event on main thread
         Bukkit.getScheduler().scheduleSyncDelayedTask(CorePlugin.getInstance(),
@@ -124,6 +115,12 @@ public abstract class PlayerUnloadTask extends ExpireableCoreTask {
         result.complete(false);
     }
 
+    /**
+     * Gets a {@link CompletableFuture} that finishes whenever this task is done.
+     *
+     * @return A {@link CompletableFuture} that finishes whenever this task is done, containing a result
+     * of {@code true} if the player was unloaded successfully.
+     */
     public CompletableFuture<Boolean> getResult() {
         return result;
     }

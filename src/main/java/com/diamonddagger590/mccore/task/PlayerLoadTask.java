@@ -1,7 +1,7 @@
 package com.diamonddagger590.mccore.task;
 
 import com.diamonddagger590.mccore.CorePlugin;
-import com.diamonddagger590.mccore.database.builder.Database;
+import com.diamonddagger590.mccore.database.Database;
 import com.diamonddagger590.mccore.database.table.impl.MutexDAO;
 import com.diamonddagger590.mccore.event.player.PlayerLoadEvent;
 import com.diamonddagger590.mccore.player.CorePlayer;
@@ -11,6 +11,7 @@ import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -27,77 +28,62 @@ public abstract class PlayerLoadTask extends ExpireableCoreTask {
         this.corePlayer = corePlayer;
         this.result = new CompletableFuture<>();
         completed = false;
+        runTask(true);
     }
 
     private void runLoadPlayerTask() {
+        Database database = getPlugin().getDatabase();
+        /*
+         If the player is already in the player manager, then that means they logged out then back in.
+         We need to check for that and don't load their data until they are removed from the manager.
+         */
+        if (CorePlugin.getInstance().getPlayerManager().getPlayer(corePlayer.getUUID()).isPresent()) {
+            resumeTask();
+            startInterval();
+            return;
+        }
 
-        Database database = getPlugin().getDatabaseManager().getDatabase();
-        if (database != null) {
-
-            /*
-             If the player is already in the player manager, then that means they logged out then back in.
-             We need to check for that and don't load their data until they are removed from the manager.
-             */
-            if (CorePlugin.getInstance().getPlayerManager().getPlayer(corePlayer.getUUID()).isPresent()) {
-                resumeTask();
-                startInterval();
-                return;
-            }
-
-            //pause the task to prevent future iterations
-            pauseTask();
-            Connection connection = database.getConnection();
+        //pause the task to prevent future iterations
+        pauseTask();
+        try (Connection connection = database.getConnection()) {
             if (corePlayer.useMutex()) {
-                MutexDAO.isUserMutexLocked(connection, corePlayer.getUUID()).thenAccept(mutexLocked -> {
+                boolean mutexLocked = MutexDAO.isUserMutexLocked(connection, corePlayer.getUUID());
+                // If the mutex is locked, resume task to continue ticking
+                if (mutexLocked) {
+                    resumeTask();
+                    startInterval(); // Start the next interval giving time for the mutex to possibly unlock
+                    return;
+                }
 
-                    // If the mutex is locked, resume task to continue ticking
-                    if (mutexLocked) {
-                        resumeTask();
-                        startInterval(); // Start the next interval giving time for the mutex to possibly unlock
-                        return;
-                    }
+                // We are completing the task one way or another, in this case we want to
+                // allow externally cancelling to be treated as a failure but not when we do it here
+                completed = true;
+                // If mutex isn't locked, then cancel task
+                cancelTask();
 
-                    // We are completing the task one way or another, in this case we want to
-                    // allow externally cancelling to be treated as a failure but not when we do it here
-                    completed = true;
-                    // If mutex isn't locked, then cancel task
-                    cancelTask();
-
-                    // Attempt to load the player, if it works, lock their mutex since we are now using it.
-                    loadPlayer().thenAccept(result -> {
-                        if (result) {
-                            corePlayer.lock();
-                            MutexDAO.updateUserMutex(connection, corePlayer)
-                                    .exceptionally(throwable -> {
-                                        throwable.printStackTrace();
-                                        return null;
-                                    });
-                            onPlayerLoadSuccessfully();
-                        } else {
-                            onPlayerLoadFail();
-                        }
-                    });
-                }).exceptionally(throwable -> {
-                    throwable.printStackTrace();
-                    completed = false;
-                    cancelTask();
-                    return null;
-                });
+                // Attempt to load the player, if it works, lock their mutex since we are now using it.
+                if (loadPlayer()) {
+                    corePlayer.lock();
+                    MutexDAO.updateUserMutex(connection, corePlayer);
+                    onPlayerLoadSuccessfully();
+                }
+                else {
+                    onPlayerLoadFail();
+                }
             }
             else {
-                loadPlayer().thenAccept(result -> {
-                    if (result) {
-                        onPlayerLoadSuccessfully();
-                    }
-                    else {
-                        onPlayerLoadFail();
-
-                    }
-                }).exceptionally(throwable -> {
+                completed = true;
+                cancelTask();
+                if (loadPlayer()) {
+                    onPlayerLoadSuccessfully();
+                }
+                else {
                     onPlayerLoadFail();
-                    return null;
-                });
+                }
             }
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
@@ -119,13 +105,12 @@ public abstract class PlayerLoadTask extends ExpireableCoreTask {
      *
      * @return {@code true} if the data was successfully loaded.
      */
-    protected abstract CompletableFuture<Boolean> loadPlayer();
+    protected abstract boolean loadPlayer();
 
     /**
      * A callback that is called whenever the player data loads successfully.
      */
     protected void onPlayerLoadSuccessfully() {
-
         result.complete(true);
         // Throw event on main thread
         Bukkit.getScheduler().scheduleSyncDelayedTask(CorePlugin.getInstance(),
@@ -145,6 +130,12 @@ public abstract class PlayerLoadTask extends ExpireableCoreTask {
         result.complete(false);
     }
 
+    /**
+     * Gets a {@link CompletableFuture} that finishes whenever this task is done.
+     *
+     * @return A {@link CompletableFuture} that finishes whenever this task is done, containing a result
+     * of {@code true} if the player was loaded successfully.
+     */
     public CompletableFuture<Boolean> getResult() {
         return result;
     }

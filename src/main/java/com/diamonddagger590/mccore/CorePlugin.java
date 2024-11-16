@@ -2,7 +2,8 @@ package com.diamonddagger590.mccore;
 
 import com.diamonddagger590.mccore.command.CoreCommandManager;
 import com.diamonddagger590.mccore.configuration.ReloadableContentRegistry;
-import com.diamonddagger590.mccore.database.DatabaseManager;
+import com.diamonddagger590.mccore.database.Database;
+import com.diamonddagger590.mccore.database.driver.DriverManager;
 import com.diamonddagger590.mccore.gui.GuiTracker;
 import com.diamonddagger590.mccore.listener.GuiCloseListener;
 import com.diamonddagger590.mccore.listener.GuiRefreshListener;
@@ -29,7 +30,7 @@ public abstract class CorePlugin extends JavaPlugin {
     private BukkitAudiences adventure;
     private MiniMessage miniMessage;
 
-    protected DatabaseManager databaseManager;
+    protected DriverManager driverManager;
     protected PlayerManager playerManager;
     protected GuiTracker guiTracker;
     protected ReloadableContentRegistry reloadableContentRegistry;
@@ -39,6 +40,8 @@ public abstract class CorePlugin extends JavaPlugin {
         instance = this;
         adventure = BukkitAudiences.create(this);
         miniMessage = MiniMessage.miniMessage();
+        driverManager = new DriverManager(this);
+        registerDrivers();
         guiTracker = new GuiTracker(this);
         reloadableContentRegistry = new ReloadableContentRegistry();
 
@@ -51,8 +54,8 @@ public abstract class CorePlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         adventure.close();
-        if (!isUnitTest() && databaseManager != null) {
-            databaseManager.getDatabaseExecutorService().shutdown();
+        if (!isUnitTest()) {
+            getDatabase().shutdown();
         }
     }
 
@@ -62,7 +65,6 @@ public abstract class CorePlugin extends JavaPlugin {
      * It is up to the plugin implementing this on the {@link #onEnable()} method
      */
     public void initializeDatabase() {
-
     }
 
     /**
@@ -71,19 +73,28 @@ public abstract class CorePlugin extends JavaPlugin {
     protected void constructCommands() {
     }
 
+    /**
+     * Registers listeners for plugins
+     */
     protected void registerListeners() {
         Bukkit.getPluginManager().registerEvents(new GuiCloseListener(), this);
         Bukkit.getPluginManager().registerEvents(new GuiRefreshListener(), this);
     }
 
+    protected void registerDrivers() {
+    }
+
+    @NotNull
+    public abstract Database getDatabase();
+
     /**
-     * Get the {@link DatabaseManager} used by the plugin
+     * Gets the {@link DriverManager} used by the plugin.
      *
-     * @return The {@link DatabaseManager} used by the plugin
+     * @return The {@link DriverManager} used by the plugin.
      */
     @NotNull
-    public DatabaseManager getDatabaseManager() {
-        return databaseManager;
+    public final DriverManager getDriverManager() {
+        return driverManager;
     }
 
     /**
@@ -94,25 +105,27 @@ public abstract class CorePlugin extends JavaPlugin {
      * objects.
      */
     @NotNull
-    public PlayerManager getPlayerManager() {
+    public final PlayerManager getPlayerManager() {
         return playerManager;
     }
 
     /**
      * Gets the {@link GuiTracker} that tracks all {@link com.diamonddagger590.mccore.gui.Gui}s
+     *
      * @return The {@link GuiTracker} that tracks all {@link com.diamonddagger590.mccore.gui.Gui}s
      */
     @NotNull
-    public GuiTracker getGuiTracker() {
+    public final GuiTracker getGuiTracker() {
         return guiTracker;
     }
 
     /**
      * Gets the {@link ReloadableContentRegistry} used to manage all {@link com.diamonddagger590.mccore.configuration.ReloadableContent}.
+     *
      * @return The {@link ReloadableContentRegistry} used to manage all {@link com.diamonddagger590.mccore.configuration.ReloadableContent}.¬
      */
     @NotNull
-    public ReloadableContentRegistry getReloadableContentRegistry() {
+    public final ReloadableContentRegistry getReloadableContentRegistry() {
         return reloadableContentRegistry;
     }
 
@@ -122,7 +135,7 @@ public abstract class CorePlugin extends JavaPlugin {
      * @return The {@link CommandManager} used by this plugin.
      */
     @NotNull
-    public CoreCommandManager getCommandManager() {
+    public final CoreCommandManager getCommandManager() {
         return commandManager;
     }
 
@@ -132,7 +145,7 @@ public abstract class CorePlugin extends JavaPlugin {
      * @return The {@link AnnotationParser} used by this plugin.
      */
     @NotNull
-    public AnnotationParser<CommandSender> getAnnotationParser() {
+    public final AnnotationParser<CommandSender> getAnnotationParser() {
         return annotationParser;
     }
 
@@ -142,7 +155,7 @@ public abstract class CorePlugin extends JavaPlugin {
      * @return The {@link BukkitAudiences} used by {@link net.kyori.adventure.Adventure}
      */
     @NotNull
-    public BukkitAudiences getAdventure() {
+    public final BukkitAudiences getAdventure() {
         return adventure;
     }
 
@@ -152,16 +165,17 @@ public abstract class CorePlugin extends JavaPlugin {
      * @return The centralized {@link MiniMessage} for deserializing chat messages
      */
     @NotNull
-    public MiniMessage getMiniMessage() {
+    public final MiniMessage getMiniMessage() {
         return miniMessage;
     }
 
     /**
      * Checks to see if we are running in unit test mode
+     *
      * @return {@code true} if we are running in unit test mode
      */
     public boolean isUnitTest() {
-        return  (getClassLoader().getClass().getPackageName().startsWith("be.seeseemelk.mockbukkit"));
+        return (getClassLoader().getClass().getPackageName().startsWith("be.seeseemelk.mockbukkit"));
     }
 
     /**
