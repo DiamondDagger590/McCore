@@ -16,15 +16,15 @@ import java.util.logging.Logger;
  * <p>
  * If a single statement fails, then the transaction will instead roll back.
  */
-public class FailsafeTransaction extends Transaction {
+public class FailSafeTransaction extends Transaction {
 
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(FailsafeTransaction.class);
+    private static final org.slf4j.Logger log = LoggerFactory.getLogger(FailSafeTransaction.class);
 
-    public FailsafeTransaction(@NotNull Connection connection) {
+    public FailSafeTransaction(@NotNull Connection connection) {
         super(connection);
     }
 
-    public FailsafeTransaction(@NotNull Connection connection, @NotNull List<PreparedStatement> preparedStatements) {
+    public FailSafeTransaction(@NotNull Connection connection, @NotNull List<PreparedStatement> preparedStatements) {
         super(connection, preparedStatements);
     }
 
