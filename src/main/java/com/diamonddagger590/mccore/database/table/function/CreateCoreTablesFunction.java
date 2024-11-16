@@ -35,24 +35,23 @@ public class CreateCoreTablesFunction {
             Connection connection = databaseManager.getDatabase().getConnection();
 
             TableVersionHistoryDAO.attemptCreateTable(connection, databaseManager)
-                .thenAccept(tableVersionHistoryTableCreated -> {
+                    .thenAccept(tableVersionHistoryTableCreated -> {
+                        logger.log(Level.INFO, "Database Creation - Table Version History DAO "
+                                + (tableVersionHistoryTableCreated ? "created a new table." : "already existed so skipping creation."));
 
-                    logger.log(Level.INFO, "Database Creation - Table Version History DAO "
-                                               + (tableVersionHistoryTableCreated ? "created a new table." : "already existed so skipping creation."));
+                        MutexDAO.attemptCreateTable(connection, databaseManager).thenAccept(mutexTableCreated -> {
+                            logger.log(Level.INFO, "Database Creation - Mutex DAO "
+                                    + (tableVersionHistoryTableCreated ? "created a new table." : "already existed so skipping creation."));
+                            returnFuture.complete(null);
+                        }).exceptionally(throwable -> {
+                            returnFuture.completeExceptionally(throwable);
+                            return null;
+                        });
 
-                    MutexDAO.attemptCreateTable(connection, databaseManager).thenAccept(mutexTableCreated -> {
-                        logger.log(Level.INFO, "Database Creation - Mutex DAO "
-                                                   + (tableVersionHistoryTableCreated ? "created a new table." : "already existed so skipping creation."));
-                        returnFuture.complete(null);
                     }).exceptionally(throwable -> {
                         returnFuture.completeExceptionally(throwable);
                         return null;
                     });
-
-                }).exceptionally(throwable -> {
-                    returnFuture.completeExceptionally(throwable);
-                    return null;
-                });
 
         });
 

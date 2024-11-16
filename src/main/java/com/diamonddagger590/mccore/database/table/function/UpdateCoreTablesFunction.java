@@ -19,10 +19,8 @@ import java.util.logging.Logger;
 public class UpdateCoreTablesFunction {
 
     private static final UpdateTableFunction updateCoreTablesFunction = (databaseManager -> {
-
         CompletableFuture<Void> returnFuture = new CompletableFuture<>();
         Logger logger = CorePlugin.getInstance().getLogger();
-
         databaseManager.getDatabaseExecutorService().submit(() -> {
 
             if (databaseManager.getDatabase() == null) {
@@ -32,14 +30,13 @@ public class UpdateCoreTablesFunction {
             }
 
             Connection connection = databaseManager.getDatabase().getConnection();
-
             TableVersionHistoryDAO.updateTable(connection)
-                .thenAccept(unused -> {
+                    .thenAccept(unused -> {
 
-                    MutexDAO.updateTable(connection).thenAccept(unused1 -> {
-                        returnFuture.complete(null);
+                        MutexDAO.updateTable(connection).thenAccept(unused1 -> {
+                            returnFuture.complete(null);
+                        });
                     });
-                });
         });
 
         return returnFuture;
@@ -50,7 +47,6 @@ public class UpdateCoreTablesFunction {
      *
      * @return The {@link UpdateTableFunction} that updates all the core database tables.
      */
-
     @NotNull
     public static UpdateTableFunction getUpdateCoreTablesFunction() {
         return updateCoreTablesFunction;

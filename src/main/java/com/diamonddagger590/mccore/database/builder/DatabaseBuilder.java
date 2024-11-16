@@ -49,7 +49,6 @@ public abstract class DatabaseBuilder {
     }
 
     protected void tryDriverName(@NotNull String driverName) {
-
         try {
             Class.forName(driverName).newInstance();
             this.driverName = driverName.split("\\.")[1];

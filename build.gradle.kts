@@ -71,6 +71,9 @@ dependencies {
     api("dev.dejvokep:boosted-yaml:$boostedYamlVersion")
     val boostedYamlSpigotVersion = "1.5"
     api("dev.dejvokep:boosted-yaml-spigot:$boostedYamlSpigotVersion")
+
+    val hikariVersion = "6.1.0"
+    api("com.zaxxer:HikariCP:$hikariVersion")
 }
 
 tasks {
