@@ -53,7 +53,6 @@ public abstract class Database {
         this.dataSource = new HikariDataSource();
         this.createTableFunctions = new ArrayList<>();
         this.updateTableFunctions = new ArrayList<>();
-        initializeDatabase();
     }
 
     /**
@@ -180,7 +179,7 @@ public abstract class Database {
     /**
      * Initializes the database
      */
-    private void initializeDatabase() {
+    public void initializeDatabase() {
         DatabaseDriver databaseDriver = getDriver();
         Credentials credentials = getCredentials();
         ConnectionDetails connectionDetails = getConnectionDetails();

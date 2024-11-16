@@ -35,7 +35,7 @@ public abstract class Transaction {
      *
      * @param preparedStatement The {@link PreparedStatement} to add to this transaction.
      */
-    public void addPreparedStatement(@NotNull PreparedStatement preparedStatement) {
+    public void add(@NotNull PreparedStatement preparedStatement) {
         preparedStatements.add(preparedStatement);
     }
 
@@ -44,7 +44,7 @@ public abstract class Transaction {
      *
      * @param preparedStatements The {@link List} of {@link PreparedStatement}s to add to the transaction.
      */
-    public void addAllPreparedStatements(@NotNull List<PreparedStatement> preparedStatements) {
+    public void addAll(@NotNull List<PreparedStatement> preparedStatements) {
         this.preparedStatements.addAll(preparedStatements);
     }
 
