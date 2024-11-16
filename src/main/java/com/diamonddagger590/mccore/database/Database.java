@@ -107,7 +107,7 @@ public abstract class Database {
      *
      * @param createTableFunction The function to be called whenever this database is initialized.
      */
-    public void addCreateTableFunction(@NotNull CreateTableFunction createTableFunction) {
+    public final void addCreateTableFunction(@NotNull CreateTableFunction createTableFunction) {
         createTableFunctions.add(createTableFunction);
     }
 
@@ -116,7 +116,7 @@ public abstract class Database {
      *
      * @param updateTableFunction The function to be called whenever this database is initialized.
      */
-    public void addUpdateTableFunction(@NotNull UpdateTableFunction updateTableFunction) {
+    public final void addUpdateTableFunction(@NotNull UpdateTableFunction updateTableFunction) {
         updateTableFunctions.add(updateTableFunction);
     }
 
