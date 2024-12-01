@@ -1,10 +1,12 @@
 package com.diamonddagger590.mccore;
 
+import com.diamonddagger590.mccore.chat.ChatResponseManager;
 import com.diamonddagger590.mccore.command.CoreCommandManager;
 import com.diamonddagger590.mccore.configuration.ReloadableContentRegistry;
 import com.diamonddagger590.mccore.database.Database;
 import com.diamonddagger590.mccore.database.driver.DriverManager;
 import com.diamonddagger590.mccore.gui.GuiTracker;
+import com.diamonddagger590.mccore.listener.ChatResponseListener;
 import com.diamonddagger590.mccore.listener.GuiCloseListener;
 import com.diamonddagger590.mccore.listener.GuiRefreshListener;
 import com.diamonddagger590.mccore.player.PlayerManager;
@@ -34,6 +36,7 @@ public abstract class CorePlugin extends JavaPlugin {
     protected PlayerManager playerManager;
     protected GuiTracker guiTracker;
     protected ReloadableContentRegistry reloadableContentRegistry;
+    protected ChatResponseManager chatResponseManager;
 
     @Override
     public void onEnable() {
@@ -44,6 +47,7 @@ public abstract class CorePlugin extends JavaPlugin {
         registerDrivers();
         guiTracker = new GuiTracker(this);
         reloadableContentRegistry = new ReloadableContentRegistry();
+        chatResponseManager = new ChatResponseManager(this);
 
         // We can't setup cloud when mocking so ignore if we are in unit test mode
         if (!isUnitTest()) {
@@ -79,6 +83,7 @@ public abstract class CorePlugin extends JavaPlugin {
     protected void registerListeners() {
         Bukkit.getPluginManager().registerEvents(new GuiCloseListener(), this);
         Bukkit.getPluginManager().registerEvents(new GuiRefreshListener(), this);
+        Bukkit.getPluginManager().registerEvents(new ChatResponseListener(), this);
     }
 
     protected void registerDrivers() {
@@ -117,6 +122,16 @@ public abstract class CorePlugin extends JavaPlugin {
     @NotNull
     public final GuiTracker getGuiTracker() {
         return guiTracker;
+    }
+
+    /**
+     * Gets the {@link ChatResponseManager} that manages any responses needed for chat messages.
+     *
+     * @return The {@link ChatResponseManager} that manages any responses needed for chat messages.
+     */
+    @NotNull
+    public final ChatResponseManager getChatResponseManager() {
+        return chatResponseManager;
     }
 
     /**

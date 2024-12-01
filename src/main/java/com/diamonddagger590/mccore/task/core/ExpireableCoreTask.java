@@ -15,6 +15,12 @@ public abstract class ExpireableCoreTask extends CancellableCoreTask {
     protected long maxTaskDuration;
     protected int maxIntervals;
 
+    public ExpireableCoreTask(@NotNull Plugin plugin, double taskDelay, long maxTaskDurationSeconds) {
+        super(plugin, taskDelay, 1);
+        this.maxTaskDuration = System.currentTimeMillis() + (maxTaskDurationSeconds * 1000);
+        this.maxIntervals = -1;
+    }
+
     public ExpireableCoreTask(@NotNull Plugin plugin, double taskDelay, double taskFrequency, long maxTaskDurationSeconds) {
         super(plugin, taskDelay, taskFrequency);
         this.maxTaskDuration = System.currentTimeMillis() + (maxTaskDurationSeconds * 1000);
