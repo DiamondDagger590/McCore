@@ -111,9 +111,13 @@ public abstract class Gui implements Listener {
         Slot slot = getSlot(slotId);
         var corePlayerOptional = CorePlugin.getInstance().getPlayerManager().getPlayer(inventoryClickEvent.getWhoClicked().getUniqueId());
         if (canProcessEvent((Player) inventoryClickEvent.getWhoClicked(), inventoryClickEvent.getView().getTopInventory())) {
-            // Disallow clicking bottom inventory
+            // Handle clicking on the bottom inventory
             if (inventoryClickEvent.getView().getBottomInventory() == inventoryClickEvent.getClickedInventory()) {
-                inventoryClickEvent.setCancelled(true);
+                // If we don't allow clicking on the bottom inventory, set event to cancelled
+                if (!allowBottomInventoryClick()) {
+                    inventoryClickEvent.setCancelled(true);
+                }
+                // Return after because we don't use slots in the bottom part of the inventory
                 return;
             }
             corePlayerOptional.ifPresent(corePlayer -> {
@@ -197,5 +201,14 @@ public abstract class Gui implements Listener {
     public boolean canProcessEvent(@NotNull Player player, @NotNull Inventory inventory) {
         GuiTracker guiTracker = CorePlugin.getInstance().getGuiTracker();
         return inventory == getInventory() && guiTracker.getOpenedGui(player).isPresent() && guiTracker.getOpenedGui(player).get() == this;
+    }
+
+    /**
+     * Checks to see if this GUI allows player clicking on the bottom half of the GUI.
+     *
+     * @return {@code true} if this GUI allows players to click on the bottom half of the GUI.
+     */
+    public boolean allowBottomInventoryClick() {
+        return false;
     }
 }
