@@ -1,4 +1,4 @@
-package com.diamonddagger590.mccore.task;
+package com.diamonddagger590.mccore.task.player;
 
 import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.database.Database;
