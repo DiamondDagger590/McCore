@@ -15,7 +15,7 @@ import java.util.function.BiFunction;
  *
  * @param <T> The type of object that needs to be stored.
  */
-public abstract class ReloadableContent<T> {
+public class ReloadableContent<T> {
 
     protected YamlDocument yamlDocument;
     protected Route route;
