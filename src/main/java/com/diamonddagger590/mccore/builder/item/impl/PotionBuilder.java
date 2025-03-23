@@ -20,7 +20,6 @@ public class PotionBuilder extends BaseItemBuilder<PotionBuilder> {
 
     public PotionBuilder(@NotNull final ItemStack itemStack) {
         super(itemStack);
-
         this.builder = PotionContents.potionContents();
     }
 
