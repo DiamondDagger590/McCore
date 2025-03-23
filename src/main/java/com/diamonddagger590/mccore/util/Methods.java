@@ -1,15 +1,25 @@
 package com.diamonddagger590.mccore.util;
 
 import com.diamonddagger590.mccore.CorePlugin;
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.World;
+import org.bukkit.*;
+import org.bukkit.block.banner.PatternType;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.EntityType;
+import org.bukkit.inventory.ItemFlag;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.ItemType;
+import org.bukkit.inventory.meta.trim.TrimMaterial;
+import org.bukkit.inventory.meta.trim.TrimPattern;
+import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
+import java.util.Base64;
 import java.util.Optional;
 
 /**
@@ -193,5 +203,207 @@ public class Methods {
             }
         }
         return duration;
+    }
+
+    /**
+     * Gets a {@link ItemType} from the provided string.
+     *
+     * @param type The string representation of a {@link ItemType}.
+     * @return An {@link Optional} containing the {@link ItemType} or it will
+     * be empty if no matches.
+     */
+    @NotNull
+    public static Optional<ItemType> getItemType(@NotNull String type) {
+        return type.isEmpty() ? Optional.empty() : Optional.ofNullable(RegistryAccess.registryAccess().getRegistry(RegistryKey.ITEM).get(getMinecraftKey(type)));
+    }
+
+    /**
+     * Gets a {@link Enchantment} from the provided string.
+     *
+     * @param value The string representation of a {@link Enchantment}.
+     * @return An {@link Optional} containing the {@link Enchantment} or it will
+     * be empty if no matches.
+     */
+    @NotNull
+    public static Optional<Enchantment> getEnchantment(@NotNull final String value) {
+        return value.isEmpty() ? Optional.empty() : Optional.ofNullable(RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT).get(getMinecraftKey(value)));
+    }
+
+    /**
+     * Gets a {@link ItemFlag} from the provided string.
+     *
+     * @param name The string representation of a {@link ItemFlag}.
+     * @return An {@link Optional} containing the {@link ItemFlag} or it will
+     * be empty if no matches.
+     */
+    @NotNull
+    public static Optional<ItemFlag> getFlag(final String name) {
+        ItemFlag flag = null;
+        for (final ItemFlag value : ItemFlag.values()) {
+            if (value.name().equalsIgnoreCase(name)) {
+                flag = value;
+                break;
+            }
+        }
+        return Optional.ofNullable(flag);
+    }
+
+    /**
+     * Gets a {@link TrimPattern} from the provided string.
+     *
+     * @param value The string representation of a {@link TrimPattern}.
+     * @return An {@link Optional} containing the {@link TrimPattern} or it will
+     * be empty if no matches.
+     */
+    @NotNull
+    public static Optional<TrimPattern> getTrimPattern(@NotNull final String value) {
+        return value.isEmpty() ? Optional.empty() : Optional.ofNullable(RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_PATTERN).get(getMinecraftKey(value)));
+    }
+
+    /**
+     * Gets a {@link TrimMaterial} from the provided string.
+     *
+     * @param value The string representation of a {@link TrimMaterial}.
+     * @return An {@link Optional} containing the {@link TrimMaterial} or it will
+     * be empty if no matches.
+     */
+    @NotNull
+    public static Optional<TrimMaterial> getTrimMaterial(@NotNull final String value) {
+        return value.isEmpty() ? Optional.empty() : Optional.ofNullable(RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_MATERIAL).get(getMinecraftKey(value)));
+    }
+
+    /**
+     * Gets a {@link PatternType} from the provided string.
+     *
+     * @param value The string representation of a {@link PatternType}.
+     * @return An {@link Optional} containing the {@link PatternType} or it will
+     * be empty if no matches.
+     */
+    @NotNull
+    public static Optional<PatternType> getPatternType(@NotNull final String value) {
+        return value.isEmpty() ? Optional.empty() : Optional.ofNullable(RegistryAccess.registryAccess().getRegistry(RegistryKey.BANNER_PATTERN).get(getMinecraftKey(value)));
+    }
+
+    /**
+     * Gets a {@link EntityType} from the provided string.
+     *
+     * @param value The string representation of a {@link EntityType}.
+     * @return An {@link Optional} containing the {@link EntityType} or it will
+     * be empty if no matches.
+     */
+    @NotNull
+    public static Optional<EntityType> getEntityType(@NotNull final String value) {
+        return value.isEmpty() ? Optional.empty() : Optional.ofNullable(RegistryAccess.registryAccess().getRegistry(RegistryKey.ENTITY_TYPE).get(getMinecraftKey(value)));
+    }
+
+    /**
+     * Gets a {@link PotionEffectType} from the provided string.
+     *
+     * @param value The string representation of a {@link PotionEffectType}.
+     * @return An {@link Optional} containing the {@link PotionEffectType} or it will
+     * be empty if no matches.
+     */
+    @NotNull
+    public static Optional<PotionEffectType> getPotionEffect(@NotNull final String value) {
+        return value.isEmpty() ? Optional.empty() : Optional.ofNullable(RegistryAccess.registryAccess().getRegistry(RegistryKey.MOB_EFFECT).get(getMinecraftKey(value)));
+    }
+
+    /**
+     * Gets a {@link Color} from the provided RGB string.
+     *
+     * @param color A string containing RGB data using {@code ,} as a delimiter.
+     * @return An {@link Optional} containing the {@link Color} matching the provided string
+     * or empty if no match.
+     */
+    @NotNull
+    public static Optional<Color> getRGB(@NotNull final String color) {
+        final String[] rgb = color.split(",");
+        if (rgb.length != 3) {
+            return Optional.empty();
+        }
+
+        int red = Integer.parseInt(rgb[0]);
+        int green = Integer.parseInt(rgb[1]);
+        int blue = Integer.parseInt(rgb[2]);
+        return Optional.of(Color.fromRGB(red, green, blue));
+    }
+
+    /**
+     * Gets the {@link Color} matching the provided string.
+     *
+     * @param value The string representation of a {@link Color}.
+     * @return The {@link Color} matching the provided string or {@link Color#WHITE}
+     */
+    @NotNull
+    public static Color getColor(@NotNull final String value) {
+        return switch (value.toLowerCase()) {
+            case "aqua" -> Color.AQUA;
+            case "black" -> Color.BLACK;
+            case "blue" -> Color.BLUE;
+            case "fuchsia" -> Color.FUCHSIA;
+            case "gray" -> Color.GRAY;
+            case "green" -> Color.GREEN;
+            case "lime" -> Color.LIME;
+            case "maroon" -> Color.MAROON;
+            case "navy" -> Color.NAVY;
+            case "olive" -> Color.OLIVE;
+            case "orange" -> Color.ORANGE;
+            case "purple" -> Color.PURPLE;
+            case "red" -> Color.RED;
+            case "silver" -> Color.SILVER;
+            case "teal" -> Color.TEAL;
+            case "yellow" -> Color.YELLOW;
+            default -> Color.WHITE;
+        };
+    }
+
+    /**
+     * Gets the {@link DyeColor} matching the provided string.
+     *
+     * @param value The string representation of a {@link DyeColor}.
+     * @return The {@link DyeColor} matching the provided string or {@link DyeColor#WHITE}.
+     */
+    @NotNull
+    public static DyeColor getDyeColor(@NotNull final String value) {
+        return switch (value.toLowerCase()) {
+            case "orange" -> DyeColor.ORANGE;
+            case "magenta", "fuchsia" -> DyeColor.MAGENTA;
+            case "light_blue", "aqua" -> DyeColor.LIGHT_BLUE;
+            case "yellow" -> DyeColor.YELLOW;
+            case "lime" -> DyeColor.LIME;
+            case "pink" -> DyeColor.PINK;
+            case "gray" -> DyeColor.GRAY;
+            case "light_gray", "silver" -> DyeColor.LIGHT_GRAY;
+            case "cyan", "teal" -> DyeColor.CYAN;
+            case "purple" -> DyeColor.PURPLE;
+            case "blue", "navy" -> DyeColor.BLUE;
+            case "brown" -> DyeColor.BROWN;
+            case "green", "olive" -> DyeColor.GREEN;
+            case "red", "maroon" -> DyeColor.RED;
+            case "black" -> DyeColor.BLACK;
+            default -> DyeColor.WHITE;
+        };
+    }
+
+    /**
+     * Gets the {@link NamespacedKey} from the provided key using the minecraft namespace.
+     *
+     * @param key The key to use.
+     * @return The {@link NamespacedKey} from the provided key using the minecraft namespace.
+     */
+    @NotNull
+    public static NamespacedKey getMinecraftKey(@NotNull String key) {
+        return NamespacedKey.minecraft(key);
+    }
+
+    /**
+     * Creates an {@link ItemStack} from the provided base64 string.
+     *
+     * @param base64 The base64 string to get an {@link ItemStack} from.
+     * @return An {@link ItemStack} from the provided base64 string.
+     */
+    @NotNull
+    public static ItemStack fromBase64(@NotNull String base64) {
+        return ItemStack.deserializeBytes(Base64.getDecoder().decode(base64));
     }
 }

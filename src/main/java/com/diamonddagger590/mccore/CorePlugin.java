@@ -1,10 +1,15 @@
 package com.diamonddagger590.mccore;
 
+import com.diamonddagger590.mccore.builder.item.ItemPluginType;
 import com.diamonddagger590.mccore.chat.ChatResponseManager;
 import com.diamonddagger590.mccore.command.CoreCommandManager;
 import com.diamonddagger590.mccore.configuration.ReloadableContentRegistry;
 import com.diamonddagger590.mccore.database.Database;
 import com.diamonddagger590.mccore.database.driver.DriverManager;
+import com.diamonddagger590.mccore.external.headdatabase.HeadDatabaseHook;
+import com.diamonddagger590.mccore.external.itemsadder.ItemsAdderHook;
+import com.diamonddagger590.mccore.external.nexo.NexoHook;
+import com.diamonddagger590.mccore.external.papi.PapiHook;
 import com.diamonddagger590.mccore.gui.GuiTracker;
 import com.diamonddagger590.mccore.listener.ChatResponseListener;
 import com.diamonddagger590.mccore.listener.GuiCloseListener;
@@ -18,6 +23,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.incendo.cloud.CommandManager;
 import org.incendo.cloud.annotations.AnnotationParser;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Optional;
 
 /**
  * The abstract version of a plugin that provides some common logic for plugins
@@ -37,6 +45,15 @@ public abstract class CorePlugin extends JavaPlugin {
     protected GuiTracker guiTracker;
     protected ReloadableContentRegistry reloadableContentRegistry;
     protected ChatResponseManager chatResponseManager;
+
+    @Nullable
+    private PapiHook papiHook;
+    @Nullable
+    private ItemsAdderHook itemsAdderHook;
+    @Nullable
+    private NexoHook nexoHook;
+    @Nullable
+    private HeadDatabaseHook headDatabaseHook;
 
     @Override
     public void onEnable() {
@@ -86,7 +103,42 @@ public abstract class CorePlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new ChatResponseListener(), this);
     }
 
+    /**
+     * Registers the database drivers for plugins.
+     */
     protected void registerDrivers() {
+    }
+
+    /**
+     * Sets up external plugin hooks for plugins.
+     */
+    protected void setupHooks() {
+        if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            getLogger().info("Papi PlaceholderAPI found... registering hooks");
+            papiHook = new PapiHook(this);
+        }
+        if (Bukkit.getPluginManager().isPluginEnabled("Nexo")) {
+            getLogger().info("Nexo found... registering hooks");
+            nexoHook = new NexoHook(this);
+        }
+        if (Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) {
+            getLogger().info("ItemsAdder found... registering hooks");
+            itemsAdderHook = new ItemsAdderHook(this);
+        }
+        if (Bukkit.getPluginManager().isPluginEnabled("HeadDatabase")) {
+            getLogger().info("HeadDatabase found... registering hooks");
+            headDatabaseHook = new HeadDatabaseHook(this);
+        }
+    }
+
+    /**
+     * Gets the {@link ItemPluginType} currently being supported.
+     *
+     * @return The {@link ItemPluginType} currently being supported.
+     */
+    @NotNull
+    public ItemPluginType getItemPlugin() {
+        return ItemPluginType.NONE;
     }
 
     @NotNull
@@ -182,6 +234,51 @@ public abstract class CorePlugin extends JavaPlugin {
     @NotNull
     public final MiniMessage getMiniMessage() {
         return miniMessage;
+    }
+
+    /**
+     * Gets the {@link PapiHook} this plugin uses to support PlaceholderAPI.
+     *
+     * @return An {@link Optional} containing the {@link PapiHook} this plugin uses to support
+     * <a href="https://www.spigotmc.org/resources/placeholderapi.6245/">PlaceholderAPI</a> if the plugin is running.
+     */
+    @NotNull
+    public Optional<PapiHook> getPapiHook() {
+        return Optional.ofNullable(papiHook);
+    }
+
+    /**
+     * Gets the {@link NexoHook} this plugin uses to support Nexo.
+     *
+     * @return An {@link Optional} containing the {@link NexoHook} this plugin uses to support
+     * <a href="https://polymart.org/resource/nexo.6901">Nexo</a> if the plugin is running.
+     */
+    @NotNull
+    public Optional<NexoHook> getNexoHook() {
+        return Optional.ofNullable(nexoHook);
+    }
+
+    /**
+     * Gets the {@link ItemsAdderHook} this plugin uses to support ItemsAdder.
+     *
+     * @return An {@link Optional} containing the {@link ItemsAdderHook} this plugin uses to support
+     * <a href="https://www.spigotmc.org/resources/%E2%9C%A8itemsadder%E2%AD%90emotes-mobs-items-armors-hud-gui-emojis-blocks-wings-hats-liquids.73355/">ItemsAdder</a>
+     * if the plugin is running.
+     */
+    @NotNull
+    public Optional<ItemsAdderHook> getItemsAdderHook() {
+        return Optional.ofNullable(itemsAdderHook);
+    }
+
+    /**
+     * Gets the {@link HeadDatabaseHook} this plugin uses to support HeadDatabase.
+     *
+     * @return An {@link Optional} containing the {@link HeadDatabaseHook} this plugin uses to support
+     * <a href="https://www.spigotmc.org/resources/head-database.14280/">HeadDatabase</a> if the plugin is running.
+     */
+    @NotNull
+    public Optional<HeadDatabaseHook> getHeadDatabaseHook() {
+        return Optional.ofNullable(headDatabaseHook);
     }
 
     /**

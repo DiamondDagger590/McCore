@@ -40,6 +40,12 @@ repositories {
         name = "sonatype-oss-snapshots"
     }
 
+    maven("https://repo.extendedclip.com/content/repositories/placeholderapi/") //Papi
+    maven("https://repo.nexomc.com/releases") // Nexo
+    maven("https://repo.alessiodp.com/releases") // Nexo also needs this
+
+    maven("https://maven.devs.beer/") // IemsAdder
+
     //Spigot
     maven("https://oss.sonatype.org/content/repositories/snapshots/")
     maven("https://repo.md-5.net/content/repositories/snapshots/")
@@ -57,6 +63,20 @@ dependencies {
     val paperVersion = "1.21.4-R0.1-SNAPSHOT"
     compileOnlyApi("io.papermc.paper:paper-api:$paperVersion")
 
+    val placeholderAPIVersion = "2.11.6"
+    api("me.clip:placeholderapi:$placeholderAPIVersion")
+    testImplementation("me.clip:placeholderapi:$placeholderAPIVersion")
+
+    val headDatabaseVersion = "1.3.1"
+    api("com.arcaniax:HeadDatabase-API:$headDatabaseVersion")
+
+    // Custom items
+    val itemsAdderVersion = "4.0.2-beta-release-11"
+    api("dev.lone:api-itemsadder:$itemsAdderVersion")
+    val nexoVersion = "1.2.0"
+    api("com.nexomc:nexo:$nexoVersion")
+
+    // Command annotations
     val cloudMinecraftVersion = "2.0.0-beta.9"
     api("org.incendo:cloud-paper:$cloudMinecraftVersion")
     val cloudVersion = "2.0.0-beta.9"
