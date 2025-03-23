@@ -20,11 +20,11 @@ import static com.diamonddagger590.mccore.util.Methods.getPotionEffect;
  */
 public class ItemBuilder extends BaseItemBuilder<ItemBuilder> {
 
-    ItemBuilder(@NotNull final ItemStack itemStack) {
+    protected ItemBuilder(@NotNull final ItemStack itemStack) {
         super(itemStack);
     }
 
-    ItemBuilder(@NotNull final String value) {
+    protected ItemBuilder(@NotNull final String value) {
         super(value);
     }
 
