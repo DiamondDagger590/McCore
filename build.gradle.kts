@@ -42,7 +42,6 @@ repositories {
 
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/") //Papi
     maven("https://repo.nexomc.com/releases") // Nexo
-    maven("https://repo.alessiodp.com/releases") // Nexo also needs this
 
     maven("https://maven.devs.beer/") // IemsAdder
 
@@ -74,7 +73,9 @@ dependencies {
     val itemsAdderVersion = "4.0.2-beta-release-11"
     api("dev.lone:api-itemsadder:$itemsAdderVersion")
     val nexoVersion = "1.2.0"
-    api("com.nexomc:nexo:$nexoVersion")
+    api("com.nexomc:nexo:$nexoVersion") {
+        exclude(group = "net.byteflux")
+    }
 
     // Command annotations
     val cloudMinecraftVersion = "2.0.0-beta.9"
