@@ -15,6 +15,8 @@ import io.papermc.paper.datacomponent.item.*;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Color;
 import org.bukkit.DyeColor;
@@ -32,10 +34,7 @@ import org.bukkit.inventory.meta.trim.TrimPattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static com.diamonddagger590.mccore.util.Methods.*;
 
@@ -81,6 +80,7 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
     protected CorePlugin corePlugin = CorePlugin.getInstance();
     protected MiniMessage miniMessage = corePlugin.getMiniMessage();
 
+    private Map<String, String> placeholders = new HashMap<>();
     private final List<ItemFlag> itemFlags = new ArrayList<>();
     private List<String> lore = new ArrayList<>();
     @Nullable
@@ -220,6 +220,53 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
         if (skull.isEmpty() || headDatabaseHookOptional.isEmpty()) return (B) this;
         HeadDatabaseHook headDatabaseHook = headDatabaseHookOptional.get();
         this.itemStack = headDatabaseHook.isHead(skull) ? headDatabaseHook.getHead(skull).orElse(ItemType.STONE.createItemStack(1)) : ItemType.PLAYER_HEAD.createItemStack();
+        return (B) this;
+    }
+
+    /**
+     * Adds a placeholder to be replaced in {@link Component}s for the items name and lore.
+     *
+     * @param placeholder The placeholder tag to be replaced.
+     * @param value       The value to replace the placeholder with.
+     * @return This builder.
+     */
+    @NotNull
+    public B addPlaceholder(@NotNull String placeholder, @NotNull String value) {
+        this.placeholders.put(placeholder, value);
+        return (B) this;
+    }
+
+    /**
+     * Sets placeholders to be replaced in {@link Component}s for the items name and lore.
+     *
+     * @param placeholders The placeholders to use.
+     * @return This builder.
+     */
+    @NotNull
+    public B setPlaceholders(@NotNull Map<String, String> placeholders) {
+        this.placeholders = placeholders;
+        return (B) this;
+    }
+
+    /**
+     * Checks to see if the provided placeholder is in this builder.
+     *
+     * @param placeholder The placeholder to check.
+     * @return {@code true} if the provided placeholder is in this builder.
+     */
+    public boolean hasPlaceholder(@NotNull String placeholder) {
+        return this.placeholders.containsKey(placeholder);
+    }
+
+    /**
+     * Removes the provided placeholder from this builder.
+     *
+     * @param placeholder The placeholder to remove.
+     * @return This builder.
+     */
+    @NotNull
+    public B removePlaceholder(@NotNull String placeholder) {
+        this.placeholders.remove(placeholder);
         return (B) this;
     }
 
@@ -924,7 +971,24 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
         if (papiHookOptional.isPresent() && audience instanceof Player player) {
             message = papiHookOptional.get().translateMessage(player, message);
         }
-        return miniMessage.deserialize(message);
+        return miniMessage.deserialize(message, getPlaceHolders());
+    }
+
+    /**
+     * Converts the stored placeholders into ones that {@link net.kyori.adventure.Adventure} can accept.
+     *
+     * @return An array of {@link TagResolver.Single}s.
+     */
+    @NotNull
+    protected TagResolver.Single[] getPlaceHolders() {
+        TagResolver.Single[] placeholderArray = new TagResolver.Single[placeholders.size()];
+        int index = 0;
+        for (String key : placeholders.keySet()) {
+            String value = placeholders.get(key);
+            TagResolver.Single placeholder = Placeholder.parsed(key, value);
+            placeholderArray[index++] = placeholder;
+        }
+        return placeholderArray;
     }
 
     /**
