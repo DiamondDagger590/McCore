@@ -1,4 +1,4 @@
-package com.diamonddagger590.mccore.util;
+package com.diamonddagger590.mccore.util.filter;
 
 import java.util.Collection;
 

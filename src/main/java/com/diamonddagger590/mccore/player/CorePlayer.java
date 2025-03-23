@@ -1,11 +1,17 @@
 package com.diamonddagger590.mccore.player;
 
 import com.diamonddagger590.mccore.mutex.Mutexable;
+import com.diamonddagger590.mccore.statistic.Statistic;
+import com.google.common.collect.ImmutableSet;
 import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -18,9 +24,11 @@ import java.util.UUID;
 public abstract class CorePlayer extends Mutexable {
 
     private final UUID uuid;
+    private final Map<NamespacedKey, Statistic> statistics;
 
     public CorePlayer(@NotNull UUID uuid) {
         this.uuid = uuid;
+        this.statistics = new HashMap<>();
     }
 
     /**
@@ -46,6 +54,20 @@ public abstract class CorePlayer extends Mutexable {
 
     public abstract boolean useMutex();
 
+    public void addStatistic(@NotNull Statistic statistic) {
+        statistics.put(statistic.getType().getStatisticKey(), statistic);
+    }
+
+    @NotNull
+    public Optional<Statistic> getStatistic(@NotNull NamespacedKey key) {
+        return Optional.ofNullable(statistics.get(key));
+    }
+
+    @NotNull
+    public Set<Statistic> getStatistics() {
+        return ImmutableSet.copyOf(statistics.values());
+    }
+
     @Override
     public int hashCode() {
         int hash = 7;
@@ -55,14 +77,10 @@ public abstract class CorePlayer extends Mutexable {
 
     @Override
     public boolean equals(Object obj) {
-
         if (obj instanceof CorePlayer) {
-
             CorePlayer corePlayer = (CorePlayer) obj;
-
             return corePlayer.getUUID().equals(getUUID());
         }
-
         return false;
     }
 

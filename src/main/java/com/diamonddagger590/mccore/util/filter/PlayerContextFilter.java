@@ -1,4 +1,4 @@
-package com.diamonddagger590.mccore.util;
+package com.diamonddagger590.mccore.util.filter;
 
 import com.diamonddagger590.mccore.player.CorePlayer;
 import org.jetbrains.annotations.NotNull;
