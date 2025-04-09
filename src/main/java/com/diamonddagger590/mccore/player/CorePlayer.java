@@ -1,6 +1,9 @@
 package com.diamonddagger590.mccore.player;
 
+import com.diamonddagger590.mccore.CorePlugin;
+import com.diamonddagger590.mccore.event.setting.setting.PlayerSettingChangeEvent;
 import com.diamonddagger590.mccore.mutex.Mutexable;
+import com.diamonddagger590.mccore.setting.PlayerSetting;
 import com.diamonddagger590.mccore.statistic.Statistic;
 import com.google.common.collect.ImmutableSet;
 import org.bukkit.Bukkit;
@@ -24,10 +27,14 @@ import java.util.UUID;
 public abstract class CorePlayer extends Mutexable {
 
     private final UUID uuid;
+    private final CorePlugin plugin;
+    private final Map<NamespacedKey, PlayerSetting> playerSettings;
     private final Map<NamespacedKey, Statistic> statistics;
 
-    public CorePlayer(@NotNull UUID uuid) {
+    public CorePlayer(@NotNull UUID uuid, @NotNull CorePlugin corePlugin) {
         this.uuid = uuid;
+        this.plugin = corePlugin;
+        this.playerSettings = new HashMap<>();
         this.statistics = new HashMap<>();
     }
 
@@ -39,6 +46,11 @@ public abstract class CorePlayer extends Mutexable {
     @NotNull
     public UUID getUUID() {
         return uuid;
+    }
+
+    @NotNull
+    public CorePlugin getPlugin() {
+        return plugin;
     }
 
     /**
@@ -53,6 +65,40 @@ public abstract class CorePlayer extends Mutexable {
     }
 
     public abstract boolean useMutex();
+
+    /**
+     * Sets the provided {@link PlayerSetting} as the current setting option for that setting type.
+     *
+     * @param playerSetting The {@link PlayerSetting} to set.
+     */
+    public void setPlayerSetting(@NotNull PlayerSetting playerSetting) {
+        PlayerSetting oldSetting = playerSettings.get(playerSetting.getSettingKey());
+        playerSettings.put(playerSetting.getSettingKey(), playerSetting);
+        PlayerSettingChangeEvent playerSettingChangeEvent = new PlayerSettingChangeEvent(this, oldSetting, playerSetting);
+        Bukkit.getPluginManager().callEvent(playerSettingChangeEvent);
+    }
+
+    /**
+     * Gets an {@link Optional} containing the {@link PlayerSetting} that belongs to the provided {@link NamespacedKey},
+     *
+     * @param key The {@link NamespacedKey} to get the {@link PlayerSetting} for.
+     * @return An {@link Optional} containing the {@link PlayerSetting} that belongs to the provided {@link NamespacedKey},
+     * or empty if there is not a match.
+     */
+    @NotNull
+    public Optional<? extends PlayerSetting> getPlayerSetting(@NotNull NamespacedKey key) {
+        return Optional.ofNullable(playerSettings.get(key));
+    }
+
+    /**
+     * Gets an {@link ImmutableSet} of all {@link PlayerSetting}s for this player.
+     *
+     * @return An {@link ImmutableSet} of all {@link PlayerSetting}s for this player.
+     */
+    @NotNull
+    public Set<? extends PlayerSetting> getPlayerSettings() {
+        return ImmutableSet.copyOf(playerSettings.values());
+    }
 
     public void addStatistic(@NotNull Statistic statistic) {
         statistics.put(statistic.getType().getStatisticKey(), statistic);

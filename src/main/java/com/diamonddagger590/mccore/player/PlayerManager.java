@@ -18,63 +18,63 @@ import java.util.stream.Collectors;
  * Implementations of {@link CorePlugin} should also have a corresponding implementation of
  * {@link CorePlayer} which they store in this class.
  */
-public class PlayerManager {
+public class PlayerManager<C extends CorePlugin, P extends CorePlayer> {
 
-    private final CorePlugin corePlugin;
-    private final Map<UUID, CorePlayer> playerMap = new ConcurrentHashMap<>();
+    protected final C corePlugin;
+    private final Map<UUID, P> playerMap = new ConcurrentHashMap<>();
 
-    public PlayerManager(@NotNull CorePlugin corePlugin) {
+    public PlayerManager(@NotNull C corePlugin) {
         this.corePlugin = corePlugin;
     }
 
     /**
-     * Adds the provided {@link CorePlayer} to the player manager.
+     * Adds the provided {@link P} to the player manager.
      *
-     * @param corePlayer The {@link CorePlayer} to add to the manager.
+     * @param corePlayer The {@link P} to add to the manager.
      */
-    public void addPlayer(@NotNull CorePlayer corePlayer) {
+    public void addPlayer(@NotNull P corePlayer) {
         playerMap.put(corePlayer.getUUID(), corePlayer);
     }
 
     /**
-     * Removes the {@link CorePlayer} that corresponds to the provided {@link UUID} from the player manager.
+     * Removes the {@link P} that corresponds to the provided {@link UUID} from the player manager.
      *
-     * @param uuid The {@link UUID} who's corresponding {@link CorePlayer} will be removed.
-     * @return An {@link Optional} containing the removed {@link CorePlayer} or an empty {@link Optional}
+     * @param uuid The {@link UUID} who's corresponding {@link P} will be removed.
+     * @return An {@link Optional} containing the removed {@link P} or an empty {@link Optional}
      * if nothing was removed.
      */
-    public Optional<CorePlayer> removePlayer(@NotNull UUID uuid) {
+    public Optional<P> removePlayer(@NotNull UUID uuid) {
         return Optional.ofNullable(playerMap.remove(uuid));
     }
 
     /**
-     * Checks to see if the provided {@link UUID} has a corresponding {@link CorePlayer} that is
+     * Checks to see if the provided {@link UUID} has a corresponding {@link P} that is
      * stored by the player manager.
      *
-     * @param uuid The {@link UUID} of the {@link CorePlugin} to check.
-     * @return {@code true} if the provided {@link UUID} has a corresponding {@link CorePlugin} stored.
+     * @param uuid The {@link UUID} of the {@link P} to check.
+     * @return {@code true} if the provided {@link UUID} has a corresponding {@link P} stored.
      */
     public boolean hasCorePlayer(@NotNull UUID uuid) {
         return playerMap.containsKey(uuid);
     }
 
     /**
-     * Gets the {@link CorePlayer} that corresponds to the provided {@link UUID}.
+     * Gets the {@link P} that corresponds to the provided {@link UUID}.
      *
-     * @param uuid The {@link UUID} used to get the corresponding {@link CorePlayer}.
-     * @return An {@link Optional} that will contain the corresponding {@link CorePlayer} or be empty
+     * @param uuid The {@link UUID} used to get the corresponding {@link P}.
+     * @return An {@link Optional} that will contain the corresponding {@link P} or be empty
      * if the {@link UUID} is not stored.
      */
-    public Optional<CorePlayer> getPlayer(@NotNull UUID uuid) {
+    public Optional<P> getPlayer(@NotNull UUID uuid) {
         return Optional.ofNullable(playerMap.get(uuid));
     }
 
     /**
-     * Check to see if the {@link CorePlayer} associated with the
+     * Check to see if the {@link P} associated with the
      * provided {@link UUID} is locked.
      *
      * @param uuid The {@link UUID} of the player to check
-     * @return {@code true} if the associated {@link CorePlayer} is locked.
+     * @return {@code true} if the associated {@link P} is locked.
      */
     public boolean isPlayerLocked(@NotNull UUID uuid) {
         if (playerMap.containsKey(uuid)) {
@@ -84,19 +84,19 @@ public class PlayerManager {
     }
 
     /**
-     * Gets all {@link CorePlayer CorePlayers} stored by this player manager.
+     * Gets all {@link P}s stored by this player manager.
      *
-     * @return A cloned {@link Set} containing all the {@link CorePlayer CorePlayers} stored
+     * @return A cloned {@link Set} containing all the {@link P}s stored
      * by this player manager.
      */
-    public Set<CorePlayer> getAllPlayers() {
+    public Set<P> getAllPlayers() {
         return new HashSet<>(playerMap.values());
     }
 
     /**
-     * Gets a {@link Set} containing the {@link Player} version of all stored {@link CorePlayer CorePlayers}.
+     * Gets a {@link Set} containing the {@link Player} version of all stored {@link P}s.
      *
-     * @return A {@link Set} containing the {@link Player} version of all stored {@link CorePlayer CorePlayers}.
+     * @return A {@link Set} containing the {@link Player} version of all stored {@link P}.
      */
     public Set<Player> getAllBukkitPlayers() {
         return playerMap.values().stream()

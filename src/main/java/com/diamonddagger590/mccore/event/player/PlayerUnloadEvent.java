@@ -14,6 +14,7 @@ public class PlayerUnloadEvent extends CorePlayerEvent {
     public PlayerUnloadEvent(@NotNull CorePlayer corePlayer) {
         super(corePlayer);
     }
+
     @Override
     @NotNull
     public HandlerList getHandlers() {

@@ -10,11 +10,14 @@ import com.diamonddagger590.mccore.external.headdatabase.HeadDatabaseHook;
 import com.diamonddagger590.mccore.external.itemsadder.ItemsAdderHook;
 import com.diamonddagger590.mccore.external.nexo.NexoHook;
 import com.diamonddagger590.mccore.external.papi.PapiHook;
+import com.diamonddagger590.mccore.gui.BaseGui;
 import com.diamonddagger590.mccore.gui.GuiTracker;
 import com.diamonddagger590.mccore.listener.ChatResponseListener;
 import com.diamonddagger590.mccore.listener.GuiCloseListener;
 import com.diamonddagger590.mccore.listener.GuiRefreshListener;
+import com.diamonddagger590.mccore.localization.LocalizationManager;
 import com.diamonddagger590.mccore.player.PlayerManager;
+import com.diamonddagger590.mccore.setting.PlayerSettingRegistry;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
@@ -41,10 +44,10 @@ public abstract class CorePlugin extends JavaPlugin {
     private MiniMessage miniMessage;
 
     protected DriverManager driverManager;
-    protected PlayerManager playerManager;
     protected GuiTracker guiTracker;
     protected ReloadableContentRegistry reloadableContentRegistry;
     protected ChatResponseManager chatResponseManager;
+    protected PlayerSettingRegistry playerSettingRegistry;
 
     @Nullable
     private PapiHook papiHook;
@@ -62,6 +65,7 @@ public abstract class CorePlugin extends JavaPlugin {
         miniMessage = MiniMessage.miniMessage();
         driverManager = new DriverManager(this);
         registerDrivers();
+        playerSettingRegistry = new PlayerSettingRegistry();
         guiTracker = new GuiTracker(this);
         reloadableContentRegistry = new ReloadableContentRegistry();
         chatResponseManager = new ChatResponseManager(this);
@@ -162,14 +166,12 @@ public abstract class CorePlugin extends JavaPlugin {
      * objects.
      */
     @NotNull
-    public final PlayerManager getPlayerManager() {
-        return playerManager;
-    }
+    public abstract PlayerManager<?, ?> getPlayerManager();
 
     /**
-     * Gets the {@link GuiTracker} that tracks all {@link com.diamonddagger590.mccore.gui.Gui}s
+     * Gets the {@link GuiTracker} that tracks all {@link BaseGui}s
      *
-     * @return The {@link GuiTracker} that tracks all {@link com.diamonddagger590.mccore.gui.Gui}s
+     * @return The {@link GuiTracker} that tracks all {@link BaseGui}s
      */
     @NotNull
     public final GuiTracker getGuiTracker() {
@@ -214,6 +216,19 @@ public abstract class CorePlugin extends JavaPlugin {
     @NotNull
     public final AnnotationParser<CommandSender> getAnnotationParser() {
         return annotationParser;
+    }
+
+    /**
+     * Gets the {@link LocalizationManager} used by this plugin.
+     *
+     * @return The {@link LocalizationManager} used by this plugin.
+     */
+    @NotNull
+    public abstract LocalizationManager getLocalizationManager();
+
+    @NotNull
+    public final PlayerSettingRegistry getPlayerSettingRegistry() {
+        return playerSettingRegistry;
     }
 
     /**

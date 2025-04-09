@@ -6,14 +6,14 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class CorePlayerEvent extends Event {
 
-    private final CorePlayer player;
+    private final CorePlayer corePlayer;
 
-    public CorePlayerEvent(@NotNull CorePlayer player) {
-        this.player = player;
+    public CorePlayerEvent(@NotNull CorePlayer corePlayer) {
+        this.corePlayer = corePlayer;
     }
 
     @NotNull
-    public CorePlayer getPlayer() {
-        return player;
+    public CorePlayer getCorePlayer() {
+        return corePlayer;
     }
 }
