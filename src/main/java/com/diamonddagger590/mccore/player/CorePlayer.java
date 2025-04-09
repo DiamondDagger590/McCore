@@ -1,12 +1,16 @@
 package com.diamonddagger590.mccore.player;
 
+import com.diamonddagger590.mccore.CorePlugin;
+import com.diamonddagger590.mccore.event.setting.setting.PlayerSettingChangeEvent;
 import com.diamonddagger590.mccore.mutex.Mutexable;
+import com.diamonddagger590.mccore.setting.PlayerSetting;
+import com.google.common.collect.ImmutableSet;
 import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * An abstract class that represents a {@link Player} that contains data
@@ -18,9 +22,13 @@ import java.util.UUID;
 public abstract class CorePlayer extends Mutexable {
 
     private final UUID uuid;
+    private final CorePlugin plugin;
+    private final Map<NamespacedKey, PlayerSetting> playerSettings;
 
-    public CorePlayer(@NotNull UUID uuid) {
+    public CorePlayer(@NotNull UUID uuid, @NotNull CorePlugin corePlugin) {
         this.uuid = uuid;
+        this.plugin = corePlugin;
+        this.playerSettings = new HashMap<>();
     }
 
     /**
@@ -31,6 +39,11 @@ public abstract class CorePlayer extends Mutexable {
     @NotNull
     public UUID getUUID() {
         return uuid;
+    }
+
+    @NotNull
+    public CorePlugin getPlugin() {
+        return plugin;
     }
 
     /**
@@ -45,6 +58,40 @@ public abstract class CorePlayer extends Mutexable {
     }
 
     public abstract boolean useMutex();
+
+    /**
+     * Sets the provided {@link PlayerSetting} as the current setting option for that setting type.
+     *
+     * @param playerSetting The {@link PlayerSetting} to set.
+     */
+    public void setPlayerSetting(@NotNull PlayerSetting playerSetting) {
+        PlayerSetting oldSetting = playerSettings.get(playerSetting.getSettingKey());
+        playerSettings.put(playerSetting.getSettingKey(), playerSetting);
+        PlayerSettingChangeEvent playerSettingChangeEvent = new PlayerSettingChangeEvent(this, oldSetting, playerSetting);
+        Bukkit.getPluginManager().callEvent(playerSettingChangeEvent);
+    }
+
+    /**
+     * Gets an {@link Optional} containing the {@link PlayerSetting} that belongs to the provided {@link NamespacedKey},
+     *
+     * @param key The {@link NamespacedKey} to get the {@link PlayerSetting} for.
+     * @return An {@link Optional} containing the {@link PlayerSetting} that belongs to the provided {@link NamespacedKey},
+     * or empty if there is not a match.
+     */
+    @NotNull
+    public Optional<? extends PlayerSetting> getPlayerSetting(@NotNull NamespacedKey key) {
+        return Optional.ofNullable(playerSettings.get(key));
+    }
+
+    /**
+     * Gets an {@link ImmutableSet} of all {@link PlayerSetting}s for this player.
+     *
+     * @return An {@link ImmutableSet} of all {@link PlayerSetting}s for this player.
+     */
+    @NotNull
+    public Set<? extends PlayerSetting> getPlayerSettings() {
+        return ImmutableSet.copyOf(playerSettings.values());
+    }
 
     @Override
     public int hashCode() {

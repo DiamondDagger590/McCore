@@ -1,36 +1,25 @@
 package com.diamonddagger590.mccore.gui.slot;
 
 import com.diamonddagger590.mccore.CorePlugin;
-import com.diamonddagger590.mccore.gui.Gui;
 import com.diamonddagger590.mccore.gui.PaginatedGui;
 import com.diamonddagger590.mccore.player.CorePlayer;
-import org.bukkit.Material;
 import org.bukkit.event.inventory.ClickType;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.Set;
 
 /**
  * This is a slot to be used in {@link PaginatedGui}s to allow for going
  * to the next page of the gui.
  */
-public class NextPageSlot extends Slot {
+public abstract class NextPageSlot<P extends CorePlayer> extends Slot<P> {
 
-    private static final Set<Class<? extends Gui>> VALID_GUIS = Set.of(PaginatedGui.class);
-    private static final ItemStack SLOT_ITEM;
-    static {
-        SLOT_ITEM = new ItemStack(Material.ARROW);
-        ItemMeta itemMeta = SLOT_ITEM.getItemMeta();
-        itemMeta.displayName(CorePlugin.getInstance().getMiniMessage().deserialize("<red>Next Page</red>"));
-        itemMeta.lore(List.of(CorePlugin.getInstance().getMiniMessage().deserialize("<gray>Click to go back to the next page.</gray>")));
-        SLOT_ITEM.setItemMeta(itemMeta);
-    }
+    private final Set<Class<?>> VALID_GUIS = Set.of(PaginatedGui.class);
+
+    public NextPageSlot() {}
 
     @Override
-    public boolean onClick(@NotNull CorePlayer corePlayer, @NotNull ClickType clickType) {
+    public boolean onClick(@NotNull P corePlayer, @NotNull ClickType clickType) {
         var guiOptional = CorePlugin.getInstance().getGuiTracker().getOpenedGui(corePlayer);
         guiOptional.ifPresent(gui -> {
             if (gui instanceof PaginatedGui paginatedGui && paginatedGui.getPage() < paginatedGui.getMaximumPage()) {
@@ -44,13 +33,7 @@ public class NextPageSlot extends Slot {
     }
 
     @Override
-    public Set<Class<? extends Gui>> getValidGuiTypes() {
+    public Set<Class<?>> getValidGuiTypes() {
         return VALID_GUIS;
-    }
-
-    @NotNull
-    @Override
-    public ItemStack getItem() {
-        return SLOT_ITEM;
     }
 }

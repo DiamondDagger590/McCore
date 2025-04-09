@@ -3,6 +3,7 @@ package com.diamonddagger590.mccore.gui;
 import com.diamonddagger590.mccore.exception.gui.InventoryAlreadyExistsForGuiException;
 import com.diamonddagger590.mccore.gui.slot.NextPageSlot;
 import com.diamonddagger590.mccore.gui.slot.PreviousPageSlot;
+import com.diamonddagger590.mccore.player.CorePlayer;
 import com.google.common.base.Preconditions;
 import org.bukkit.inventory.Inventory;
 import org.jetbrains.annotations.NotNull;
@@ -11,10 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * A paginated gui is a gui that can have multiple pages of content,
  * requiring the ability to go back and forth between pages.
  */
-public abstract class PaginatedGui extends Gui {
-
-    protected static final PreviousPageSlot PREVIOUS_PAGE_SLOT = new PreviousPageSlot();
-    protected static final NextPageSlot NEXT_PAGE_SLOT = new NextPageSlot();
+public abstract class PaginatedGui<P extends CorePlayer> extends BaseGui<P> {
 
     private int page;
 
@@ -23,9 +21,34 @@ public abstract class PaginatedGui extends Gui {
         this.page = 1;
     }
 
+    public PaginatedGui(@NotNull P corePlayer) {
+        super(corePlayer);
+        this.page = 1;
+    }
+
     public PaginatedGui(int page) {
         this.page = page;
     }
+
+    /**
+     * Gets the {@link PreviousPageSlot} to use as a button to
+     * go to the previous page of this gui.
+     *
+     * @return The {@link PreviousPageSlot} to use as a button
+     * to go to the previous page of this gui.
+     */
+    @NotNull
+    public abstract PreviousPageSlot<P> getPreviousPageSlot();
+
+    /**
+     * Gets the {@link NextPageSlot} to use as a button to
+     * go to the next page of this gui.
+     *
+     * @return The {@link NextPageSlot} to use as a button
+     * to go to the next page of this gui.
+     */
+    @NotNull
+    public abstract NextPageSlot<P> getNextPageSlot();
 
     /**
      * {@inheritDoc}
