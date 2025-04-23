@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
  * @param clazz The {@link Class} of the {@link PluginHook} being represented by this key.
  * @param <T>   The {@link PluginHook} class stored in this key.
  */
-record PluginHookKeyImpl<T extends PluginHook>(Class<T> clazz) implements PluginHookKey<T> {
+public record PluginHookKeyImpl<T extends PluginHook>(Class<T> clazz) implements PluginHookKey<T> {
 
     /**
      * Creates a new instance of a key using the provided {@link Class}.
