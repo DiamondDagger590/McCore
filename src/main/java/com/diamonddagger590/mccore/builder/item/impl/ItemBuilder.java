@@ -149,6 +149,9 @@ public class ItemBuilder extends BaseItemBuilder<ItemBuilder> {
                 .withDisplayLore(itemSection.getStringList(ItemBuilderConfigurationKeys.LORE_ROUTE))
                 .setAmount(itemSection.getInt(ItemBuilderConfigurationKeys.AMOUNT, 1));
         itemBuilder.setCustomModelData(itemSection.getInt(ItemBuilderConfigurationKeys.CUSTOM_MODEL_DATA, -1));
+        if (itemSection.contains(ItemBuilderConfigurationKeys.CUSTOM_ITEM)) {
+            itemBuilder.withCustomItem(itemSection.getString(ItemBuilderConfigurationKeys.CUSTOM_ITEM));
+        }
         if (itemSection.getBoolean(ItemBuilderConfigurationKeys.HIDE_TOOLTIP, false)) {
             itemBuilder.hideToolTip();
         }

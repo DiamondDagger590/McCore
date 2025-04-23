@@ -1,6 +1,7 @@
 package com.diamonddagger590.mccore.event.gui;
 
 import com.diamonddagger590.mccore.gui.BaseGui;
+import com.diamonddagger590.mccore.gui.Gui;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
@@ -12,9 +13,9 @@ public class GuiRefreshEvent extends Event {
 
     private static final HandlerList handlers = new HandlerList();
 
-    private final BaseGui gui;
+    private final Gui<?> gui;
 
-    public GuiRefreshEvent(@NotNull BaseGui gui) {
+    public GuiRefreshEvent(@NotNull Gui<?> gui) {
         this.gui = gui;
     }
 
@@ -24,7 +25,7 @@ public class GuiRefreshEvent extends Event {
      * @return The {@link BaseGui} being refreshed.
      */
     @NotNull
-    public BaseGui getGui() {
+    public Gui<?> getGui() {
         return gui;
     }
 

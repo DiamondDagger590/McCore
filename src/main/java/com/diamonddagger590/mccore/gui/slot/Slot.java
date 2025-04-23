@@ -7,7 +7,6 @@ import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ItemType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -27,7 +26,7 @@ public abstract class Slot<P extends CorePlayer> {
      * @return The {@link ItemStack} used to represent this slot.
      */
     @NotNull
-    public ItemBuilder getItem(@Nullable P corePlayer) {
+    public ItemBuilder getItem(@NotNull P corePlayer) {
         return ItemBuilder.from(ItemType.AIR);
     }
 

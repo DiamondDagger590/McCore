@@ -1,6 +1,8 @@
 package com.diamonddagger590.mccore.command;
 
 import com.diamonddagger590.mccore.CorePlugin;
+import com.diamonddagger590.mccore.registry.RegistryKey;
+import com.diamonddagger590.mccore.registry.manager.ManagerKey;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -18,7 +20,7 @@ import java.util.List;
 public class LoreCommand {
 
     public static void registerCommand() {
-        CommandManager<CommandSourceStack> commandManager = CorePlugin.getInstance().getCommandManager().getCommandManager();
+        CommandManager<CommandSourceStack> commandManager = CorePlugin.getInstance().registryAccess().registry(RegistryKey.MANAGER).manager(ManagerKey.COMMAND).getCommandManager();
         MiniMessage miniMessage = CorePlugin.getInstance().getMiniMessage();
         commandManager.command(commandManager.commandBuilder("lore")
                 .literal("clear")

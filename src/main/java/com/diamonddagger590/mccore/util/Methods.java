@@ -87,6 +87,48 @@ public class Methods {
     }
 
     /**
+     * Creates a colored progress bar based on the provided double. Each bar represents a different
+     * amount of percentage (basically 100/barCount). Each bar then gets colored to represent how much of that bar
+     * has been "filled" by the provided progression. The color goes from red -> green as there is more and more progress.
+     * <p>
+     * The bar count will specify how many bars should be used for displaying the progress.
+     * The more bars provided, the higher the degree of accuracy when it comes to coloring each
+     * individual bar.
+     *
+     * @param progress The amount of progress to create a bar for. Must be between 0.0 and 1.0
+     * @param barCount The amount of bars to have in the progress bar.
+     * @return A {@link String} representing a progress bar.
+     * @throws IllegalArgumentException If the provided progress is not between 0.0 and 1.0
+     */
+    public static String getProgressBarAsString(double progress, int barCount) {
+        if (progress < 0.0 || progress > 1.0) {
+            throw new IllegalArgumentException("Percentage must be between 0.0 and 1.0");
+        }
+        int greenSegments = (int) (progress * barCount);
+        int redSegments = (barCount - greenSegments);
+        double remainder = progress % barCount;
+
+        MiniMessage miniMessage = CorePlugin.getInstance().getMiniMessage();
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("<green>").append("|".repeat(Math.max(0, greenSegments))).append("</green>");
+        if (remainder > 0.0f && remainder < 1.0f) {
+            if (remainder <= 0.25f) {
+                stringBuilder.append("<color:#c9ff29>|</color>");
+            } else if (remainder <= 0.50f) {
+                stringBuilder.append("<color:#ffcb21>|</color>");
+            } else if (remainder <= 0.75f) {
+                stringBuilder.append("<color:#ff822e>|</color>");
+            } else {
+                stringBuilder.append("<color:#ff6417>|</color>");
+            }
+            // Remove a red segment since we are doing fun colors
+            redSegments--;
+        }
+        stringBuilder.append("<color:#ff1418>").append("|".repeat(Math.max(0, redSegments))).append("</color>");
+        return stringBuilder.toString();
+    }
+
+    /**
      * Serializes the provided {@link Location} into a string.
      *
      * @param location The {@link Location} to serialize.

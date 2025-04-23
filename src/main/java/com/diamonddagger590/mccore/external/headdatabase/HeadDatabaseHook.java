@@ -1,6 +1,7 @@
 package com.diamonddagger590.mccore.external.headdatabase;
 
 import com.diamonddagger590.mccore.CorePlugin;
+import com.diamonddagger590.mccore.registry.plugin.PluginHook;
 import me.arcaniax.hdb.api.HeadDatabaseAPI;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -11,13 +12,12 @@ import java.util.Optional;
  * The hook needed to support <a href="https://www.spigotmc.org/resources/head-database.14280/">HeadDatabase</a>
  * for this plugin.
  */
-public class HeadDatabaseHook {
+public class HeadDatabaseHook extends PluginHook {
 
-    private final CorePlugin plugin;
     private final HeadDatabaseAPI headDatabaseAPI;
 
     public HeadDatabaseHook(@NotNull final CorePlugin plugin) {
-        this.plugin = plugin;
+        super(plugin);
         this.headDatabaseAPI = new HeadDatabaseAPI();
     }
 

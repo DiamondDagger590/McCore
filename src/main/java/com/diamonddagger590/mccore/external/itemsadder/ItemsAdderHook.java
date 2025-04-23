@@ -1,6 +1,7 @@
 package com.diamonddagger590.mccore.external.itemsadder;
 
 import com.diamonddagger590.mccore.CorePlugin;
+import com.diamonddagger590.mccore.registry.plugin.PluginHook;
 import dev.lone.itemsadder.api.CustomStack;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -12,12 +13,10 @@ import java.util.Optional;
  * <a href="https://www.spigotmc.org/resources/%E2%9C%A8itemsadder%E2%AD%90emotes-mobs-items-armors-hud-gui-emojis-blocks-wings-hats-liquids.73355/">ItemsAdder</a>
  * for this plugin.
  */
-public class ItemsAdderHook {
-
-    private final CorePlugin plugin;
+public class ItemsAdderHook extends PluginHook {
 
     public ItemsAdderHook(@NotNull CorePlugin plugin) {
-        this.plugin = plugin;
+        super(plugin);
     }
 
     /**

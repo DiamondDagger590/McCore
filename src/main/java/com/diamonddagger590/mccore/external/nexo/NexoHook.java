@@ -1,6 +1,7 @@
 package com.diamonddagger590.mccore.external.nexo;
 
 import com.diamonddagger590.mccore.CorePlugin;
+import com.diamonddagger590.mccore.registry.plugin.PluginHook;
 import com.nexomc.nexo.api.NexoItems;
 import com.nexomc.nexo.items.ItemBuilder;
 import org.bukkit.inventory.ItemStack;
@@ -11,12 +12,10 @@ import java.util.Optional;
 /**
  * The hook needed to support <a href="https://polymart.org/resource/nexo.6901">Nexo</a> for this plugin.
  */
-public class NexoHook {
-
-    private final CorePlugin corePlugin;
+public class NexoHook extends PluginHook {
 
     public NexoHook(@NotNull CorePlugin corePlugin) {
-        this.corePlugin = corePlugin;
+        super(corePlugin);
     }
 
     /**

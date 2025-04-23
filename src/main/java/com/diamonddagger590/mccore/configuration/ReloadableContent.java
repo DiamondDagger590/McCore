@@ -10,8 +10,8 @@ import java.util.function.BiFunction;
  * This class represents a wrapper around a type of content that needs to support being reloaded from a
  * configuration file.
  * <p>
- * Any reloadable content should be registered with the {@link ReloadableContentRegistry} in order to automatically
- * be reloaded whenever {@link ReloadableContentRegistry#reloadAllContent()} is called.
+ * Any reloadable content should be registered with the {@link ReloadableContentManager} in order to automatically
+ * be reloaded whenever {@link ReloadableContentManager#reloadAllContent()} is called.
  *
  * @param <T> The type of object that needs to be stored.
  */

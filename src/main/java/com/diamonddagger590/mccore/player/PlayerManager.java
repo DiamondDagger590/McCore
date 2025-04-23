@@ -1,6 +1,7 @@
 package com.diamonddagger590.mccore.player;
 
 import com.diamonddagger590.mccore.CorePlugin;
+import com.diamonddagger590.mccore.registry.manager.Manager;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,13 +19,12 @@ import java.util.stream.Collectors;
  * Implementations of {@link CorePlugin} should also have a corresponding implementation of
  * {@link CorePlayer} which they store in this class.
  */
-public class PlayerManager<C extends CorePlugin, P extends CorePlayer> {
+public class PlayerManager<C extends CorePlugin, P extends CorePlayer> extends Manager<C> {
 
-    protected final C corePlugin;
     private final Map<UUID, P> playerMap = new ConcurrentHashMap<>();
 
     public PlayerManager(@NotNull C corePlugin) {
-        this.corePlugin = corePlugin;
+        super(corePlugin);
     }
 
     /**

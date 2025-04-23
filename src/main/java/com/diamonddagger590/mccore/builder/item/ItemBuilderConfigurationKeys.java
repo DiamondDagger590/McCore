@@ -26,6 +26,7 @@ public class ItemBuilderConfigurationKeys {
     public static final Route AMOUNT = Route.fromString("amount");
     public static final Route ENCHANTMENTS = Route.fromString("enchantments");
     public static final Route CUSTOM_MODEL_DATA = Route.fromString("custom-model-data");
+    public static final Route CUSTOM_ITEM = Route.fromString("custom-item");
     public static final Route HIDE_TOOLTIP = Route.fromString("hide-tool-tip");
     public static final Route UNBREAKABLE_ITEM = Route.fromString("unbreakable-item");
 
