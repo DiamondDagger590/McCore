@@ -12,7 +12,7 @@ import java.util.Optional;
 /**
  * The hook needed to support <a href="https://polymart.org/resource/nexo.6901">Nexo</a> for this plugin.
  */
-public class NexoHook extends PluginHook {
+public class NexoHook extends PluginHook<CorePlugin> {
 
     public NexoHook(@NotNull CorePlugin corePlugin) {
         super(corePlugin);
