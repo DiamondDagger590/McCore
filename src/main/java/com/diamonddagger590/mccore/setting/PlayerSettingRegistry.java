@@ -1,5 +1,6 @@
 package com.diamonddagger590.mccore.setting;
 
+import com.diamonddagger590.mccore.registry.Registry;
 import com.google.common.collect.ImmutableSet;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +18,7 @@ import java.util.Set;
  * {@link com.diamonddagger590.mccore.util.LinkedNode}s. This registry provides an easy way
  * to get the first setting for a given node chain.
  */
-public final class PlayerSettingRegistry {
+public final class PlayerSettingRegistry implements Registry<PlayerSetting> {
 
     private final Map<NamespacedKey, PlayerSetting> settings;
 
@@ -30,8 +31,18 @@ public final class PlayerSettingRegistry {
      *
      * @param playerSetting The {@link PlayerSetting} to register.
      */
-    public void registerSetting(@NotNull PlayerSetting playerSetting) {
+    public void register(@NotNull PlayerSetting playerSetting) {
         settings.put(playerSetting.getSettingKey(), playerSetting.getFirstSetting().getNodeValue());
+    }
+
+    /**
+     * Checks to see if the provided {@link PlayerSetting} is registered.
+     *
+     * @param playerSetting The {@link PlayerSetting} to check.
+     * @return {@code true} if the provided {@link PlayerSetting} is registered.
+     */
+    public boolean registered(@NotNull PlayerSetting playerSetting) {
+        return isRegistered(playerSetting.getSettingKey());
     }
 
     /**
@@ -40,7 +51,7 @@ public final class PlayerSettingRegistry {
      * @param key The {@link NamespacedKey} to check.
      * @return {@code true} if the provided {@link NamespacedKey} has a registered {@link PlayerSetting}.
      */
-    public boolean isSettingRegistered(@NotNull NamespacedKey key) {
+    public boolean isRegistered(@NotNull NamespacedKey key) {
         return settings.containsKey(key);
     }
 

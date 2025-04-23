@@ -2,6 +2,7 @@ package com.diamonddagger590.mccore.database.driver;
 
 import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.database.Database;
+import com.diamonddagger590.mccore.registry.manager.Manager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -14,13 +15,12 @@ import java.util.Optional;
  * Any driver that is allowed to be used in a {@link Database} should be registered
  * here.
  */
-public final class DriverManager {
+public final class DriverManager extends Manager<CorePlugin> {
 
-    private final CorePlugin plugin;
     private final Map<DatabaseDriverType, DatabaseDriver> registeredDrivers;
 
     public DriverManager(@NotNull CorePlugin corePlugin) {
-        this.plugin = corePlugin;
+        super(corePlugin);
         this.registeredDrivers = new HashMap<>();
     }
 

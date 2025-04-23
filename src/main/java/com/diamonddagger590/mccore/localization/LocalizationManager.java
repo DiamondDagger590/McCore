@@ -4,6 +4,10 @@ import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.configuration.ReloadableContent;
 import com.diamonddagger590.mccore.exception.localization.NoLocalizationContainsMessageException;
 import com.diamonddagger590.mccore.player.CorePlayer;
+import com.diamonddagger590.mccore.registry.RegistryKey;
+import com.diamonddagger590.mccore.registry.manager.Manager;
+import com.diamonddagger590.mccore.registry.manager.ManagerKey;
+import com.diamonddagger590.mccore.registry.plugin.PluginHookKey;
 import com.diamonddagger590.mccore.util.LinkedNode;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
@@ -29,31 +33,20 @@ import java.util.*;
  * <p>
  * Third party plugins can add their own configuration files to be included for localization by using {@link #registerLanguageFile(Localization)}.
  */
-public abstract class LocalizationManager<P extends CorePlugin, T extends CorePlayer> {
+public abstract class LocalizationManager<P extends CorePlugin, T extends CorePlayer> extends Manager<P> {
 
-    private final P plugin;
     protected final Map<Locale, List<YamlDocument>> localizations;
     protected final ReloadableContent<LinkedNode<Locale>> localeChain;
 
     public LocalizationManager(P plugin) {
-        this.plugin = plugin;
+        super(plugin);
         this.localizations = new HashMap<>();
         this.localeChain = generateLocaleChain();
-        plugin.getReloadableContentRegistry().trackReloadableContent(localeChain);
+        plugin.registryAccess().registry(RegistryKey.MANAGER).manager(ManagerKey.RELOADABLE_CONTENT).trackReloadableContent(localeChain);
     }
 
     @NotNull
     protected abstract ReloadableContent<LinkedNode<Locale>> generateLocaleChain();
-
-    /**
-     * Gets the {@link P} plugin instance creating this manager.
-     *
-     * @return The {@link P} plugin instance creating this manager.
-     */
-    @NotNull
-    protected P getPlugin() {
-        return plugin;
-    }
 
     /**
      * Gets a localized {@link Component} using the provided {@link Route} to find a translated message.
@@ -66,7 +59,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
      */
     @NotNull
     public Component getLocalizedMessageAsComponent(@NotNull T corePlayer, @NotNull Route route) {
-        return plugin.getMiniMessage().deserialize(getLocalizedMessage(corePlayer, route));
+        return plugin().getMiniMessage().deserialize(getLocalizedMessage(corePlayer, route));
     }
 
     /**
@@ -81,7 +74,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
      */
     @NotNull
     public Component getLocalizedMessageAsComponent(@NotNull T player, @NotNull Route route, @NotNull Map<String, String> placeholders) {
-        return plugin.getMiniMessage().deserialize(getLocalizedMessage(player, route), getPlaceholders(placeholders));
+        return plugin().getMiniMessage().deserialize(getLocalizedMessage(player, route), getPlaceholders(placeholders));
     }
 
     /**
@@ -93,6 +86,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
      * @throws NoLocalizationContainsMessageException If there is no localization in the player's locale
      *                                                chain that supports the provided route.
      */
+    @NotNull
     public String getLocalizedMessage(@NotNull T player, @NotNull Route route) {
         LinkedNode<Locale> locales = getLocaleChain(player);
         Set<Locale> processedLocales = new HashSet<>();
@@ -110,13 +104,76 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
                 // Check all registered configurations for the message
                 for (YamlDocument yamlDocument : documents) {
                     if (yamlDocument.contains(route)) {
-                        var papiHookOptional = plugin.getPapiHook();
+                        var papiHookOptional = plugin().registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(PluginHookKey.PAPI);
                         var playerOptional = player.getAsBukkitPlayer();
                         String message = yamlDocument.getString(route);
                         if (papiHookOptional.isPresent() && playerOptional.isPresent()) {
                             message = papiHookOptional.get().translateMessage(playerOptional.get(), message);
                         }
                         return message;
+                    }
+                }
+            }
+        }
+        // If we reach here, then that means no languages support the message which shouldn't be true.
+        // English should always be supported.
+        throw new NoLocalizationContainsMessageException(route, processedLocales);
+    }
+
+    /**
+     * Gets a localized message using the provided {@link Route} to find a translated message
+     * with {@link Locale#ENGLISH} as the locale.
+     *
+     * @param route The {@link Route} to check for a translated message.
+     * @return A localized message using the provided {@link Route} to find a translated message.
+     * @throws NoLocalizationContainsMessageException If there is no localization in the player's locale
+     *                                                chain that supports the provided route.
+     */
+    @NotNull
+    public String getLocalizedMessage(@NotNull Route route) {
+        Locale locale = Locale.ENGLISH;
+        if (localizations.containsKey(locale)) {
+            List<YamlDocument> documents = localizations.get(locale);
+            // Check all registered configurations for the message
+            for (YamlDocument yamlDocument : documents) {
+                if (yamlDocument.contains(route)) {
+                    return yamlDocument.getString(route);
+                }
+            }
+        }
+        // If we reach here, then that means no languages support the message which shouldn't be true.
+        // English should always be supported.
+        throw new NoLocalizationContainsMessageException(route, Set.of(locale));
+    }
+
+    @NotNull
+    public List<String> getLocalizedMessages(@NotNull T player, @NotNull Route route) {
+        LinkedNode<Locale> locales = getLocaleChain(player);
+        Set<Locale> processedLocales = new HashSet<>();
+        while (locales.hasNext()) {
+            Locale locale = locales.getNodeValue();
+            // We don't want to process locales twice
+            if (processedLocales.contains(locale)) {
+                continue;
+            }
+            // Mark that it has now been processed
+            processedLocales.add(locale);
+            // If we support this localization
+            if (localizations.containsKey(locale)) {
+                List<YamlDocument> documents = localizations.get(locale);
+                // Check all registered configurations for the message
+                for (YamlDocument yamlDocument : documents) {
+                    if (yamlDocument.contains(route)) {
+                        var papiHookOptional = plugin().registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(PluginHookKey.PAPI);
+                        var playerOptional = player.getAsBukkitPlayer();
+                        List<String> message = yamlDocument.getStringList(route);
+                        List<String> returnList = new ArrayList<>();
+                        if (papiHookOptional.isPresent() && playerOptional.isPresent()) {
+                            for (String line : message) {
+                                returnList.add(papiHookOptional.get().translateMessage(playerOptional.get(), line));
+                            }
+                        }
+                        return returnList;
                     }
                 }
             }

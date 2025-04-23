@@ -16,17 +16,13 @@ public abstract class PaginatedGui<P extends CorePlayer> extends BaseGui<P> {
 
     private int page;
 
-    public PaginatedGui() {
-        super();
-        this.page = 1;
-    }
-
     public PaginatedGui(@NotNull P corePlayer) {
         super(corePlayer);
         this.page = 1;
     }
 
-    public PaginatedGui(int page) {
+    public PaginatedGui(@NotNull P corePlayer, int page) {
+        this(corePlayer);
         this.page = page;
     }
 

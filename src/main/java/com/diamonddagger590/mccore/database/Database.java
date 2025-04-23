@@ -12,6 +12,8 @@ import com.diamonddagger590.mccore.event.database.PreTablesUpdateEvent;
 import com.diamonddagger590.mccore.event.database.TablesCreatedEvent;
 import com.diamonddagger590.mccore.event.database.TablesUpdatedEvent;
 import com.diamonddagger590.mccore.pair.Pair;
+import com.diamonddagger590.mccore.registry.RegistryKey;
+import com.diamonddagger590.mccore.registry.manager.ManagerKey;
 import com.zaxxer.hikari.HikariDataSource;
 import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
@@ -172,7 +174,7 @@ public abstract class Database {
      */
     @NotNull
     protected final DatabaseDriver getDriver() {
-        return plugin.getDriverManager().getDriver(databaseDriverType)
+        return plugin.registryAccess().registry(RegistryKey.MANAGER).manager(ManagerKey.DRIVER).getDriver(databaseDriverType)
                 .orElseThrow(() -> new IllegalArgumentException(String.format("Database driver %s was not registered... unable to initialize database.", databaseDriverType.getDriverName())));
     }
 

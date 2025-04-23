@@ -1,6 +1,8 @@
 package com.diamonddagger590.mccore.chat;
 
 import com.diamonddagger590.mccore.CorePlugin;
+import com.diamonddagger590.mccore.registry.RegistryKey;
+import com.diamonddagger590.mccore.registry.manager.ManagerKey;
 import com.diamonddagger590.mccore.task.core.ExpireableCoreTask;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +23,7 @@ public class ChatResponseExpireTask extends ExpireableCoreTask {
 
     @Override
     protected void onTaskExpire() {
-        plugin.getChatResponseManager().removePendingResponse(chatResponse);
+        plugin.registryAccess().registry(RegistryKey.MANAGER).manager(ManagerKey.CHAT_RESPONSE).removePendingResponse(chatResponse);
     }
 
     @Override

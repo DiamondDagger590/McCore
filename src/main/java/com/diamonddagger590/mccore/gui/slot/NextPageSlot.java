@@ -3,6 +3,8 @@ package com.diamonddagger590.mccore.gui.slot;
 import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.gui.PaginatedGui;
 import com.diamonddagger590.mccore.player.CorePlayer;
+import com.diamonddagger590.mccore.registry.RegistryKey;
+import com.diamonddagger590.mccore.registry.manager.ManagerKey;
 import org.bukkit.event.inventory.ClickType;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,9 +22,9 @@ public abstract class NextPageSlot<P extends CorePlayer> extends Slot<P> {
 
     @Override
     public boolean onClick(@NotNull P corePlayer, @NotNull ClickType clickType) {
-        var guiOptional = CorePlugin.getInstance().getGuiTracker().getOpenedGui(corePlayer);
+        var guiOptional = CorePlugin.getInstance().registryAccess().registry(RegistryKey.MANAGER).manager(ManagerKey.CORE_GUI_MANAGER).getOpenedGui(corePlayer);
         guiOptional.ifPresent(gui -> {
-            if (gui instanceof PaginatedGui paginatedGui && paginatedGui.getPage() < paginatedGui.getMaximumPage()) {
+            if (gui instanceof PaginatedGui<?> paginatedGui && paginatedGui.getPage() < paginatedGui.getMaximumPage()) {
                 corePlayer.getAsBukkitPlayer().ifPresent(player -> {
                     paginatedGui.setPage(paginatedGui.getPage() + 1);
                     paginatedGui.refreshGUI();

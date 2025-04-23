@@ -3,32 +3,28 @@ package com.diamonddagger590.mccore;
 import com.diamonddagger590.mccore.builder.item.ItemPluginType;
 import com.diamonddagger590.mccore.chat.ChatResponseManager;
 import com.diamonddagger590.mccore.command.CoreCommandManager;
-import com.diamonddagger590.mccore.configuration.ReloadableContentRegistry;
+import com.diamonddagger590.mccore.configuration.ReloadableContentManager;
 import com.diamonddagger590.mccore.database.Database;
 import com.diamonddagger590.mccore.database.driver.DriverManager;
 import com.diamonddagger590.mccore.external.headdatabase.HeadDatabaseHook;
 import com.diamonddagger590.mccore.external.itemsadder.ItemsAdderHook;
 import com.diamonddagger590.mccore.external.nexo.NexoHook;
 import com.diamonddagger590.mccore.external.papi.PapiHook;
-import com.diamonddagger590.mccore.gui.BaseGui;
-import com.diamonddagger590.mccore.gui.GuiTracker;
 import com.diamonddagger590.mccore.listener.ChatResponseListener;
 import com.diamonddagger590.mccore.listener.GuiCloseListener;
 import com.diamonddagger590.mccore.listener.GuiRefreshListener;
-import com.diamonddagger590.mccore.localization.LocalizationManager;
-import com.diamonddagger590.mccore.player.PlayerManager;
+import com.diamonddagger590.mccore.registry.RegistryAccess;
+import com.diamonddagger590.mccore.registry.RegistryKey;
+import com.diamonddagger590.mccore.registry.manager.ManagerRegistry;
+import com.diamonddagger590.mccore.registry.plugin.PluginHookRegistry;
 import com.diamonddagger590.mccore.setting.PlayerSettingRegistry;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.incendo.cloud.CommandManager;
 import org.incendo.cloud.annotations.AnnotationParser;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Optional;
 
 /**
  * The abstract version of a plugin that provides some common logic for plugins
@@ -38,42 +34,35 @@ public abstract class CorePlugin extends JavaPlugin {
 
     private static CorePlugin instance;
 
-    private CoreCommandManager commandManager;
+    private RegistryAccess registryAccess;
+
     private AnnotationParser<CommandSender> annotationParser;
     private BukkitAudiences adventure;
     private MiniMessage miniMessage;
 
-    protected DriverManager driverManager;
-    protected GuiTracker guiTracker;
-    protected ReloadableContentRegistry reloadableContentRegistry;
-    protected ChatResponseManager chatResponseManager;
     protected PlayerSettingRegistry playerSettingRegistry;
-
-    @Nullable
-    private PapiHook papiHook;
-    @Nullable
-    private ItemsAdderHook itemsAdderHook;
-    @Nullable
-    private NexoHook nexoHook;
-    @Nullable
-    private HeadDatabaseHook headDatabaseHook;
 
     @Override
     public void onEnable() {
         instance = this;
+        registryAccess = RegistryAccess.registryAccess();
+        registryAccess.register(new ManagerRegistry());
+        registryAccess.register(new PluginHookRegistry());
+
         adventure = BukkitAudiences.create(this);
         miniMessage = MiniMessage.miniMessage();
-        driverManager = new DriverManager(this);
+        registryAccess.registry(RegistryKey.MANAGER).register(new DriverManager(this));
         registerDrivers();
-        playerSettingRegistry = new PlayerSettingRegistry();
-        guiTracker = new GuiTracker(this);
-        reloadableContentRegistry = new ReloadableContentRegistry();
-        chatResponseManager = new ChatResponseManager(this);
+        registryAccess.register(new PlayerSettingRegistry());
+        registryAccess.registry(RegistryKey.MANAGER).register(new ReloadableContentManager(this));
+        registryAccess.registry(RegistryKey.MANAGER).register(new ChatResponseManager(this));
 
         // We can't setup cloud when mocking so ignore if we are in unit test mode
         if (!isUnitTest()) {
-            commandManager = new CoreCommandManager(this);
+            registryAccess.registry(RegistryKey.MANAGER).register(new CoreCommandManager(this));
         }
+
+        setupHooks();
     }
 
     @Override
@@ -119,19 +108,19 @@ public abstract class CorePlugin extends JavaPlugin {
     protected void setupHooks() {
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             getLogger().info("Papi PlaceholderAPI found... registering hooks");
-            papiHook = new PapiHook(this);
+            registryAccess.registry(RegistryKey.PLUGIN_HOOK).register(new PapiHook(this));
         }
         if (Bukkit.getPluginManager().isPluginEnabled("Nexo")) {
             getLogger().info("Nexo found... registering hooks");
-            nexoHook = new NexoHook(this);
+            registryAccess.registry(RegistryKey.PLUGIN_HOOK).register(new NexoHook(this));
         }
         if (Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) {
             getLogger().info("ItemsAdder found... registering hooks");
-            itemsAdderHook = new ItemsAdderHook(this);
+            registryAccess.registry(RegistryKey.PLUGIN_HOOK).register(new ItemsAdderHook(this));
         }
         if (Bukkit.getPluginManager().isPluginEnabled("HeadDatabase")) {
             getLogger().info("HeadDatabase found... registering hooks");
-            headDatabaseHook = new HeadDatabaseHook(this);
+            registryAccess.registry(RegistryKey.PLUGIN_HOOK).register(new HeadDatabaseHook(this));
         }
     }
 
@@ -149,66 +138,6 @@ public abstract class CorePlugin extends JavaPlugin {
     public abstract Database getDatabase();
 
     /**
-     * Gets the {@link DriverManager} used by the plugin.
-     *
-     * @return The {@link DriverManager} used by the plugin.
-     */
-    @NotNull
-    public final DriverManager getDriverManager() {
-        return driverManager;
-    }
-
-    /**
-     * Gets the {@link PlayerManager} that stores all the plugin's {@link com.diamonddagger590.mccore.player.CorePlayer}
-     * objects.
-     *
-     * @return The {@link PlayerManager} that stores all the plugin's {@link com.diamonddagger590.mccore.player.CorePlayer}
-     * objects.
-     */
-    @NotNull
-    public abstract PlayerManager<?, ?> getPlayerManager();
-
-    /**
-     * Gets the {@link GuiTracker} that tracks all {@link BaseGui}s
-     *
-     * @return The {@link GuiTracker} that tracks all {@link BaseGui}s
-     */
-    @NotNull
-    public final GuiTracker getGuiTracker() {
-        return guiTracker;
-    }
-
-    /**
-     * Gets the {@link ChatResponseManager} that manages any responses needed for chat messages.
-     *
-     * @return The {@link ChatResponseManager} that manages any responses needed for chat messages.
-     */
-    @NotNull
-    public final ChatResponseManager getChatResponseManager() {
-        return chatResponseManager;
-    }
-
-    /**
-     * Gets the {@link ReloadableContentRegistry} used to manage all {@link com.diamonddagger590.mccore.configuration.ReloadableContent}.
-     *
-     * @return The {@link ReloadableContentRegistry} used to manage all {@link com.diamonddagger590.mccore.configuration.ReloadableContent}.¬
-     */
-    @NotNull
-    public final ReloadableContentRegistry getReloadableContentRegistry() {
-        return reloadableContentRegistry;
-    }
-
-    /**
-     * Gets the {@link CommandManager} used by this plugin.
-     *
-     * @return The {@link CommandManager} used by this plugin.
-     */
-    @NotNull
-    public final CoreCommandManager getCommandManager() {
-        return commandManager;
-    }
-
-    /**
      * Gets the {@link AnnotationParser} used by this plugin.
      *
      * @return The {@link AnnotationParser} used by this plugin.
@@ -216,19 +145,6 @@ public abstract class CorePlugin extends JavaPlugin {
     @NotNull
     public final AnnotationParser<CommandSender> getAnnotationParser() {
         return annotationParser;
-    }
-
-    /**
-     * Gets the {@link LocalizationManager} used by this plugin.
-     *
-     * @return The {@link LocalizationManager} used by this plugin.
-     */
-    @NotNull
-    public abstract LocalizationManager getLocalizationManager();
-
-    @NotNull
-    public final PlayerSettingRegistry getPlayerSettingRegistry() {
-        return playerSettingRegistry;
     }
 
     /**
@@ -251,49 +167,9 @@ public abstract class CorePlugin extends JavaPlugin {
         return miniMessage;
     }
 
-    /**
-     * Gets the {@link PapiHook} this plugin uses to support PlaceholderAPI.
-     *
-     * @return An {@link Optional} containing the {@link PapiHook} this plugin uses to support
-     * <a href="https://www.spigotmc.org/resources/placeholderapi.6245/">PlaceholderAPI</a> if the plugin is running.
-     */
     @NotNull
-    public Optional<PapiHook> getPapiHook() {
-        return Optional.ofNullable(papiHook);
-    }
-
-    /**
-     * Gets the {@link NexoHook} this plugin uses to support Nexo.
-     *
-     * @return An {@link Optional} containing the {@link NexoHook} this plugin uses to support
-     * <a href="https://polymart.org/resource/nexo.6901">Nexo</a> if the plugin is running.
-     */
-    @NotNull
-    public Optional<NexoHook> getNexoHook() {
-        return Optional.ofNullable(nexoHook);
-    }
-
-    /**
-     * Gets the {@link ItemsAdderHook} this plugin uses to support ItemsAdder.
-     *
-     * @return An {@link Optional} containing the {@link ItemsAdderHook} this plugin uses to support
-     * <a href="https://www.spigotmc.org/resources/%E2%9C%A8itemsadder%E2%AD%90emotes-mobs-items-armors-hud-gui-emojis-blocks-wings-hats-liquids.73355/">ItemsAdder</a>
-     * if the plugin is running.
-     */
-    @NotNull
-    public Optional<ItemsAdderHook> getItemsAdderHook() {
-        return Optional.ofNullable(itemsAdderHook);
-    }
-
-    /**
-     * Gets the {@link HeadDatabaseHook} this plugin uses to support HeadDatabase.
-     *
-     * @return An {@link Optional} containing the {@link HeadDatabaseHook} this plugin uses to support
-     * <a href="https://www.spigotmc.org/resources/head-database.14280/">HeadDatabase</a> if the plugin is running.
-     */
-    @NotNull
-    public Optional<HeadDatabaseHook> getHeadDatabaseHook() {
-        return Optional.ofNullable(headDatabaseHook);
+    public final RegistryAccess registryAccess() {
+        return registryAccess;
     }
 
     /**

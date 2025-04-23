@@ -5,6 +5,8 @@ import com.diamonddagger590.mccore.builder.item.impl.ItemBuilder;
 import com.diamonddagger590.mccore.exception.gui.IllegalSlotAssignmentException;
 import com.diamonddagger590.mccore.gui.slot.Slot;
 import com.diamonddagger590.mccore.player.CorePlayer;
+import com.diamonddagger590.mccore.registry.RegistryKey;
+import com.diamonddagger590.mccore.registry.manager.ManagerKey;
 import com.google.common.base.Preconditions;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -13,7 +15,6 @@ import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,15 +35,9 @@ public abstract class BaseGui<P extends CorePlayer> implements Listener, Gui<P> 
         }
     };
     private final UUID guiUUID;
-    @Nullable
     private final P creatingPlayer;
     private Map<Integer, Slot<P>> slots = new HashMap<>();
     protected Inventory inventory;
-
-    public BaseGui() {
-        this.guiUUID = UUID.randomUUID();
-        this.creatingPlayer = null;
-    }
 
     public BaseGui(@NotNull P creatingPlayer) {
         this.guiUUID = creatingPlayer.getUUID();
@@ -61,8 +56,8 @@ public abstract class BaseGui<P extends CorePlayer> implements Listener, Gui<P> 
      * @return An {@link Optional} containing the {@link P} that created this GUI if present.
      */
     @NotNull
-    public Optional<P> getCreatingPlayer() {
-        return Optional.ofNullable(creatingPlayer);
+    public P getCreatingPlayer() {
+        return creatingPlayer;
     }
 
     /**
@@ -98,7 +93,7 @@ public abstract class BaseGui<P extends CorePlayer> implements Listener, Gui<P> 
         Preconditions.checkArgument(index < inventory.getSize());
         slots.put(index, slot);
         ItemBuilder itemBuilder = slot.getItem(creatingPlayer);
-        inventory.setItem(index, creatingPlayer != null ? itemBuilder.asItemStack(creatingPlayer.getPlugin().getAdventure().player(creatingPlayer.getUUID())) : itemBuilder.asItemStack());
+        inventory.setItem(index, itemBuilder.asItemStack(creatingPlayer.getPlugin().getAdventure().player(creatingPlayer.getUUID())));
     }
 
     /**
@@ -120,7 +115,11 @@ public abstract class BaseGui<P extends CorePlayer> implements Listener, Gui<P> 
     public void handleClickEvent(@NotNull InventoryClickEvent inventoryClickEvent) {
         int slotId = inventoryClickEvent.getSlot();
         Slot<P> slot = getSlot(slotId);
-        var corePlayerOptional = CorePlugin.getInstance().getPlayerManager().getPlayer(inventoryClickEvent.getWhoClicked().getUniqueId());
+        Optional<CorePlayer> corePlayerOptional = (Optional<CorePlayer>) CorePlugin.getInstance()
+                .registryAccess()
+                .registry(RegistryKey.MANAGER)
+                .manager(ManagerKey.CORE_PLAYER_MANAGER)
+                .getPlayer(inventoryClickEvent.getWhoClicked().getUniqueId());
         if (canProcessEvent((Player) inventoryClickEvent.getWhoClicked(), inventoryClickEvent.getView().getTopInventory())) {
             // Handle clicking on the bottom inventory
             if (inventoryClickEvent.getView().getBottomInventory() == inventoryClickEvent.getClickedInventory()) {
@@ -178,16 +177,6 @@ public abstract class BaseGui<P extends CorePlayer> implements Listener, Gui<P> 
     }
 
     /**
-     * Register the events that this GUI should be a listener of
-     */
-    public abstract void registerListeners();
-
-    /**
-     * Unregister this GUI as a listener
-     */
-    public abstract void unregisterListeners();
-
-    /**
      * Checks to see if this GUI can process an event for the provided {@link Player} and {@link Inventory}.
      * <p>
      * This logic should be checked to validate that this is the GUI calling some sort of event such as an {@link org.bukkit.event.inventory.InventoryClickEvent}.
@@ -197,8 +186,8 @@ public abstract class BaseGui<P extends CorePlayer> implements Listener, Gui<P> 
      * @return {@code true} if this GUI can process an event for the provided {@link Player} and {@link Inventory}
      */
     public boolean canProcessEvent(@NotNull Player player, @NotNull Inventory inventory) {
-        GuiTracker guiTracker = CorePlugin.getInstance().getGuiTracker();
-        return inventory == getInventory() && guiTracker.getOpenedGui(player).isPresent() && guiTracker.getOpenedGui(player).get() == this;
+        GuiManager<?, ?> guiManager = CorePlugin.getInstance().registryAccess().registry(RegistryKey.MANAGER).manager(ManagerKey.CORE_GUI_MANAGER);
+        return inventory == getInventory() && guiManager.getOpenedGui(player).isPresent() && guiManager.getOpenedGui(player).get() == this;
     }
 
     /**

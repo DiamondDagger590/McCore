@@ -3,6 +3,7 @@ package com.diamonddagger590.mccore.chat;
 import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.pair.ImmutablePair;
 import com.diamonddagger590.mccore.pair.Pair;
+import com.diamonddagger590.mccore.registry.manager.Manager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -13,13 +14,12 @@ import java.util.UUID;
 /**
  * Handles managing and expiring {@link ChatResponse}s.
  */
-public class ChatResponseManager {
+public class ChatResponseManager extends Manager<CorePlugin> {
 
-    private final CorePlugin corePlugin;
     private final Map<UUID, Pair<ChatResponse, ChatResponseExpireTask>> pendingResponses = new HashMap<>();
 
-    public ChatResponseManager(CorePlugin corePlugin) {
-        this.corePlugin = corePlugin;
+    public ChatResponseManager(@NotNull CorePlugin corePlugin) {
+        super(corePlugin);
     }
 
     /**
@@ -58,7 +58,7 @@ public class ChatResponseManager {
             response.getLeft().onExpire();
             response.getRight().cancelTask();
         }
-        var pair = ImmutablePair.of(chatResponse, new ChatResponseExpireTask(corePlugin, chatResponse));
+        var pair = ImmutablePair.of(chatResponse, new ChatResponseExpireTask(plugin(), chatResponse));
         pendingResponses.put(chatterUUID, pair);
         // Add an expire task so if the chatter doesn't respond, then the response is removed
         pair.getRight().runTask();

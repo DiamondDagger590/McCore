@@ -63,4 +63,14 @@ import java.util.UUID;
     default void refreshGUI() {
         paintInventory();
     }
+
+    /**
+     * Register the events that this GUI should be a listener of
+     */
+    void registerListeners();
+
+    /**
+     * Unregister this GUI as a listener
+     */
+    void unregisterListeners();
 }
