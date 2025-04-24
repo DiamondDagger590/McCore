@@ -23,7 +23,7 @@ import static com.diamonddagger590.mccore.registry.manager.ManagerKeyImpl.create
  *
  * @param <M> The {@link Manager} being represented by this key.
  */
-public sealed interface ManagerKey<M> permits ManagerKeyImpl {
+public interface ManagerKey<M> {
 
     ManagerKey<CoreCommandManager> COMMAND = create(CoreCommandManager.class);
     ManagerKey<DriverManager> DRIVER = create(DriverManager.class);

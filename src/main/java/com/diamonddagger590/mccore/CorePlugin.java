@@ -9,7 +9,6 @@ import com.diamonddagger590.mccore.database.driver.DriverManager;
 import com.diamonddagger590.mccore.external.headdatabase.HeadDatabaseHook;
 import com.diamonddagger590.mccore.external.itemsadder.ItemsAdderHook;
 import com.diamonddagger590.mccore.external.nexo.NexoHook;
-import com.diamonddagger590.mccore.external.papi.PapiHook;
 import com.diamonddagger590.mccore.listener.ChatResponseListener;
 import com.diamonddagger590.mccore.listener.GuiCloseListener;
 import com.diamonddagger590.mccore.listener.GuiRefreshListener;
@@ -106,10 +105,6 @@ public abstract class CorePlugin extends JavaPlugin {
      * Sets up external plugin hooks for plugins.
      */
     protected void setupHooks() {
-        if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-            getLogger().info("Papi PlaceholderAPI found... registering hooks");
-            registryAccess.registry(RegistryKey.PLUGIN_HOOK).register(new PapiHook(this));
-        }
         if (Bukkit.getPluginManager().isPluginEnabled("Nexo")) {
             getLogger().info("Nexo found... registering hooks");
             registryAccess.registry(RegistryKey.PLUGIN_HOOK).register(new NexoHook(this));

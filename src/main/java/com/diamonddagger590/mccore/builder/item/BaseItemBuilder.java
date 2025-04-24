@@ -969,7 +969,7 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
      */
     @NotNull
     protected Component parseString(@NotNull String message, @Nullable Audience audience) {
-        var papiHookOptional = corePlugin.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(PluginHookKey.PAPI);
+        var papiHookOptional = corePlugin.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(PluginHookKey.CORE_PAPI);
         if (papiHookOptional.isPresent() && audience instanceof Player player) {
             message = papiHookOptional.get().translateMessage(player, message);
         }
