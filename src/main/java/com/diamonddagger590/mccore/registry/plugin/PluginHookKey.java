@@ -5,6 +5,7 @@ import com.diamonddagger590.mccore.external.itemsadder.ItemsAdderHook;
 import com.diamonddagger590.mccore.external.nexo.NexoHook;
 import com.diamonddagger590.mccore.external.papi.PapiHook;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.diamonddagger590.mccore.registry.plugin.PluginHookKeyImpl.create;
@@ -20,12 +21,15 @@ import static com.diamonddagger590.mccore.registry.plugin.PluginHookKeyImpl.crea
  *
  * @param <P> The {@link PluginHook} being represented by this key.
  */
-public sealed interface PluginHookKey<P extends PluginHook> permits PluginHookKeyImpl {
+public interface PluginHookKey<P extends PluginHook> {
 
     PluginHookKey<HeadDatabaseHook> HEAD_DATABASE = create(HeadDatabaseHook.class);
-    PluginHookKey<PapiHook> PAPI = create(PapiHook.class);
     PluginHookKey<NexoHook> NEXO = create(NexoHook.class);
     PluginHookKey<ItemsAdderHook> ITEMS_ADDER = create(ItemsAdderHook.class);
+
+    @ApiStatus.Internal
+    PluginHookKey<PapiHook> CORE_PAPI = create(PapiHook.class);
+
 
     /**
      * Gets the {@link Class} of the {@link PluginHook} represented by this key.

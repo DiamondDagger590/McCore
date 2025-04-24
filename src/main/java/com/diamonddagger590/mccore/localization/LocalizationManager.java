@@ -104,7 +104,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
                 // Check all registered configurations for the message
                 for (YamlDocument yamlDocument : documents) {
                     if (yamlDocument.contains(route)) {
-                        var papiHookOptional = plugin().registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(PluginHookKey.PAPI);
+                        var papiHookOptional = plugin().registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(PluginHookKey.CORE_PAPI);
                         var playerOptional = player.getAsBukkitPlayer();
                         String message = yamlDocument.getString(route);
                         if (papiHookOptional.isPresent() && playerOptional.isPresent()) {
@@ -164,7 +164,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
                 // Check all registered configurations for the message
                 for (YamlDocument yamlDocument : documents) {
                     if (yamlDocument.contains(route)) {
-                        var papiHookOptional = plugin().registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(PluginHookKey.PAPI);
+                        var papiHookOptional = plugin().registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(PluginHookKey.CORE_PAPI);
                         var playerOptional = player.getAsBukkitPlayer();
                         List<String> message = yamlDocument.getStringList(route);
                         List<String> returnList = new ArrayList<>();

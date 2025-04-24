@@ -12,7 +12,7 @@ import static com.diamonddagger590.mccore.registry.RegistryKeyImpl.create;
  *
  * @param <T> The {@link Registry} being represented by a key.
  */
-public sealed interface RegistryKey<T extends Registry<?>> permits RegistryKeyImpl {
+public interface RegistryKey<T extends Registry<?>> {
 
     RegistryKey<ManagerRegistry> MANAGER = create(ManagerRegistry.class);
     RegistryKey<PluginHookRegistry> PLUGIN_HOOK = create(PluginHookRegistry.class);
