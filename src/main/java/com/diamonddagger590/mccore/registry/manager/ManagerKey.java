@@ -4,10 +4,7 @@ import com.diamonddagger590.mccore.chat.ChatResponseManager;
 import com.diamonddagger590.mccore.command.CoreCommandManager;
 import com.diamonddagger590.mccore.configuration.ReloadableContentManager;
 import com.diamonddagger590.mccore.database.driver.DriverManager;
-import com.diamonddagger590.mccore.gui.GuiManager;
-import com.diamonddagger590.mccore.player.PlayerManager;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.diamonddagger590.mccore.registry.manager.ManagerKeyImpl.create;
@@ -29,13 +26,6 @@ public interface ManagerKey<M> {
     ManagerKey<DriverManager> DRIVER = create(DriverManager.class);
     ManagerKey<ReloadableContentManager> RELOADABLE_CONTENT = create(ReloadableContentManager.class);
     ManagerKey<ChatResponseManager> CHAT_RESPONSE = create(ChatResponseManager.class);
-
-    @ApiStatus.Internal
-    @SuppressWarnings("rawtypes")
-    ManagerKey<GuiManager> CORE_GUI_MANAGER = create(GuiManager.class);
-    @ApiStatus.Internal
-    @SuppressWarnings("rawtypes")
-    ManagerKey<PlayerManager> CORE_PLAYER_MANAGER = create(PlayerManager.class);
 
     /**
      * Gets the {@link Class} of the {@link Manager} represented by this key.

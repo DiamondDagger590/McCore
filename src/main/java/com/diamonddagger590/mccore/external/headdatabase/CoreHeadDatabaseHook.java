@@ -12,11 +12,11 @@ import java.util.Optional;
  * The hook needed to support <a href="https://www.spigotmc.org/resources/head-database.14280/">HeadDatabase</a>
  * for this plugin.
  */
-public class HeadDatabaseHook extends PluginHook<CorePlugin> {
+public class CoreHeadDatabaseHook extends PluginHook<CorePlugin> {
 
     private final HeadDatabaseAPI headDatabaseAPI;
 
-    public HeadDatabaseHook(@NotNull final CorePlugin plugin) {
+    public CoreHeadDatabaseHook(@NotNull final CorePlugin plugin) {
         super(plugin);
         this.headDatabaseAPI = new HeadDatabaseAPI();
     }

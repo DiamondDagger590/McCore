@@ -27,6 +27,9 @@ public final class RegistryAccess implements Registry<Registry<?>> {
      * @param registry The registry to register.
      */
     public void register(@NotNull Registry<?> registry) {
+        if (registryMap.containsKey(registry.getClass())) {
+            throw new IllegalArgumentException("Registry already registered: " + registry.getClass());
+        }
         this.registryMap.put(registry.getClass(), registry);
     }
 

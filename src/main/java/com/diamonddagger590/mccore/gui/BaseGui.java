@@ -6,7 +6,7 @@ import com.diamonddagger590.mccore.exception.gui.IllegalSlotAssignmentException;
 import com.diamonddagger590.mccore.gui.slot.Slot;
 import com.diamonddagger590.mccore.player.CorePlayer;
 import com.diamonddagger590.mccore.registry.RegistryKey;
-import com.diamonddagger590.mccore.registry.manager.ManagerKey;
+import com.diamonddagger590.mccore.registry.manager.CoreManagerKey;
 import com.google.common.base.Preconditions;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -118,7 +118,7 @@ public abstract class BaseGui<P extends CorePlayer> implements Listener, Gui<P> 
         Optional<CorePlayer> corePlayerOptional = (Optional<CorePlayer>) CorePlugin.getInstance()
                 .registryAccess()
                 .registry(RegistryKey.MANAGER)
-                .manager(ManagerKey.CORE_PLAYER_MANAGER)
+                .manager(CoreManagerKey.CORE_PLAYER_MANAGER)
                 .getPlayer(inventoryClickEvent.getWhoClicked().getUniqueId());
         if (canProcessEvent((Player) inventoryClickEvent.getWhoClicked(), inventoryClickEvent.getView().getTopInventory())) {
             // Handle clicking on the bottom inventory
@@ -186,7 +186,7 @@ public abstract class BaseGui<P extends CorePlayer> implements Listener, Gui<P> 
      * @return {@code true} if this GUI can process an event for the provided {@link Player} and {@link Inventory}
      */
     public boolean canProcessEvent(@NotNull Player player, @NotNull Inventory inventory) {
-        GuiManager<?, ?> guiManager = CorePlugin.getInstance().registryAccess().registry(RegistryKey.MANAGER).manager(ManagerKey.CORE_GUI_MANAGER);
+        GuiManager<?, ?> guiManager = CorePlugin.getInstance().registryAccess().registry(RegistryKey.MANAGER).manager(CoreManagerKey.CORE_GUI_MANAGER);
         return inventory == getInventory() && guiManager.getOpenedGui(player).isPresent() && guiManager.getOpenedGui(player).get() == this;
     }
 
