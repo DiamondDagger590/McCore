@@ -2,7 +2,7 @@ package com.diamonddagger590.mccore.builder.item;
 
 import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.registry.RegistryKey;
-import com.diamonddagger590.mccore.registry.plugin.PluginHookKey;
+import com.diamonddagger590.mccore.registry.plugin.CorePluginHookKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ItemType;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +20,7 @@ public enum ItemPluginType {
 
     NEXO((customItem) -> {
         CorePlugin corePlugin = CorePlugin.getInstance();
-        var nexoHookOptional = corePlugin.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(PluginHookKey.NEXO);
+        var nexoHookOptional = corePlugin.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(CorePluginHookKey.CORE_NEXO);
         if (nexoHookOptional.isPresent()) {
             var itemOptional = nexoHookOptional.get().getNexoItem(customItem);
             if (itemOptional.isPresent()) {
@@ -40,7 +40,7 @@ public enum ItemPluginType {
     }, "nexo"),
     ITEMS_ADDER(customItem -> {
         CorePlugin corePlugin = CorePlugin.getInstance();
-        var itemsAdderOptional = corePlugin.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(PluginHookKey.ITEMS_ADDER);
+        var itemsAdderOptional = corePlugin.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(CorePluginHookKey.CORE_ITEMS_ADDER);
         if (itemsAdderOptional.isPresent()) {
             var itemOptional = itemsAdderOptional.get().getItemsAdderItem(customItem);
             if (itemOptional.isPresent()) {
@@ -60,8 +60,8 @@ public enum ItemPluginType {
     }, "itemsadder", "items_adder"),
     NONE(customItem -> {
         CorePlugin corePlugin = CorePlugin.getInstance();
-        var nexoHookOptional = corePlugin.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(PluginHookKey.NEXO);
-        var itemsAdderHookOptional = corePlugin.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(PluginHookKey.ITEMS_ADDER);
+        var nexoHookOptional = corePlugin.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(CorePluginHookKey.CORE_NEXO);
+        var itemsAdderHookOptional = corePlugin.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(CorePluginHookKey.CORE_ITEMS_ADDER);
         if (nexoHookOptional.isPresent() && nexoHookOptional.get().doesNexoItemExist(customItem)) {
             var itemOptional = nexoHookOptional.get().getNexoItem(customItem);
             if (itemOptional.isPresent()) {

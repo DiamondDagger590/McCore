@@ -17,21 +17,24 @@ import java.util.Optional;
  * To access this registry, call {@link com.diamonddagger590.mccore.registry.RegistryAccess#registry(RegistryKey)}
  * while providing {@link RegistryKey#PLUGIN_HOOK}.
  */
-public class PluginHookRegistry implements Registry<PluginHook> {
+public class PluginHookRegistry implements Registry<PluginHook<?>> {
 
-    private final Map<Class<? extends PluginHook>, PluginHook> hooks;
+    private final Map<Class<?>, PluginHook<?>> hooks;
 
     public PluginHookRegistry() {
         this.hooks = new HashMap<>();
     }
 
     @Override
-    public void register(@NotNull PluginHook pluginHook) {
+    public void register(@NotNull PluginHook<?> pluginHook) {
+        if (hooks.containsKey(pluginHook.getClass())) {
+            throw new IllegalArgumentException("Plugin hook already registered: " + pluginHook.getClass());
+        }
         hooks.put(pluginHook.getClass(), pluginHook);
     }
 
     @Override
-    public boolean registered(@NotNull PluginHook pluginHook) {
+    public boolean registered(@NotNull PluginHook<?> pluginHook) {
         return hooks.containsKey(pluginHook.getClass());
     }
 
@@ -47,7 +50,7 @@ public class PluginHookRegistry implements Registry<PluginHook> {
      */
     @NotNull
     @SuppressWarnings("unchecked")
-    public <T extends PluginHook> Optional<T> pluginHook(@NotNull PluginHookKey<T> pluginHookKey) {
+    public <T extends PluginHook<?>> Optional<T> pluginHook(@NotNull PluginHookKey<T> pluginHookKey) {
         return hooks.containsKey(pluginHookKey.hookClass()) ? Optional.of((T) hooks.get(pluginHookKey.hookClass())) : Optional.empty();
     }
 }

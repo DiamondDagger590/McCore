@@ -8,9 +8,9 @@ import com.diamonddagger590.mccore.builder.item.impl.SpawnerBuilder;
 import com.diamonddagger590.mccore.builder.item.impl.fireworks.FireworkBuilder;
 import com.diamonddagger590.mccore.builder.item.impl.fireworks.FireworkStarBuilder;
 import com.diamonddagger590.mccore.exception.builder.item.InvalidItemBuilderException;
+import com.diamonddagger590.mccore.external.headdatabase.CoreHeadDatabaseHook;
 import com.diamonddagger590.mccore.registry.RegistryKey;
-import com.diamonddagger590.mccore.registry.plugin.PluginHookKey;
-import com.diamonddagger590.mccore.external.headdatabase.HeadDatabaseHook;
+import com.diamonddagger590.mccore.registry.plugin.CorePluginHookKey;
 import com.google.common.collect.ImmutableMultimap;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.*;
@@ -218,10 +218,10 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
      * @return This builder.
      */
     public B withSkull(@NotNull final String skull) {
-        var headDatabaseHookOptional = corePlugin.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(PluginHookKey.HEAD_DATABASE);
+        var headDatabaseHookOptional = corePlugin.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(CorePluginHookKey.CORE_HEAD_DATABASE);
         if (skull.isEmpty() || headDatabaseHookOptional.isEmpty()) return (B) this;
-        HeadDatabaseHook headDatabaseHook = headDatabaseHookOptional.get();
-        this.itemStack = headDatabaseHook.isHead(skull) ? headDatabaseHook.getHead(skull).orElse(ItemType.STONE.createItemStack(1)) : ItemType.PLAYER_HEAD.createItemStack();
+        CoreHeadDatabaseHook coreHeadDatabaseHook = headDatabaseHookOptional.get();
+        this.itemStack = coreHeadDatabaseHook.isHead(skull) ? coreHeadDatabaseHook.getHead(skull).orElse(ItemType.STONE.createItemStack(1)) : ItemType.PLAYER_HEAD.createItemStack();
         return (B) this;
     }
 
@@ -969,7 +969,7 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
      */
     @NotNull
     protected Component parseString(@NotNull String message, @Nullable Audience audience) {
-        var papiHookOptional = corePlugin.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(PluginHookKey.CORE_PAPI);
+        var papiHookOptional = corePlugin.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(CorePluginHookKey.CORE_PAPI);
         if (papiHookOptional.isPresent() && audience instanceof Player player) {
             message = papiHookOptional.get().translateMessage(player, message);
         }

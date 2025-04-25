@@ -10,9 +10,9 @@ import org.jetbrains.annotations.NotNull;
  * A hook for containing all code related to <a href="https://www.spigotmc.org/resources/placeholderapi.6245/">PlaceholderAPI</a>
  * that this plugin needs in order to support it.
  */
-public abstract class PapiHook<CP extends CorePlugin> extends PluginHook<CP> {
+public class CorePapiHook extends PluginHook<CorePlugin> {
 
-    public PapiHook(@NotNull CP plugin) {
+    public CorePapiHook(@NotNull CorePlugin plugin) {
         super(plugin);
     }
 

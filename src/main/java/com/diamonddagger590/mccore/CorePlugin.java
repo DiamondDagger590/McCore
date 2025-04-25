@@ -6,9 +6,12 @@ import com.diamonddagger590.mccore.command.CoreCommandManager;
 import com.diamonddagger590.mccore.configuration.ReloadableContentManager;
 import com.diamonddagger590.mccore.database.Database;
 import com.diamonddagger590.mccore.database.driver.DriverManager;
-import com.diamonddagger590.mccore.external.headdatabase.HeadDatabaseHook;
-import com.diamonddagger590.mccore.external.itemsadder.ItemsAdderHook;
-import com.diamonddagger590.mccore.external.nexo.NexoHook;
+import com.diamonddagger590.mccore.external.headdatabase.CoreHeadDatabaseHook;
+import com.diamonddagger590.mccore.external.itemsadder.CoreItemsAdderHook;
+import com.diamonddagger590.mccore.external.modelengine.CoreModelEngineHook;
+import com.diamonddagger590.mccore.external.mythicmobs.CoreMythicMobsHook;
+import com.diamonddagger590.mccore.external.nexo.CoreNexoHook;
+import com.diamonddagger590.mccore.external.papi.CorePapiHook;
 import com.diamonddagger590.mccore.listener.ChatResponseListener;
 import com.diamonddagger590.mccore.listener.GuiCloseListener;
 import com.diamonddagger590.mccore.listener.GuiRefreshListener;
@@ -106,16 +109,28 @@ public abstract class CorePlugin extends JavaPlugin {
      */
     protected void setupHooks() {
         if (Bukkit.getPluginManager().isPluginEnabled("Nexo")) {
-            getLogger().info("Nexo found... registering hooks");
-            registryAccess.registry(RegistryKey.PLUGIN_HOOK).register(new NexoHook(this));
+            getLogger().info("Nexo found... registering hooks for core");
+            registryAccess.registry(RegistryKey.PLUGIN_HOOK).register(new CoreNexoHook(this));
         }
         if (Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) {
-            getLogger().info("ItemsAdder found... registering hooks");
-            registryAccess.registry(RegistryKey.PLUGIN_HOOK).register(new ItemsAdderHook(this));
+            getLogger().info("ItemsAdder found... registering hook for core");
+            registryAccess.registry(RegistryKey.PLUGIN_HOOK).register(new CoreItemsAdderHook(this));
         }
         if (Bukkit.getPluginManager().isPluginEnabled("HeadDatabase")) {
-            getLogger().info("HeadDatabase found... registering hooks");
-            registryAccess.registry(RegistryKey.PLUGIN_HOOK).register(new HeadDatabaseHook(this));
+            getLogger().info("HeadDatabase found... registering hooks for core");
+            registryAccess.registry(RegistryKey.PLUGIN_HOOK).register(new CoreHeadDatabaseHook(this));
+        }
+        if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            getLogger().info("PlaceholderAPI found... registering placeholders translation support for core");
+            registryAccess.registry(RegistryKey.PLUGIN_HOOK).register(new CorePapiHook(this));
+        }
+        if (Bukkit.getPluginManager().isPluginEnabled("ModelEngine")) {
+            getLogger().info("ModelEngine found... registering placeholders translation support for core");
+            registryAccess.registry(RegistryKey.PLUGIN_HOOK).register(new CoreModelEngineHook(this));
+        }
+        if (Bukkit.getPluginManager().isPluginEnabled("MythicMobs")) {
+            getLogger().info("MythicMobs found... registering placeholders translation support for core");
+            registryAccess.registry(RegistryKey.PLUGIN_HOOK).register(new CoreMythicMobsHook(this));
         }
     }
 

@@ -6,7 +6,7 @@ import com.diamonddagger590.mccore.database.table.impl.MutexDAO;
 import com.diamonddagger590.mccore.event.player.PlayerLoadEvent;
 import com.diamonddagger590.mccore.player.CorePlayer;
 import com.diamonddagger590.mccore.registry.RegistryKey;
-import com.diamonddagger590.mccore.registry.manager.ManagerKey;
+import com.diamonddagger590.mccore.registry.manager.CoreManagerKey;
 import com.diamonddagger590.mccore.task.core.CoreTask;
 import com.diamonddagger590.mccore.task.core.ExpireableCoreTask;
 import org.bukkit.Bukkit;
@@ -39,7 +39,7 @@ public abstract class PlayerLoadTask extends ExpireableCoreTask {
          If the player is already in the player manager, then that means they logged out then back in.
          We need to check for that and don't load their data until they are removed from the manager.
          */
-        if (CorePlugin.getInstance().registryAccess().registry(RegistryKey.MANAGER).manager(ManagerKey.CORE_PLAYER_MANAGER).getPlayer(corePlayer.getUUID()).isPresent()) {
+        if (CorePlugin.getInstance().registryAccess().registry(RegistryKey.MANAGER).manager(CoreManagerKey.CORE_PLAYER_MANAGER).getPlayer(corePlayer.getUUID()).isPresent()) {
             resumeTask();
             startInterval();
             return;

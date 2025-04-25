@@ -7,7 +7,7 @@ import com.diamonddagger590.mccore.player.CorePlayer;
 import com.diamonddagger590.mccore.registry.RegistryKey;
 import com.diamonddagger590.mccore.registry.manager.Manager;
 import com.diamonddagger590.mccore.registry.manager.ManagerKey;
-import com.diamonddagger590.mccore.registry.plugin.PluginHookKey;
+import com.diamonddagger590.mccore.registry.plugin.CorePluginHookKey;
 import com.diamonddagger590.mccore.util.LinkedNode;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
@@ -104,7 +104,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
                 // Check all registered configurations for the message
                 for (YamlDocument yamlDocument : documents) {
                     if (yamlDocument.contains(route)) {
-                        var papiHookOptional = plugin().registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(PluginHookKey.CORE_PAPI);
+                        var papiHookOptional = plugin().registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(CorePluginHookKey.CORE_PAPI);
                         var playerOptional = player.getAsBukkitPlayer();
                         String message = yamlDocument.getString(route);
                         if (papiHookOptional.isPresent() && playerOptional.isPresent()) {
@@ -164,7 +164,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
                 // Check all registered configurations for the message
                 for (YamlDocument yamlDocument : documents) {
                     if (yamlDocument.contains(route)) {
-                        var papiHookOptional = plugin().registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(PluginHookKey.CORE_PAPI);
+                        var papiHookOptional = plugin().registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(CorePluginHookKey.CORE_PAPI);
                         var playerOptional = player.getAsBukkitPlayer();
                         List<String> message = yamlDocument.getStringList(route);
                         List<String> returnList = new ArrayList<>();

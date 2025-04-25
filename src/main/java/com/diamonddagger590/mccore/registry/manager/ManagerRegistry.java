@@ -23,6 +23,9 @@ public class ManagerRegistry implements Registry<Manager<?>> {
 
     @Override
     public void register(@NotNull Manager<?> manager) {
+        if (managers.containsKey(manager.getClass())) {
+            throw new IllegalArgumentException("Manager already registered: " + manager.getClass());
+        }
         managers.put(manager.getClass(), manager);
     }
 

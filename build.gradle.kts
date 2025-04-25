@@ -42,8 +42,8 @@ repositories {
 
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/") //Papi
     maven("https://repo.nexomc.com/releases") // Nexo
-
-    maven("https://maven.devs.beer/") // IemsAdder
+    maven("https://maven.devs.beer/") // ItemsAdder
+    maven("https://mvn.lumine.io/repository/maven-public/") //MythicMobs + Model Engine
 
     //Spigot
     maven("https://oss.sonatype.org/content/repositories/snapshots/")
@@ -76,6 +76,12 @@ dependencies {
     api("com.nexomc:nexo:$nexoVersion") {
         exclude(group = "net.byteflux")
     }
+
+    val mythicMobsVersion = "5.6.1"
+    api("io.lumine:Mythic-Dist:$mythicMobsVersion")
+
+    val modelEngineVersion = "R4.0.4"
+    api("com.ticxo.modelengine:ModelEngine:$modelEngineVersion")
 
     // Command annotations
     val cloudMinecraftVersion = "2.0.0-beta.9"
