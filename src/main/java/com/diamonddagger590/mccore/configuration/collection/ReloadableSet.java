@@ -1,5 +1,6 @@
-package com.diamonddagger590.mccore.configuration;
+package com.diamonddagger590.mccore.configuration.collection;
 
+import com.diamonddagger590.mccore.configuration.ReloadableContent;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import dev.dejvokep.boostedyaml.route.Route;
 import org.jetbrains.annotations.NotNull;

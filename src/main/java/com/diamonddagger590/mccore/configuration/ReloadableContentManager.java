@@ -1,6 +1,7 @@
 package com.diamonddagger590.mccore.configuration;
 
 import com.diamonddagger590.mccore.CorePlugin;
+import com.diamonddagger590.mccore.configuration.collection.ReloadableSet;
 import com.diamonddagger590.mccore.registry.manager.Manager;
 import org.jetbrains.annotations.NotNull;
 

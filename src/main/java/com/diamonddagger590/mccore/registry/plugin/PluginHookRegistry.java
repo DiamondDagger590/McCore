@@ -5,6 +5,7 @@ import com.diamonddagger590.mccore.registry.RegistryKey;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -52,5 +53,24 @@ public class PluginHookRegistry implements Registry<PluginHook<?>> {
     @SuppressWarnings("unchecked")
     public <T extends PluginHook<?>> Optional<T> pluginHook(@NotNull PluginHookKey<T> pluginHookKey) {
         return hooks.containsKey(pluginHookKey.hookClass()) ? Optional.of((T) hooks.get(pluginHookKey.hookClass())) : Optional.empty();
+    }
+
+    /**
+     * Gets a list of all registered {@link PluginHook}s that are a child of the provided class.
+     * <p>
+     * This allows for easy fetching of common plugin hooks such as providing {@link com.diamonddagger590.mccore.external.CustomBlockHook}
+     * to get all custom block hooks that are registered.
+     *
+     * @param extensible The class to get children plugin hooks of.
+     * @param <T>        The class type to return the {@link PluginHook}s as.
+     * @return A {@link List} of all registered {@link PluginHook}s that are a child of the provided
+     * class.
+     */
+    @NotNull
+    @SuppressWarnings("unchecked")
+    public <T> List<T> pluginHooks(@NotNull Class<T> extensible) {
+        return hooks.values().stream()
+                .filter(pluginHook -> pluginHook.getClass().isAssignableFrom(extensible))
+                .map(pluginHook -> (T) pluginHook).toList();
     }
 }

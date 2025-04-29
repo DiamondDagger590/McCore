@@ -1,5 +1,6 @@
-package com.diamonddagger590.mccore.configuration;
+package com.diamonddagger590.mccore.configuration.parser;
 
+import com.diamonddagger590.mccore.configuration.ReloadableContent;
 import com.diamonddagger590.mccore.parser.Parser;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import dev.dejvokep.boostedyaml.route.Route;

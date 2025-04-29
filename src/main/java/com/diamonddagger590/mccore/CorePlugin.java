@@ -144,6 +144,11 @@ public abstract class CorePlugin extends JavaPlugin {
         return ItemPluginType.NONE;
     }
 
+    /**
+     * Gets the {@link Database} instance for this plugin.
+     *
+     * @return The {@link Database} instance for this plugin.
+     */
     @NotNull
     public abstract Database getDatabase();
 
@@ -177,6 +182,11 @@ public abstract class CorePlugin extends JavaPlugin {
         return miniMessage;
     }
 
+    /**
+     * Gets the {@link RegistryAccess} instance used by this plugin.
+     *
+     * @return The {@link RegistryAccess} instance used by this plugin.
+     */
     @NotNull
     public final RegistryAccess registryAccess() {
         return registryAccess;
@@ -187,6 +197,7 @@ public abstract class CorePlugin extends JavaPlugin {
      *
      * @return {@code true} if we are running in unit test mode
      */
+    @Deprecated(forRemoval = true, since = "1.0.0.13-SNAPSHOT")
     public boolean isUnitTest() {
         return (getClassLoader().getClass().getPackageName().startsWith("be.seeseemelk.mockbukkit"));
     }
