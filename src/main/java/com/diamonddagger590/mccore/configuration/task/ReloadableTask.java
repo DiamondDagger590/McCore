@@ -1,5 +1,6 @@
-package com.diamonddagger590.mccore.configuration;
+package com.diamonddagger590.mccore.configuration.task;
 
+import com.diamonddagger590.mccore.configuration.ReloadableContent;
 import com.diamonddagger590.mccore.task.core.CancellableCoreTask;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import dev.dejvokep.boostedyaml.route.Route;

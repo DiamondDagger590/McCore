@@ -184,7 +184,7 @@ public class ItemBuilder extends BaseItemBuilder<ItemBuilder> {
         final Optional<EntityType> mobType = getEntityType(itemSection.getString(ItemBuilderConfigurationKeys.MOB_TYPE, null));
         mobType.ifPresent(entityType -> itemBuilder.asSpawnerBuilder().withEntityType(entityType).build());
 
-        itemBuilder.setTrim(itemSection.getString(ItemBuilderConfigurationKeys.TRIM_PATTERN, ""), itemSection.getString(ItemBuilderConfigurationKeys.TRIM_MATERIAL, ""), false);
+        itemBuilder.setTrim(itemSection.getString(ItemBuilderConfigurationKeys.TRIM_PATTERN, ""), itemSection.getString(ItemBuilderConfigurationKeys.TRIM_MATERIAL, ""));
 
         final Section potions = itemSection.getSection(ItemBuilderConfigurationKeys.POTION_HEADER);
         if (potions != null) {

@@ -22,7 +22,7 @@ public enum ItemPluginType {
         CorePlugin corePlugin = CorePlugin.getInstance();
         var nexoHookOptional = corePlugin.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(CorePluginHookKey.CORE_NEXO);
         if (nexoHookOptional.isPresent()) {
-            var itemOptional = nexoHookOptional.get().getNexoItem(customItem);
+            var itemOptional = nexoHookOptional.get().item(customItem);
             if (itemOptional.isPresent()) {
                 return itemOptional.get();
             }
@@ -42,7 +42,7 @@ public enum ItemPluginType {
         CorePlugin corePlugin = CorePlugin.getInstance();
         var itemsAdderOptional = corePlugin.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(CorePluginHookKey.CORE_ITEMS_ADDER);
         if (itemsAdderOptional.isPresent()) {
-            var itemOptional = itemsAdderOptional.get().getItemsAdderItem(customItem);
+            var itemOptional = itemsAdderOptional.get().item(customItem);
             if (itemOptional.isPresent()) {
                 return itemOptional.get();
             }
@@ -62,14 +62,14 @@ public enum ItemPluginType {
         CorePlugin corePlugin = CorePlugin.getInstance();
         var nexoHookOptional = corePlugin.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(CorePluginHookKey.CORE_NEXO);
         var itemsAdderHookOptional = corePlugin.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(CorePluginHookKey.CORE_ITEMS_ADDER);
-        if (nexoHookOptional.isPresent() && nexoHookOptional.get().doesNexoItemExist(customItem)) {
-            var itemOptional = nexoHookOptional.get().getNexoItem(customItem);
+        if (nexoHookOptional.isPresent() && nexoHookOptional.get().isItem(customItem)) {
+            var itemOptional = nexoHookOptional.get().item(customItem);
             if (itemOptional.isPresent()) {
                 return itemOptional.get();
             }
         }
-        if (itemsAdderHookOptional.isPresent() && itemsAdderHookOptional.get().doesItemsAdderExist(customItem)) {
-            var itemOptional = itemsAdderHookOptional.get().getItemsAdderItem(customItem);
+        if (itemsAdderHookOptional.isPresent() && itemsAdderHookOptional.get().isItem(customItem)) {
+            var itemOptional = itemsAdderHookOptional.get().item(customItem);
             if (itemOptional.isPresent()) {
                 return itemOptional.get();
             }

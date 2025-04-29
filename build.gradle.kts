@@ -23,7 +23,7 @@ apply {
 }
 
 //RECODE.RELEASE.PATCH.DEVELOPMENT
-version = "1.0.0.12-SNAPSHOT"
+version = "1.0.0.13-SNAPSHOT"
 group = "com.diamonddagger590"
 
 java {
@@ -59,29 +59,29 @@ dependencies {
     val intellijAnnotationVersion = "12.0"
     compileOnlyApi("com.intellij:annotations:$intellijAnnotationVersion")
 
-    val paperVersion = "1.21.4-R0.1-SNAPSHOT"
+    val paperVersion = "1.21.5-R0.1-SNAPSHOT"
     compileOnlyApi("io.papermc.paper:paper-api:$paperVersion")
 
     val placeholderAPIVersion = "2.11.6"
-    api("me.clip:placeholderapi:$placeholderAPIVersion")
+    compileOnlyApi("me.clip:placeholderapi:$placeholderAPIVersion")
     testImplementation("me.clip:placeholderapi:$placeholderAPIVersion")
 
     val headDatabaseVersion = "1.3.1"
-    api("com.arcaniax:HeadDatabase-API:$headDatabaseVersion")
+    compileOnly("com.arcaniax:HeadDatabase-API:$headDatabaseVersion")
 
     // Custom items
     val itemsAdderVersion = "4.0.2-beta-release-11"
-    api("dev.lone:api-itemsadder:$itemsAdderVersion")
+    compileOnly("dev.lone:api-itemsadder:$itemsAdderVersion")
     val nexoVersion = "1.2.0"
-    api("com.nexomc:nexo:$nexoVersion") {
+    compileOnly("com.nexomc:nexo:$nexoVersion") {
         exclude(group = "net.byteflux")
     }
 
     val mythicMobsVersion = "5.6.1"
-    api("io.lumine:Mythic-Dist:$mythicMobsVersion")
+    compileOnly("io.lumine:Mythic-Dist:$mythicMobsVersion")
 
     val modelEngineVersion = "R4.0.4"
-    api("com.ticxo.modelengine:ModelEngine:$modelEngineVersion")
+    compileOnly("com.ticxo.modelengine:ModelEngine:$modelEngineVersion")
 
     // Command annotations
     val cloudMinecraftVersion = "2.0.0-beta.9"

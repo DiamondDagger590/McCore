@@ -221,7 +221,7 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
         var headDatabaseHookOptional = corePlugin.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(CorePluginHookKey.CORE_HEAD_DATABASE);
         if (skull.isEmpty() || headDatabaseHookOptional.isEmpty()) return (B) this;
         CoreHeadDatabaseHook coreHeadDatabaseHook = headDatabaseHookOptional.get();
-        this.itemStack = coreHeadDatabaseHook.isHead(skull) ? coreHeadDatabaseHook.getHead(skull).orElse(ItemType.STONE.createItemStack(1)) : ItemType.PLAYER_HEAD.createItemStack();
+        this.itemStack = coreHeadDatabaseHook.isItem(skull) ? coreHeadDatabaseHook.item(skull).orElse(ItemType.STONE.createItemStack(1)) : ItemType.PLAYER_HEAD.createItemStack();
         return (B) this;
     }
 
@@ -476,8 +476,8 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
      */
     @NotNull
     public B hideToolTip() {
-        if (!this.itemStack.hasData(DataComponentTypes.HIDE_TOOLTIP)) {
-            this.itemStack.setData(DataComponentTypes.HIDE_TOOLTIP);
+        if (!this.itemStack.hasData(DataComponentTypes.TOOLTIP_DISPLAY)) {
+            this.itemStack.setData(DataComponentTypes.TOOLTIP_DISPLAY, TooltipDisplay.tooltipDisplay().hideTooltip(true).build());
         }
         return (B) this;
     }
@@ -489,34 +489,8 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
      */
     @NotNull
     public B showToolTip() {
-        if (this.itemStack.hasData(DataComponentTypes.HIDE_TOOLTIP)) {
-            this.itemStack.unsetData(DataComponentTypes.HIDE_TOOLTIP);
-        }
-        return (B) this;
-    }
-
-    /**
-     * Sets it so the underlying {@link ItemStack} has additional tooltips hidden.
-     *
-     * @return This builder.
-     */
-    @NotNull
-    public B hideAdditionalToolTip() {
-        if (!this.itemStack.hasData(DataComponentTypes.HIDE_ADDITIONAL_TOOLTIP)) {
-            this.itemStack.setData(DataComponentTypes.HIDE_ADDITIONAL_TOOLTIP);
-        }
-        return (B) this;
-    }
-
-    /**
-     * Sets it so the underlying {@link ItemStack} has additional tooltips shown.
-     *
-     * @return
-     */
-    @NotNull
-    public B showAdditionalToolTip() {
-        if (this.itemStack.hasData(DataComponentTypes.HIDE_ADDITIONAL_TOOLTIP)) {
-            this.itemStack.unsetData(DataComponentTypes.HIDE_ADDITIONAL_TOOLTIP);
+        if (this.itemStack.hasData(DataComponentTypes.TOOLTIP_DISPLAY)) {
+            this.itemStack.unsetData(DataComponentTypes.TOOLTIP_DISPLAY);
         }
         return (B) this;
     }
@@ -599,7 +573,7 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
     @NotNull
     public B setUnbreakable(final boolean isUnbreakable) {
         if (isUnbreakable && !this.itemStack.hasData(DataComponentTypes.UNBREAKABLE)) {
-            this.itemStack.setData(DataComponentTypes.UNBREAKABLE, Unbreakable.unbreakable().build());
+            this.itemStack.setData(DataComponentTypes.UNBREAKABLE);
             return (B) this;
         }
         if (this.itemStack.hasData(DataComponentTypes.UNBREAKABLE)) {
@@ -653,18 +627,17 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
      *
      * @param pattern     The string representation of a {@link TrimPattern}.
      * @param material    The string representation of a {@link TrimMaterial}.
-     * @param hideToolTip If the trim should be shown in the tooltip or not.
      * @return This builder.
      */
     @NotNull
-    public B setTrim(@NotNull final String pattern, @NotNull final String material, final boolean hideToolTip) {
+    public B setTrim(@NotNull final String pattern, @NotNull final String material) {
         if (pattern.isEmpty() || material.isEmpty()) return (B) this;
         Optional<TrimMaterial> trimMaterial = getTrimMaterial(material);
         Optional<TrimPattern> trimPattern = getTrimPattern(pattern);
         if (trimPattern.isEmpty() || trimMaterial.isEmpty()) {
             return (B) this;
         }
-        return setTrim(trimPattern.get(), trimMaterial.get(), hideToolTip);
+        return setTrim(trimPattern.get(), trimMaterial.get());
     }
 
     /**
@@ -672,14 +645,12 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
      *
      * @param trimPattern  The {@link TrimPattern} to use.
      * @param trimMaterial The {@link TrimMaterial} to use.
-     * @param hideToolTip  If the trim should be shown in the tooltip or not.
      * @return This builder.
      */
     @NotNull
-    public B setTrim(@NotNull final TrimPattern trimPattern, @NotNull final TrimMaterial trimMaterial, final boolean hideToolTip) {
+    public B setTrim(@NotNull final TrimPattern trimPattern, @NotNull final TrimMaterial trimMaterial) {
         final ItemArmorTrim.Builder builder = ItemArmorTrim
-                .itemArmorTrim(new ArmorTrim(trimMaterial, trimPattern))
-                .showInTooltip(hideToolTip);
+                .itemArmorTrim(new ArmorTrim(trimMaterial, trimPattern));
         this.itemStack.setData(DataComponentTypes.TRIM, builder.build());
         return (B) this;
     }
