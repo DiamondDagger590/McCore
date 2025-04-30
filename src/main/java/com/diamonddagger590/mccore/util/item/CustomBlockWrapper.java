@@ -3,8 +3,10 @@ package com.diamonddagger590.mccore.util.item;
 import com.diamonddagger590.mccore.external.CustomBlockHook;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
 import com.diamonddagger590.mccore.registry.RegistryKey;
+import com.diamonddagger590.mccore.util.Methods;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.inventory.ItemType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,8 +39,15 @@ public class CustomBlockWrapper {
     }
 
     public CustomBlockWrapper(@NotNull String customBlock) {
-        this.material = null;
-        this.customBlock = customBlock;
+        ItemType itemType = io.papermc.paper.registry.RegistryAccess.registryAccess().getRegistry(io.papermc.paper.registry.RegistryKey.ITEM).get(Methods.getMinecraftKey(customBlock));
+        if (itemType != null) {
+            this.material = itemType.asMaterial();
+            this.customBlock = null;
+        }
+        else {
+            this.material = null;
+            this.customBlock = customBlock;
+        }
     }
 
     /**

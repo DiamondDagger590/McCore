@@ -4,8 +4,10 @@ import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.external.CustomItemHook;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
 import com.diamonddagger590.mccore.registry.RegistryKey;
+import com.diamonddagger590.mccore.util.Methods;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.ItemType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,8 +40,15 @@ public class CustomItemWrapper {
     }
 
     public CustomItemWrapper(@NotNull String customItem) {
-        this.material = null;
-        this.customItem = customItem;
+        ItemType itemType = io.papermc.paper.registry.RegistryAccess.registryAccess().getRegistry(io.papermc.paper.registry.RegistryKey.ITEM).get(Methods.getMinecraftKey(customItem));
+        if (itemType != null) {
+            this.material = itemType.asMaterial();
+            this.customItem = customItem;
+        }
+        else {
+            this.material = null;
+            this.customItem = customItem;
+        }
     }
 
     /**
