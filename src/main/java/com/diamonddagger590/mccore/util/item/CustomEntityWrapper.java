@@ -3,6 +3,7 @@ package com.diamonddagger590.mccore.util.item;
 import com.diamonddagger590.mccore.external.CustomEntityHook;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
 import com.diamonddagger590.mccore.registry.RegistryKey;
+import com.diamonddagger590.mccore.util.Methods;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +38,15 @@ public class CustomEntityWrapper {
     }
 
     public CustomEntityWrapper(@NotNull String customEntity) {
-        this.entityType = null;
-        this.customEntity = customEntity;
+        EntityType entityType = io.papermc.paper.registry.RegistryAccess.registryAccess().getRegistry(io.papermc.paper.registry.RegistryKey.ENTITY_TYPE).get(Methods.getMinecraftKey(customEntity));
+        if (entityType != null) {
+            this.entityType = entityType;
+            this.customEntity = null;
+        }
+        else {
+            this.entityType = null;
+            this.customEntity = customEntity;
+        }
     }
 
     /**
