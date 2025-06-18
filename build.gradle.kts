@@ -59,7 +59,7 @@ dependencies {
     val intellijAnnotationVersion = "12.0"
     compileOnlyApi("com.intellij:annotations:$intellijAnnotationVersion")
 
-    val paperVersion = "1.21.5-R0.1-SNAPSHOT"
+    val paperVersion = "1.21.6-R0.1-SNAPSHOT"
     compileOnlyApi("io.papermc.paper:paper-api:$paperVersion")
 
     val placeholderAPIVersion = "2.11.6"

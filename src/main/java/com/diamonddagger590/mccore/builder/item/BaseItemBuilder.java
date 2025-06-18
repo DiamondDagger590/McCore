@@ -13,7 +13,13 @@ import com.diamonddagger590.mccore.registry.RegistryKey;
 import com.diamonddagger590.mccore.registry.plugin.CorePluginHookKey;
 import com.google.common.collect.ImmutableMultimap;
 import io.papermc.paper.datacomponent.DataComponentTypes;
-import io.papermc.paper.datacomponent.item.*;
+import io.papermc.paper.datacomponent.item.CustomModelData;
+import io.papermc.paper.datacomponent.item.DyedItemColor;
+import io.papermc.paper.datacomponent.item.ItemArmorTrim;
+import io.papermc.paper.datacomponent.item.ItemEnchantments;
+import io.papermc.paper.datacomponent.item.ItemLore;
+import io.papermc.paper.datacomponent.item.MapItemColor;
+import io.papermc.paper.datacomponent.item.TooltipDisplay;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -36,9 +42,21 @@ import org.bukkit.inventory.meta.trim.TrimPattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-import static com.diamonddagger590.mccore.util.Methods.*;
+import static com.diamonddagger590.mccore.util.Methods.fromBase64;
+import static com.diamonddagger590.mccore.util.Methods.getColor;
+import static com.diamonddagger590.mccore.util.Methods.getDyeColor;
+import static com.diamonddagger590.mccore.util.Methods.getEnchantment;
+import static com.diamonddagger590.mccore.util.Methods.getFlag;
+import static com.diamonddagger590.mccore.util.Methods.getRGB;
+import static com.diamonddagger590.mccore.util.Methods.getTrimMaterial;
+import static com.diamonddagger590.mccore.util.Methods.getTrimPattern;
 
 /**
  * Forked from <a href="https://github.com/ryderbelserion/Fusion/blob/main/paper/src/main/java/com/ryderbelserion/fusion/paper/builder/items/modern/BaseItemBuilder.java">Fusion</a>.
