@@ -57,7 +57,7 @@ public class ManagerRegistry implements Registry<Manager<?>> {
          elsewhere.
          */
         for (Map.Entry<Class<?>, Manager<?>> entry : managers.entrySet()) {
-            if (entry.getKey().isAssignableFrom(managerKey.getClass())) {
+            if (managerKey.managerClass().isAssignableFrom(entry.getKey())) {
                 return (T) entry.getValue();
             }
         }

@@ -31,7 +31,10 @@ public class ReloadableTask<T extends CancellableCoreTask> extends ReloadableCon
     @Override
     public void reloadContent() {
         // Cancel the task, reload and create a new one and then run the new task
-        content.cancelTask();
+        // We check for null because on the first run this can be null before the first super is called.
+        if (content != null) {
+            content.cancelTask();
+        }
         super.reloadContent();
         content.runTask(async);
     }

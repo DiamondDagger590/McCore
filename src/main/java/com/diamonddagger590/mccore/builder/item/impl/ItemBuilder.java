@@ -140,7 +140,7 @@ public class ItemBuilder extends BaseItemBuilder<ItemBuilder> {
      */
     @NotNull
     public static ItemBuilder from(@NotNull Section itemSection) {
-        final String base64 = itemSection.getString(ItemBuilderConfigurationKeys.DATA, null);
+        final String base64 = itemSection.getString(ItemBuilderConfigurationKeys.DATA, "");
         final ItemBuilder itemBuilder = ItemBuilder.from(itemSection.getString(ItemBuilderConfigurationKeys.MATERIAL, "stone"));
         if (base64 != null && !base64.isEmpty()) {
             itemBuilder.withBase64(base64);
@@ -167,7 +167,7 @@ public class ItemBuilder extends BaseItemBuilder<ItemBuilder> {
             }
         }
 
-        final String player = itemSection.getString(ItemBuilderConfigurationKeys.PLAYER, null);
+        final String player = itemSection.getString(ItemBuilderConfigurationKeys.PLAYER, "");
         if (player != null && !player.isEmpty()) {
             final SkullBuilder skullBuilder = itemBuilder.asSkullBuilder();
             skullBuilder.withName(player).build();
@@ -181,7 +181,7 @@ public class ItemBuilder extends BaseItemBuilder<ItemBuilder> {
         itemBuilder.setColor(!color.isEmpty() ? color : !rgb.isEmpty() ? rgb : "");
 
         // Spawner
-        final Optional<EntityType> mobType = getEntityType(itemSection.getString(ItemBuilderConfigurationKeys.MOB_TYPE, null));
+        final Optional<EntityType> mobType = getEntityType(itemSection.getString(ItemBuilderConfigurationKeys.MOB_TYPE, ""));
         mobType.ifPresent(entityType -> itemBuilder.asSpawnerBuilder().withEntityType(entityType).build());
 
         itemBuilder.setTrim(itemSection.getString(ItemBuilderConfigurationKeys.TRIM_PATTERN, ""), itemSection.getString(ItemBuilderConfigurationKeys.TRIM_MATERIAL, ""));

@@ -56,7 +56,7 @@ public final class RegistryAccess implements Registry<Registry<?>> {
     @NotNull
     @SuppressWarnings("unchecked")
     public <T extends Registry<?>> T registry(@NotNull RegistryKey<T> registryKey) {
-        return (T) registryMap.get(registryKey.getClass());
+        return (T) registryMap.get(registryKey.registryClass());
     }
 
     /**

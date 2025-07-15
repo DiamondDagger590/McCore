@@ -37,6 +37,7 @@ public class FailSafeTransaction extends Transaction {
             connection.setAutoCommit(false);
             for (PreparedStatement preparedStatement : getPreparedStatements()) {
                 try (preparedStatement) {
+                    logger.info(preparedStatement.toString());
                     preparedStatement.executeUpdate();
                 }
             }
@@ -44,11 +45,13 @@ public class FailSafeTransaction extends Transaction {
         } catch (SQLException e) {
             logger.severe("Encountered an exception while executing a fail safe transaction... rolling back.");
             logger.severe(e.getMessage());
+            e.printStackTrace();
             try {
                 connection.rollback();
             } catch (SQLException rollbackException) {
                 logger.severe("Encountered an exception while rolling back transaction...");
                 logger.severe(rollbackException.getMessage());
+                rollbackException.printStackTrace();
             }
         }
     }

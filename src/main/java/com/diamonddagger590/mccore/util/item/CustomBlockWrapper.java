@@ -1,11 +1,14 @@
 package com.diamonddagger590.mccore.util.item;
 
+import com.diamonddagger590.mccore.builder.item.impl.ItemBuilder;
 import com.diamonddagger590.mccore.external.CustomBlockHook;
+import com.diamonddagger590.mccore.external.CustomItemHook;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
 import com.diamonddagger590.mccore.registry.RegistryKey;
 import com.diamonddagger590.mccore.util.Methods;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ItemType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +53,22 @@ public class CustomBlockWrapper {
         }
     }
 
+    public CustomBlockWrapper(@NotNull Block block) {
+        List<CustomBlockHook> pluginHooks = RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHooks(CustomBlockHook.class);
+        String customBlockResult = null;
+        for (CustomBlockHook hook : pluginHooks) {
+            if (hook.isCustomBlock(block)) {
+                var blockModelsOptional = hook.blockModels(block);
+                if (blockModelsOptional.isPresent() && !blockModelsOptional.get().isEmpty()) {
+                    customBlockResult =  blockModelsOptional.get().iterator().next();
+                    break;
+                }
+            }
+        }
+        this.material = customBlockResult == null ? block.getType() : null;
+        this.customBlock = customBlockResult;
+    }
+
     /**
      * Gets an {@link Optional} containing the {@link Material} represented
      * by this wrapper.
@@ -74,6 +93,22 @@ public class CustomBlockWrapper {
     @NotNull
     public Optional<String> customBlock() {
         return Optional.ofNullable(customBlock);
+    }
+
+    @NotNull
+    public ItemBuilder itemBuilder() {
+        if (customBlock != null) {
+            List<CustomItemHook> pluginHooks = RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHooks(CustomItemHook.class);
+            for (CustomItemHook hook : pluginHooks) {
+                var itemOptional = hook.item(customBlock);
+                if (itemOptional.isPresent()) {
+                    return ItemBuilder.from(itemOptional.get());
+                }
+            }
+            return ItemBuilder.from(new ItemStack(Material.AIR));
+        }
+        assert material != null;
+        return ItemBuilder.from(new ItemStack(material));
     }
 
     /**

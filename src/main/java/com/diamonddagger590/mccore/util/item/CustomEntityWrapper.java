@@ -49,6 +49,22 @@ public class CustomEntityWrapper {
         }
     }
 
+    public CustomEntityWrapper(@NotNull Entity entity) {
+        List<CustomEntityHook> pluginHooks = RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHooks(CustomEntityHook.class);
+        String customEntityResult = null;
+        for (CustomEntityHook hook : pluginHooks) {
+            if (hook.isCustomEntity(entity)) {
+                var entityModelsOptional = hook.entityModels(entity);
+                if (entityModelsOptional.isPresent() && !entityModelsOptional.get().isEmpty()) {
+                    customEntityResult =  entityModelsOptional.get().iterator().next();
+                    break;
+                }
+            }
+        }
+        this.entityType = customEntityResult == null ? entity.getType() : null;
+        this.customEntity = customEntityResult;
+    }
+
     /**
      * Gets an {@link Optional} containing the {@link EntityType} represented
      * by this wrapper.

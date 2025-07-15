@@ -1,6 +1,7 @@
 package com.diamonddagger590.mccore.util.item;
 
 import com.diamonddagger590.mccore.CorePlugin;
+import com.diamonddagger590.mccore.builder.item.impl.ItemBuilder;
 import com.diamonddagger590.mccore.external.CustomItemHook;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
 import com.diamonddagger590.mccore.registry.RegistryKey;
@@ -51,6 +52,22 @@ public class CustomItemWrapper {
         }
     }
 
+    public CustomItemWrapper(@NotNull ItemStack itemStack) {
+        List<CustomItemHook> pluginHooks = RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHooks(CustomItemHook.class);
+        String customItemResult = null;
+        for (CustomItemHook hook : pluginHooks) {
+            if (hook.isItem(itemStack)) {
+                var itemModelsOptional = hook.itemModels(itemStack);
+                if (itemModelsOptional.isPresent() && !itemModelsOptional.get().isEmpty()) {
+                    customItemResult =  itemModelsOptional.get().iterator().next();
+                    break;
+                }
+            }
+        }
+        this.material = customItemResult == null ? itemStack.getType() : null;
+        this.customItem = customItemResult;
+    }
+
     /**
      * Gets an {@link Optional} containing the {@link Material} represented
      * by this wrapper.
@@ -75,6 +92,22 @@ public class CustomItemWrapper {
     @NotNull
     public Optional<String> customItem() {
         return Optional.ofNullable(customItem);
+    }
+
+    @NotNull
+    public ItemBuilder itemBuilder() {
+        if (customItem != null) {
+            List<CustomItemHook> pluginHooks = RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHooks(CustomItemHook.class);
+            for (CustomItemHook hook : pluginHooks) {
+                var itemOptional = hook.item(customItem);
+                if (itemOptional.isPresent()) {
+                    return ItemBuilder.from(itemOptional.get());
+                }
+            }
+            return ItemBuilder.from(new ItemStack(Material.AIR));
+        }
+        assert material != null;
+        return ItemBuilder.from(new ItemStack(material));
     }
 
     /**
