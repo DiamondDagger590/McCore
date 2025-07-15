@@ -28,6 +28,7 @@ import java.util.Optional;
 public class Methods {
 
     private static final String LOCATION_DELIMITER = ";";
+    private static final String YAML_PATH_SEPARATOR = ".";
 
     /**
      * Checks to see if the provided string is an integer.
@@ -435,7 +436,7 @@ public class Methods {
      */
     @NotNull
     public static NamespacedKey getMinecraftKey(@NotNull String key) {
-        return NamespacedKey.minecraft(key);
+        return NamespacedKey.minecraft(key.toLowerCase());
     }
 
     /**
@@ -447,5 +448,17 @@ public class Methods {
     @NotNull
     public static ItemStack fromBase64(@NotNull String base64) {
         return ItemStack.deserializeBytes(Base64.getDecoder().decode(base64));
+    }
+
+    @NotNull
+    public static String toRoutePath(@NotNull String... paths) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < paths.length; i++) {
+            if (i > 0) {
+                sb.append(YAML_PATH_SEPARATOR);
+            }
+            sb.append(paths[i]);
+        }
+        return sb.toString();
     }
 }

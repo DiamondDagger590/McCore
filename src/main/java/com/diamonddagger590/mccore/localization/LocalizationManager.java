@@ -92,6 +92,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
         Set<Locale> processedLocales = new HashSet<>();
         while (locales.hasNext()) {
             Locale locale = locales.getNodeValue();
+            locales = locales.getNextNode();
             // We don't want to process locales twice
             if (processedLocales.contains(locale)) {
                 continue;
@@ -152,6 +153,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
         Set<Locale> processedLocales = new HashSet<>();
         while (locales.hasNext()) {
             Locale locale = locales.getNodeValue();
+            locales = locales.getNextNode();
             // We don't want to process locales twice
             if (processedLocales.contains(locale)) {
                 continue;
@@ -200,6 +202,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
         Set<Locale> processedLocales = new HashSet<>();
         while (locales.hasNext()) {
             Locale locale = locales.getNodeValue();
+            locales = locales.getNextNode();
             // We don't want to process locales twice
             if (processedLocales.contains(locale)) {
                 continue;

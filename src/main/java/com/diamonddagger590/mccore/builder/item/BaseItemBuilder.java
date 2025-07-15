@@ -9,6 +9,7 @@ import com.diamonddagger590.mccore.builder.item.impl.fireworks.FireworkBuilder;
 import com.diamonddagger590.mccore.builder.item.impl.fireworks.FireworkStarBuilder;
 import com.diamonddagger590.mccore.exception.builder.item.InvalidItemBuilderException;
 import com.diamonddagger590.mccore.external.headdatabase.CoreHeadDatabaseHook;
+import com.diamonddagger590.mccore.external.papi.CorePapiHook;
 import com.diamonddagger590.mccore.registry.RegistryKey;
 import com.diamonddagger590.mccore.registry.plugin.CorePluginHookKey;
 import com.google.common.collect.ImmutableMultimap;
@@ -22,6 +23,9 @@ import io.papermc.paper.datacomponent.item.MapItemColor;
 import io.papermc.paper.datacomponent.item.TooltipDisplay;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.PatternReplacementResult;
+import net.kyori.adventure.text.TextReplacementConfig;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
@@ -103,13 +107,25 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
     private Map<String, String> placeholders = new HashMap<>();
     private final List<ItemFlag> itemFlags = new ArrayList<>();
     private List<String> lore = new ArrayList<>();
+    private List<Component> loreAsComponent = new ArrayList<>();
     @Nullable
     private String displayName = null;
+    @Nullable
+    private Component  displayNameComponent = null;
     private ItemStack itemStack;
     private boolean staticItemName = true;
 
     public BaseItemBuilder(@NotNull ItemStack itemStack) {
         this.itemStack = itemStack;
+        if (itemStack.hasData(DataComponentTypes.CUSTOM_NAME)) {
+            this.displayNameComponent = itemStack.getData(DataComponentTypes.CUSTOM_NAME);
+        }
+        else if (itemStack.hasData(DataComponentTypes.ITEM_NAME)) {
+            this.displayNameComponent = itemStack.getData(DataComponentTypes.ITEM_NAME);
+        }
+        if (this.itemStack.getItemMeta().hasLore()) {
+            this.loreAsComponent  = itemStack.lore();
+        }
     }
 
     public BaseItemBuilder(@NotNull String item) {
@@ -131,8 +147,17 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
         if (this.displayName != null) {
             this.itemStack.setData(this.staticItemName ? DataComponentTypes.ITEM_NAME : DataComponentTypes.CUSTOM_NAME, parseString(displayName, audience));
         }
-        if (!this.displayName.isEmpty()) {
+        else if (this.displayNameComponent != null) {
+            Component displayComponent = parseComponent(displayNameComponent);
+            displayComponent.decoration(TextDecoration.ITALIC, false);
+            this.itemStack.setData(DataComponentTypes.ITEM_NAME, displayComponent);
+            this.itemStack.setData(DataComponentTypes.CUSTOM_NAME, displayComponent);
+        }
+        if (!this.lore.isEmpty()) {
             this.itemStack.setData(DataComponentTypes.LORE, ItemLore.lore(lore.stream().map(loreLine -> parseString(loreLine, audience)).toList()));
+        }
+        if (!this.loreAsComponent.isEmpty()) {
+            this.itemStack.setData(DataComponentTypes.LORE, ItemLore.lore(loreAsComponent.stream().map(this::parseComponent).toList()));
         }
         if (!this.itemFlags.isEmpty()) { // temporary for now.
             this.itemStack.editMeta(itemMeta -> this.itemFlags.forEach(flag -> {
@@ -244,7 +269,7 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
     }
 
     /**
-     * Adds a placeholder to be replaced in {@link Component}s for the items name and lore.
+     * Adds a placeholder to be replaced in {@link Component}s for the item's name and lore.
      *
      * @param placeholder The placeholder tag to be replaced.
      * @param value       The value to replace the placeholder with.
@@ -257,7 +282,7 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
     }
 
     /**
-     * Sets placeholders to be replaced in {@link Component}s for the items name and lore.
+     * Sets placeholders to be replaced in {@link Component}s for the item's name and lore.
      *
      * @param placeholders The placeholders to use.
      * @return This builder.
@@ -265,6 +290,18 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
     @NotNull
     public B setPlaceholders(@NotNull Map<String, String> placeholders) {
         this.placeholders = placeholders;
+        return (B) this;
+    }
+
+    /**
+     * Adds the provided placeholders be replaced in {@link Component}s for the item's name and lore.
+     *
+     * @param placeholders The placeholders to add.
+     * @return This builder.
+     */
+    @NotNull
+    public B addPlaceholders(@NotNull Map<String, String> placeholders) {
+        this.placeholders.putAll(placeholders);
         return (B) this;
     }
 
@@ -407,6 +444,9 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
      */
     @NotNull
     public B setDisplayName(@Nullable final String displayName, final boolean staticItemName) {
+        if (displayNameComponent != null) {
+            throw new IllegalStateException("Can not set display name when there was already one created");
+        }
         this.displayName = displayName;
         this.staticItemName = staticItemName;
         return (B) this;
@@ -453,6 +493,9 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
      */
     @NotNull
     public B withDisplayLore(@NotNull final List<String> displayLore) {
+        if (!loreAsComponent.isEmpty()) {
+            throw new IllegalStateException("Can not set lore when there was already one created");
+        }
         this.lore = displayLore;
         return (B) this;
     }
@@ -467,6 +510,20 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
     public B addDisplayLore(@NotNull final String displayLore) {
         if (displayLore.isEmpty()) return (B) this;
         this.lore.add(displayLore);
+        return (B) this;
+    }
+
+    /**
+     * Adds the provided {@link List} of strings
+     * to the lore to be used for the item being built.
+     *
+     * @param displayLore The {@link List} of lore to be added.
+     * @return This builder.
+     */
+    @NotNull
+    public B addDisplayLore(@NotNull final List<String> displayLore) {
+        if (displayLore.isEmpty()) return (B) this;
+        this.lore.addAll(displayLore);
         return (B) this;
     }
 
@@ -959,10 +1016,23 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
     @NotNull
     protected Component parseString(@NotNull String message, @Nullable Audience audience) {
         var papiHookOptional = corePlugin.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(CorePluginHookKey.CORE_PAPI);
-        if (papiHookOptional.isPresent() && audience instanceof Player player) {
-            message = papiHookOptional.get().translateMessage(player, message);
+        return miniMessage.deserialize(message, getPlaceHolders(papiHookOptional.orElse(null), audience)).decoration(TextDecoration.ITALIC, false);
+    }
+
+    /**
+     * Parses the provided {@link Component} using Placeholder API if available with the provided {@link Audience}
+     * as the target for placeholders.
+     *
+     * @param message  The message to be parsed.
+     * @return A parsed {@link Component}.
+     */
+    @NotNull
+    protected Component parseComponent(@NotNull Component message) {
+        for (TextReplacementConfig config : getPlaceholdersAsConfig()) {
+            message = message.replaceText(config);
         }
-        return miniMessage.deserialize(message, getPlaceHolders());
+        message.decoration(TextDecoration.ITALIC, false);
+        return message;
     }
 
     /**
@@ -971,15 +1041,37 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
      * @return An array of {@link TagResolver.Single}s.
      */
     @NotNull
-    protected TagResolver.Single[] getPlaceHolders() {
-        TagResolver.Single[] placeholderArray = new TagResolver.Single[placeholders.size()];
+    protected TagResolver[] getPlaceHolders(@Nullable CorePapiHook papiHook, @Nullable Audience audience) {
+        TagResolver[] placeholderArray = new TagResolver.Single[placeholders.size() + (papiHook != null && audience instanceof Player ? 1 : 0)];
         int index = 0;
         for (String key : placeholders.keySet()) {
             String value = placeholders.get(key);
             TagResolver.Single placeholder = Placeholder.parsed(key, value);
             placeholderArray[index++] = placeholder;
         }
+        if (papiHook != null && audience instanceof Player player) {
+            placeholderArray[index] = papiHook.getTagResolver(player);
+        }
         return placeholderArray;
+    }
+
+    /**
+     * Converts the stored placeholders into ones that {@link net.kyori.adventure.Adventure} can accept.
+     *
+     * @return An array of {@link TagResolver.Single}s.
+     */
+    @NotNull
+    protected List<TextReplacementConfig> getPlaceholdersAsConfig() {
+        List<TextReplacementConfig> configs = new ArrayList<>();
+        for (String key : placeholders.keySet()) {
+            TextReplacementConfig.Builder textReplacementConfig = TextReplacementConfig.builder();
+            String value = placeholders.get(key);
+            textReplacementConfig.condition(getReplacementCondition());
+            textReplacementConfig.matchLiteral("<" + key + ">");
+            textReplacementConfig.replacement(value);
+            configs.add(textReplacementConfig.build());
+        }
+        return configs;
     }
 
     /**
@@ -1009,5 +1101,10 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
     @NotNull
     protected final ItemStack getItemStack() {
         return this.itemStack;
+    }
+
+    @NotNull
+    protected final TextReplacementConfig.Condition getReplacementCondition() {
+        return (result, matchCount, replaced) -> PatternReplacementResult.REPLACE;
     }
 }

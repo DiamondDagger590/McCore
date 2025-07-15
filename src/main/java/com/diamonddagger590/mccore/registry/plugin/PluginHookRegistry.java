@@ -70,7 +70,7 @@ public class PluginHookRegistry implements Registry<PluginHook<?>> {
     @SuppressWarnings("unchecked")
     public <T> List<T> pluginHooks(@NotNull Class<T> extensible) {
         return hooks.values().stream()
-                .filter(pluginHook -> pluginHook.getClass().isAssignableFrom(extensible))
+                .filter(pluginHook -> extensible.isAssignableFrom(pluginHook.getClass()))
                 .map(pluginHook -> (T) pluginHook).toList();
     }
 }

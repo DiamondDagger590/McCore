@@ -59,7 +59,7 @@ dependencies {
     val intellijAnnotationVersion = "12.0"
     compileOnlyApi("com.intellij:annotations:$intellijAnnotationVersion")
 
-    val paperVersion = "1.21.6-R0.1-SNAPSHOT"
+    val paperVersion = "1.21.7-R0.1-SNAPSHOT"
     compileOnlyApi("io.papermc.paper:paper-api:$paperVersion")
 
     val placeholderAPIVersion = "2.11.6"
@@ -94,7 +94,7 @@ dependencies {
     val adventureBukkitVersion = "4.3.3"
     api("net.kyori:adventure-platform-bukkit:$adventureBukkitVersion")
 
-    val boostedYamlVersion = "1.3.5"
+    val boostedYamlVersion = "1.3.7"
     api("dev.dejvokep:boosted-yaml:$boostedYamlVersion")
     val boostedYamlSpigotVersion = "1.5"
     api("dev.dejvokep:boosted-yaml-spigot:$boostedYamlSpigotVersion")
