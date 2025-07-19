@@ -45,6 +45,11 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
         plugin.registryAccess().registry(RegistryKey.MANAGER).manager(ManagerKey.RELOADABLE_CONTENT).trackReloadableContent(localeChain);
     }
 
+    /**
+     * Generates the default locale chain for this plugin.
+     *
+     * @return A {@link ReloadableContent} containing the default locale chain for this plugin.
+     */
     @NotNull
     protected abstract ReloadableContent<LinkedNode<Locale>> generateLocaleChain();
 
@@ -60,6 +65,19 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
     @NotNull
     public Component getLocalizedMessageAsComponent(@NotNull T corePlayer, @NotNull Route route) {
         return plugin().getMiniMessage().deserialize(getLocalizedMessage(corePlayer, route));
+    }
+
+    /**
+     * Gets a localized {@link Component} using the provided {@link Route} to find a translated message.
+     *
+     * @param route The {@link Route} to check for a translated message.
+     * @return A localized {@link Component} using the provided {@link Route} to find a translated message.
+     * @throws NoLocalizationContainsMessageException If there is no localization in the default locale
+     *                                                chain that supports the provided route.
+     */
+    @NotNull
+    public Component getLocalizedMessageAsComponent(@NotNull Route route) {
+        return plugin().getMiniMessage().deserialize(getLocalizedMessage(route));
     }
 
     /**
@@ -127,7 +145,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
      *
      * @param route The {@link Route} to check for a translated message.
      * @return A localized message using the provided {@link Route} to find a translated message.
-     * @throws NoLocalizationContainsMessageException If there is no localization in the player's locale
+     * @throws NoLocalizationContainsMessageException If there is no localization in the default locale
      *                                                chain that supports the provided route.
      */
     @NotNull
@@ -147,6 +165,17 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
         throw new NoLocalizationContainsMessageException(route, Set.of(locale));
     }
 
+    /**
+     * Gets a {@link List} of localized messages from the provided {@link Route} assuming the route
+     * maps to a string list.
+     *
+     * @param player The {@link CorePlayer} to use for localization.
+     * @param route  The route containing the messages to localize.
+     * @return A {@link List} of localized messages from the provided {@link Route} assuming
+     * the route maps to a string list.
+     * @throws NoLocalizationContainsMessageException If there is no localization in the default locale
+     *                                                chain that supports the provided route.
+     */
     @NotNull
     public List<String> getLocalizedMessages(@NotNull T player, @NotNull Route route) {
         LinkedNode<Locale> locales = getLocaleChain(player);
