@@ -4,7 +4,10 @@ import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.configuration.ReloadableContent;
 import com.diamonddagger590.mccore.exception.localization.NoLocalizationContainsMessageException;
 import com.diamonddagger590.mccore.player.CorePlayer;
+import com.diamonddagger590.mccore.player.PlayerManager;
+import com.diamonddagger590.mccore.registry.RegistryAccess;
 import com.diamonddagger590.mccore.registry.RegistryKey;
+import com.diamonddagger590.mccore.registry.manager.CoreManagerKey;
 import com.diamonddagger590.mccore.registry.manager.Manager;
 import com.diamonddagger590.mccore.registry.manager.ManagerKey;
 import com.diamonddagger590.mccore.registry.plugin.CorePluginHookKey;
@@ -12,13 +15,23 @@ import com.diamonddagger590.mccore.util.LinkedNode;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
 import dev.dejvokep.boostedyaml.route.Route;
+import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Any messages sent for McRPG should pass through here in order to be translated.
@@ -68,6 +81,22 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
     }
 
     /**
+     * Gets a localized {@link Component} using the provided {@link Route} to find a translated message. If the
+     * provided {@link Audience} is an instance of a {@link Player}, then it will use that player's locale chain to
+     * get the message. Otherwise, the default locale chain is used.
+     *
+     * @param audience The {@link Audience} to localize for.
+     * @param route    The {@link Route} to check for a translated message.
+     * @return A localized {@link Component} using the provided {@link Route} to find a translated message.
+     * @throws NoLocalizationContainsMessageException If there is no localization in the player's locale
+     *                                                chain that supports the provided route.
+     */
+    @NotNull
+    public Component getLocalizedMessageAsComponent(@NotNull Audience audience, @NotNull Route route) {
+        return plugin().getMiniMessage().deserialize(getLocalizedMessage(audience, route));
+    }
+
+    /**
      * Gets a localized {@link Component} using the provided {@link Route} to find a translated message.
      *
      * @param route The {@link Route} to check for a translated message.
@@ -83,6 +112,103 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
     /**
      * Gets a localized {@link Component} using the provided {@link Route} to find a translated message.
      *
+     * @param corePlayer   The {@link T} to localize for.
+     * @param route        The {@link Route} to check for a translated message.
+     * @param placeholders The placeholders to replace in the message.
+     * @return A localized {@link Component} using the provided {@link Route} to find a translated message.
+     * @throws NoLocalizationContainsMessageException If there is no localization in the player's locale
+     *                                                chain that supports the provided route.
+     */
+    @NotNull
+    public Component getLocalizedMessageAsComponent(@NotNull T corePlayer, @NotNull Route route, @NotNull Map<String, String> placeholders) {
+        return plugin().getMiniMessage().deserialize(getLocalizedMessage(corePlayer, route), getPlaceholders(placeholders));
+    }
+
+    /**
+     * Gets a localized {@link Component} using the provided {@link Route} to find a translated message. If the
+     * provided {@link Audience} is an instance of a {@link Player}, then it will use that player's locale chain to
+     * get the message. Otherwise, the default locale chain is used.
+     *
+     * @param audience     The {@link Audience} to localize for.
+     * @param route        The {@link Route} to check for a translated message.
+     * @param placeholders The placeholders to replace in the message.
+     * @return A localized {@link Component} using the provided {@link Route} to find a translated message.
+     * @throws NoLocalizationContainsMessageException If there is no localization in the audience's locale
+     *                                                chain that supports the provided route.
+     */
+    @NotNull
+    public Component getLocalizedMessageAsComponent(@NotNull Audience audience, @NotNull Route route, @NotNull Map<String, String> placeholders) {
+        return plugin().getMiniMessage().deserialize(getLocalizedMessage(audience, route), getPlaceholders(placeholders));
+    }
+
+    /**
+     * Gets a localized {@link Component} using the provided {@link Route} to find a translated message.
+     *
+     * @param route        The {@link Route} to check for a translated message.
+     * @param placeholders The placeholders to replace in the message.
+     * @return A localized {@link Component} using the provided {@link Route} to find a translated message.
+     * @throws NoLocalizationContainsMessageException If there is no localization in the default locale
+     *                                                chain that supports the provided route.
+     */
+    @NotNull
+    public Component getLocalizedMessageAsComponent(@NotNull Route route, @NotNull Map<String, String> placeholders) {
+        return plugin().getMiniMessage().deserialize(getLocalizedMessage(route), getPlaceholders(placeholders));
+    }
+
+    /**
+     * Gets a {@link List} of localized {@link Component}s using the provided {@link Route}
+     * to find a translated messages.
+     *
+     * @param player The {@link T} to localize for.
+     * @param route  The {@link Route} to check for a translated message.
+     * @return A localized {@link Component} using the provided {@link Route} to find a translated message.
+     * @throws NoLocalizationContainsMessageException If there is no localization in the player's locale
+     *                                                chain that supports the provided route.
+     */
+    @NotNull
+    public List<Component> getLocalizedMessageAsComponents(@NotNull T player, @NotNull Route route) {
+        return getLocalizedMessages(player, route).stream()
+                .map(message -> plugin().getMiniMessage().deserialize(message))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Gets a {@link List} of localized {@link Component}s using the provided {@link Route}
+     * to find a translated messages.
+     *
+     * @param audience The {@link Audience} to localize for.
+     * @param route    The {@link Route} to check for a translated message.
+     * @return A localized {@link Component} using the provided {@link Route} to find a translated message.
+     * @throws NoLocalizationContainsMessageException If there is no localization in the audience's locale
+     *                                                chain that supports the provided route.
+     */
+    @NotNull
+    public List<Component> getLocalizedMessageAsComponents(@NotNull Audience audience, @NotNull Route route) {
+        return getLocalizedMessages(audience, route).stream()
+                .map(message -> plugin().getMiniMessage().deserialize(message))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Gets a {@link List} of localized {@link Component}s using the provided {@link Route}
+     * to find a translated messages.
+     *
+     * @param route The {@link Route} to check for a translated message.
+     * @return A localized {@link Component} using the provided {@link Route} to find a translated message.
+     * @throws NoLocalizationContainsMessageException If there is no localization in the default locale
+     *                                                chain that supports the provided route.
+     */
+    @NotNull
+    public List<Component> getLocalizedMessageAsComponents(@NotNull Route route) {
+        return getLocalizedMessages(route).stream()
+                .map(message -> plugin().getMiniMessage().deserialize(message))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Gets a {@link List} of localized {@link Component}s using the provided {@link Route}
+     * to find a translated messages.
+     *
      * @param player       The {@link T} to localize for.
      * @param route        The {@link Route} to check for a translated message.
      * @param placeholders The placeholders to replace in the message.
@@ -91,8 +217,45 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
      *                                                chain that supports the provided route.
      */
     @NotNull
-    public Component getLocalizedMessageAsComponent(@NotNull T player, @NotNull Route route, @NotNull Map<String, String> placeholders) {
-        return plugin().getMiniMessage().deserialize(getLocalizedMessage(player, route), getPlaceholders(placeholders));
+    public List<Component> getLocalizedMessageAsComponents(@NotNull T player, @NotNull Route route, @NotNull Map<String, String> placeholders) {
+        return getLocalizedMessages(player, route).stream()
+                .map(message -> plugin().getMiniMessage().deserialize(message, getPlaceholders(placeholders)))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Gets a {@link List} of localized {@link Component}s using the provided {@link Route}
+     * to find a translated messages.
+     *
+     * @param audience     The {@link Audience} to localize for.
+     * @param route        The {@link Route} to check for a translated message.
+     * @param placeholders The placeholders to replace in the message.
+     * @return A localized {@link Component} using the provided {@link Route} to find a translated message.
+     * @throws NoLocalizationContainsMessageException If there is no localization in the audience's locale
+     *                                                chain that supports the provided route.
+     */
+    @NotNull
+    public List<Component> getLocalizedMessageAsComponents(@NotNull Audience audience, @NotNull Route route, @NotNull Map<String, String> placeholders) {
+        return getLocalizedMessages(audience, route).stream()
+                .map(message -> plugin().getMiniMessage().deserialize(message, getPlaceholders(placeholders)))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Gets a {@link List} of localized {@link Component}s using the provided {@link Route}
+     * to find a translated messages.
+     *
+     * @param route        The {@link Route} to check for a translated message.
+     * @param placeholders The placeholders to replace in the message.
+     * @return A localized {@link Component} using the provided {@link Route} to find a translated message.
+     * @throws NoLocalizationContainsMessageException If there is no localization in the default locale
+     *                                                chain that supports the provided route.
+     */
+    @NotNull
+    public List<Component> getLocalizedMessageAsComponents(@NotNull Route route, @NotNull Map<String, String> placeholders) {
+        return getLocalizedMessages(route).stream()
+                .map(message -> plugin().getMiniMessage().deserialize(message, getPlaceholders(placeholders)))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -140,6 +303,29 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
     }
 
     /**
+     * Gets a localized message using the provided {@link Route} to find a translated message. If the
+     * provided {@link Audience} is an instance of a {@link Player}, then it will use that player's locale chain to
+     * get the message. Otherwise, the default locale chain is used.
+     *
+     * @param audience The {@link Audience} to localize for.
+     * @param route    The {@link Route} to check for a translated message.
+     * @return A localized message using the provided {@link Route} to find a translated message.
+     * @throws NoLocalizationContainsMessageException If there is no localization in the player's locale
+     *                                                chain that supports the provided route.
+     */
+    @NotNull
+    public String getLocalizedMessage(@NotNull Audience audience, @NotNull Route route) {
+        if (audience instanceof Player player) {
+            PlayerManager<?, T> playerManager = RegistryAccess.registryAccess().registry(RegistryKey.MANAGER).manager(CoreManagerKey.CORE_PLAYER_MANAGER);
+            var playerOptional = playerManager.getPlayer(player.getUniqueId());
+            if (playerOptional.isPresent()) {
+                return getLocalizedMessage(playerOptional.get(), route);
+            }
+        }
+        return getLocalizedMessage(route);
+    }
+
+    /**
      * Gets a localized message using the provided {@link Route} to find a translated message
      * with {@link Locale#ENGLISH} as the locale.
      *
@@ -173,7 +359,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
      * @param route  The route containing the messages to localize.
      * @return A {@link List} of localized messages from the provided {@link Route} assuming
      * the route maps to a string list.
-     * @throws NoLocalizationContainsMessageException If there is no localization in the default locale
+     * @throws NoLocalizationContainsMessageException If there is no localization in the player's locale
      *                                                chain that supports the provided route.
      */
     @NotNull
@@ -212,6 +398,76 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
         // If we reach here, then that means no languages support the message which shouldn't be true.
         // English should always be supported.
         throw new NoLocalizationContainsMessageException(route, processedLocales);
+    }
+
+    /**
+     * Gets a {@link List} of localized messages from the provided {@link Route} assuming the route
+     * maps to a string list.
+     *
+     * @param audience The {@link Audience} to use for localization.
+     * @param route    The route containing the messages to localize.
+     * @return A {@link List} of localized messages from the provided {@link Route} assuming
+     * the route maps to a string list.
+     * @throws NoLocalizationContainsMessageException If there is no localization in the audience's locale
+     *                                                chain that supports the provided route.
+     */
+    @NotNull
+    public List<String> getLocalizedMessages(@NotNull Audience audience, @NotNull Route route) {
+        if (audience instanceof Player player) {
+            PlayerManager<?, T> playerManager = RegistryAccess.registryAccess().registry(RegistryKey.MANAGER).manager(CoreManagerKey.CORE_PLAYER_MANAGER);
+            var playerOptional = playerManager.getPlayer(player.getUniqueId());
+            if (playerOptional.isPresent()) {
+                return getLocalizedMessages(playerOptional.get(), route);
+            }
+        }
+        return getLocalizedMessages(route);
+    }
+
+    /**
+     * Gets a {@link List} of localized messages from the provided {@link Route} assuming the route
+     * maps to a string list.
+     *
+     * @param route The route containing the messages to localize.
+     * @return A {@link List} of localized messages from the provided {@link Route} assuming
+     * the route maps to a string list.
+     * @throws NoLocalizationContainsMessageException If there is no localization in the default locale
+     *                                                chain that supports the provided route.
+     */
+    @NotNull
+    public List<String> getLocalizedMessages(@NotNull Route route) {
+        Locale locale = Locale.ENGLISH;
+        if (localizations.containsKey(locale)) {
+            List<YamlDocument> documents = localizations.get(locale);
+            // Check all registered configurations for the message
+            for (YamlDocument yamlDocument : documents) {
+                if (yamlDocument.contains(route)) {
+                    return yamlDocument.getStringList(route);
+                }
+            }
+        }
+        // If we reach here, then that means no languages support the message which shouldn't be true.
+        // English should always be supported.
+        throw new NoLocalizationContainsMessageException(route, Set.of(locale));
+    }
+
+    public void broadcastMessage(@NotNull Route route) {
+        PlayerManager<?, T> playerManager = (PlayerManager<?, T>) RegistryAccess.registryAccess()
+                .registry(RegistryKey.MANAGER)
+                .manager(CoreManagerKey.CORE_PLAYER_MANAGER);
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            // If the player is loaded, attempt to use their locale chain
+            var playerOptional = playerManager.getPlayer(player.getUniqueId());
+            if (playerOptional.isPresent()) {
+                T corePlayer = playerOptional.get();
+                player.sendMessage(getLocalizedMessage(corePlayer, route));
+            }
+            // If the player isn't loaded, use default locale chain
+            else {
+                player.sendMessage(getLocalizedMessage(route));
+            }
+        }
+        // Send to console using default locale chain
+        Bukkit.getConsoleSender().sendMessage(getLocalizedMessage(route));
     }
 
     /**
