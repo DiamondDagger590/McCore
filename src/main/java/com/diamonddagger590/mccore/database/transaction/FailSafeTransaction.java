@@ -37,8 +37,11 @@ public class FailSafeTransaction extends Transaction {
             connection.setAutoCommit(false);
             for (PreparedStatement preparedStatement : getPreparedStatements()) {
                 try (preparedStatement) {
-                    logger.info(preparedStatement.toString());
                     preparedStatement.executeUpdate();
+                }
+                catch (SQLException ex) {
+                    logger.severe("Failing statement: " + preparedStatement.toString());
+                    throw new SQLException(ex);
                 }
             }
             connection.commit();
@@ -52,6 +55,21 @@ public class FailSafeTransaction extends Transaction {
                 logger.severe("Encountered an exception while rolling back transaction...");
                 logger.severe(rollbackException.getMessage());
                 rollbackException.printStackTrace();
+            }
+        }
+        finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                logger.severe("Encountered an exception trying to set autocommit to true.");
+                logger.severe(e.getMessage());
+                // Close out the connection if we fail
+                try {
+                    connection.close();
+                } catch (SQLException closeException) {
+                    logger.severe("Encountered an exception trying to close connection.");
+                    logger.severe(closeException.getMessage());
+                }
             }
         }
     }
