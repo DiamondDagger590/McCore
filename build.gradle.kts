@@ -23,7 +23,7 @@ apply {
 }
 
 //RECODE.RELEASE.PATCH.DEVELOPMENT
-version = "1.0.0.14-SNAPSHOT"
+version = "1.0.0.15-SNAPSHOT"
 group = "com.diamonddagger590"
 
 java {
@@ -35,10 +35,6 @@ java {
 repositories {
     mavenCentral()
     maven("https://jitpack.io")
-
-    maven(url = "https://s01.oss.sonatype.org/content/repositories/snapshots/") {
-        name = "sonatype-oss-snapshots"
-    }
 
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/") //Papi
     maven("https://repo.nexomc.com/releases") // Nexo
@@ -52,6 +48,9 @@ repositories {
     maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
     maven("https://repo.papermc.io/repository/maven-public/")
 
+    maven(url = "https://s01.oss.sonatype.org/content/repositories/snapshots/") {
+        name = "sonatype-oss-snapshots"
+    }
 }
 
 dependencies {
@@ -59,7 +58,7 @@ dependencies {
     val intellijAnnotationVersion = "12.0"
     compileOnlyApi("com.intellij:annotations:$intellijAnnotationVersion")
 
-    val paperVersion = "1.21.7-R0.1-SNAPSHOT"
+    val paperVersion = "1.21.8-R0.1-SNAPSHOT"
     compileOnlyApi("io.papermc.paper:paper-api:$paperVersion")
 
     val placeholderAPIVersion = "2.11.6"
