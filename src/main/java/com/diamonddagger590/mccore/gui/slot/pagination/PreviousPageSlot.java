@@ -15,7 +15,7 @@ import java.util.Set;
  * This is a slot to be used in {@link PaginatedGui}s to allow for going
  * to the previous page of the gui.
  */
-public abstract class PreviousPageSlot<P extends CorePlayer> extends Slot<P> {
+public abstract class PreviousPageSlot<P extends CorePlayer> implements Slot<P> {
 
     private final Set<Class<?>> VALID_GUIS = Set.of(PaginatedGui.class);
 

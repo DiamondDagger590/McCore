@@ -19,7 +19,7 @@ import java.util.Optional;
  *
  * @param <T> The {@link PlayerSetting} represented by this slot.
  */
-public abstract class PlayerSettingSlot<T extends PlayerSetting, P extends CorePlayer> extends Slot<P> {
+public abstract class PlayerSettingSlot<T extends PlayerSetting, P extends CorePlayer> implements Slot<P> {
 
     protected final P corePlayer;
     protected final Player player;

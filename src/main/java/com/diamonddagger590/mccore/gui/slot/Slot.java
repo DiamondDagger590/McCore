@@ -16,9 +16,7 @@ import java.util.Set;
  * object provides the {@link ItemStack} representation of the slot, an action to perform when the slot
  * is clicked, and a set of gui types that can accept this slot.
  */
-public abstract class Slot<P extends CorePlayer> {
-
-    public Slot() {}
+public interface Slot<P extends CorePlayer> {
 
     /**
      * Gets the {@link ItemStack} used to represent this slot.
@@ -26,7 +24,7 @@ public abstract class Slot<P extends CorePlayer> {
      * @return The {@link ItemStack} used to represent this slot.
      */
     @NotNull
-    public ItemBuilder getItem(@NotNull P corePlayer) {
+    default ItemBuilder getItem(@NotNull P corePlayer) {
         return ItemBuilder.from(ItemType.AIR);
     }
 
@@ -38,7 +36,7 @@ public abstract class Slot<P extends CorePlayer> {
      * @return {@code true} if the {@link org.bukkit.event.inventory.InventoryClickEvent} that called this
      * method should be cancelled.
      */
-    public abstract boolean onClick(@NotNull P corePlayer, @NotNull ClickType clickType);
+    boolean onClick(@NotNull P corePlayer, @NotNull ClickType clickType);
 
     /**
      * Gets a {@link Set} of all {@link BaseGui} classes that can accept this slot.
@@ -50,7 +48,7 @@ public abstract class Slot<P extends CorePlayer> {
      * @return A {@link Set} of all {@link BaseGui} classes that can accept this slot.
      * If the slot should be accepted into any gui, an empty set will be returned.
      */
-    public Set<Class<?>> getValidGuiTypes() {
+    default Set<Class<?>> getValidGuiTypes() {
         return new HashSet<>();
     }
 
