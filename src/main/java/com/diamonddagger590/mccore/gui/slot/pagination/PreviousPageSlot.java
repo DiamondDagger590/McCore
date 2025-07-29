@@ -1,7 +1,8 @@
-package com.diamonddagger590.mccore.gui.slot;
+package com.diamonddagger590.mccore.gui.slot.pagination;
 
 import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.gui.PaginatedGui;
+import com.diamonddagger590.mccore.gui.slot.Slot;
 import com.diamonddagger590.mccore.player.CorePlayer;
 import com.diamonddagger590.mccore.registry.RegistryKey;
 import com.diamonddagger590.mccore.registry.manager.CoreManagerKey;
