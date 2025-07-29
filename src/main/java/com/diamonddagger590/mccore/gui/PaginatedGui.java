@@ -1,8 +1,8 @@
 package com.diamonddagger590.mccore.gui;
 
 import com.diamonddagger590.mccore.exception.gui.InventoryAlreadyExistsForGuiException;
-import com.diamonddagger590.mccore.gui.slot.NextPageSlot;
-import com.diamonddagger590.mccore.gui.slot.PreviousPageSlot;
+import com.diamonddagger590.mccore.gui.slot.pagination.NextPageSlot;
+import com.diamonddagger590.mccore.gui.slot.pagination.PreviousPageSlot;
 import com.diamonddagger590.mccore.player.CorePlayer;
 import com.google.common.base.Preconditions;
 import org.bukkit.inventory.Inventory;

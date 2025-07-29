@@ -3,6 +3,7 @@ package com.diamonddagger590.mccore.database.table.function;
 import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.database.function.UpdateTableFunction;
 import com.diamonddagger590.mccore.database.table.impl.MutexDAO;
+import com.diamonddagger590.mccore.database.table.impl.PlayerSettingDAO;
 import com.diamonddagger590.mccore.database.table.impl.TableVersionHistoryDAO;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,6 +26,7 @@ public class UpdateCoreTablesFunction {
             try (Connection connection = database.getConnection()) {
                 TableVersionHistoryDAO.updateTable(connection);
                 MutexDAO.updateTable(connection);
+                PlayerSettingDAO.updateTable(connection);
                 returnFuture.complete(null);
             }
             catch (SQLException e) {
