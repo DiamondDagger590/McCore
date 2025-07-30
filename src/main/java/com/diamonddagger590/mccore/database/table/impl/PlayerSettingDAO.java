@@ -114,38 +114,32 @@ public class PlayerSettingDAO {
         try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT setting_value FROM " + TABLE_NAME + " WHERE uuid = ? AND setting_key = ?")) {
             preparedStatement.setString(1, playerUUID.toString());
             // Go through all settings
-            logger.info("Loading settings");
             for (NamespacedKey settingKey : playerSettingRegistry.getSettingKeys()) {
-                logger.info("Setting "  + settingKey.toString());
                 var settingOptional = playerSettingRegistry.getSetting(settingKey);
                 if (settingOptional.isEmpty()) {
-                    logger.info("setting is empty");
                     continue;
                 }
                 PlayerSetting defaultSetting = settingOptional.get();
-                logger.info("got default setting: " + defaultSetting);
                 // Fetch the setting
                 preparedStatement.setString(2, settingKey.toString());
                 ResultSet resultSet = preparedStatement.executeQuery();
                 if (resultSet.next()) {
-                    logger.info("got result from db");
                     String settingValue = resultSet.getString("setting_value");
                     Optional<? extends PlayerSetting> playerSetting = defaultSetting.fromString(settingValue);
                     // If the player doesn't have the setting saved, then we should just grab the default one
                     if (playerSetting.isPresent()) {
-                        logger.info("grabbed setting is present, using it");
                         playerSettings.add(playerSetting.get());
                     } else {
-                        logger.info("grabbed setting is absent, using default");
                         playerSettings.add(defaultSetting);
                     }
+                } else {
+                    playerSettings.add(defaultSetting);
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
             return playerSettings;
         }
-        logger.info("Loaded " + playerSettings.size() + " settings");
         return playerSettings;
     }
 
@@ -212,7 +206,7 @@ public class PlayerSettingDAO {
      */
     public static PreparedStatement savePlayerSetting(@NotNull Connection connection, @NotNull UUID playerUUID, @NotNull PlayerSetting playerSetting) {
         try {
-            PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO " + TABLE_NAME + " (uuid, setting_key, setting_value) VALUES (?, ?, ?)");
+            PreparedStatement preparedStatement = connection.prepareStatement("REPLACE INTO " + TABLE_NAME + " (uuid, setting_key, setting_value) VALUES (?, ?, ?)");
             preparedStatement.setString(1, playerUUID.toString());
             preparedStatement.setString(2, playerSetting.getSettingKey().toString());
             preparedStatement.setString(3, playerSetting.name());
