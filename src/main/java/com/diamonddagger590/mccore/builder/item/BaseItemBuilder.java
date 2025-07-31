@@ -114,6 +114,7 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
     private Component  displayNameComponent = null;
     private ItemStack itemStack;
     private boolean staticItemName = true;
+    private boolean applyAudienceSkullTexture = true;
 
     public BaseItemBuilder(@NotNull ItemStack itemStack) {
         this.itemStack = itemStack;
@@ -166,6 +167,10 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
                     itemMeta.setAttributeModifiers(ImmutableMultimap.of());
                 }
             }));
+        }
+        // Check to see if we should apply the skull texture of the player this item is being created for
+        if (applyAudienceSkullTexture && isPlayerHead() && audience != null) {
+            this.asSkullBuilder().withAudience(audience).build();
         }
         build();
         return this.itemStack.clone();
@@ -264,7 +269,13 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
         var headDatabaseHookOptional = corePlugin.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(CorePluginHookKey.CORE_HEAD_DATABASE);
         if (skull.isEmpty() || headDatabaseHookOptional.isEmpty()) return (B) this;
         CoreHeadDatabaseHook coreHeadDatabaseHook = headDatabaseHookOptional.get();
-        this.itemStack = coreHeadDatabaseHook.isItem(skull) ? coreHeadDatabaseHook.item(skull).orElse(ItemType.STONE.createItemStack(1)) : ItemType.PLAYER_HEAD.createItemStack();
+        if (coreHeadDatabaseHook.isItem(skull)) {
+            this.itemStack = coreHeadDatabaseHook.item(skull).orElse(ItemType.STONE.createItemStack(1));
+            applyAudienceSkullTexture = false;
+        }
+        else {
+            this.itemStack = ItemType.PLAYER_HEAD.createItemStack();
+        }
         return (B) this;
     }
 

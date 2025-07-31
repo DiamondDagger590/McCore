@@ -1,4 +1,4 @@
-package com.diamonddagger590.mccore.util;
+package com.diamonddagger590.mccore.util.comparator;
 
 
 import org.jetbrains.annotations.NotNull;

@@ -1,4 +1,4 @@
-package com.diamonddagger590.mccore.util;
+package com.diamonddagger590.mccore.util.filter;
 
 import com.diamonddagger590.mccore.player.CorePlayer;
 import org.jetbrains.annotations.NotNull;
@@ -10,7 +10,7 @@ import java.util.Collection;
  *
  * @param <E> The object type being filtered.
  */
-public interface PlayerContextFilter<E> {
+public interface PlayerContextFilter<E, P extends CorePlayer> {
 
     /**
      * Filters the provided collection based on some related context from the provided {@link CorePlayer}.
@@ -20,5 +20,5 @@ public interface PlayerContextFilter<E> {
      * @return A filtered {@link Collection}.
      */
     @NotNull
-    public Collection<E> filter(@NotNull CorePlayer corePlayer, @NotNull Collection<E> list);
+    Collection<E> filter(@NotNull P corePlayer, @NotNull Collection<E> list);
 }
