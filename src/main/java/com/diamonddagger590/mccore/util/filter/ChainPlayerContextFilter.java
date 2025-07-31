@@ -11,19 +11,19 @@ import java.util.List;
  * feed into each other into one combined filtered output.
  * @param <E> The object type being filtered.
  */
-public class ChainPlayerContextFilter<E> implements PlayerContextFilter<E> {
+public class ChainPlayerContextFilter<E, P extends CorePlayer> implements PlayerContextFilter<E, P> {
 
-    private final List<PlayerContextFilter<E>> filterList;
+    private final List<PlayerContextFilter<E, P>> filterList;
 
     @SafeVarargs
-    public ChainPlayerContextFilter(@NotNull PlayerContextFilter<E>... filters) {
+    public ChainPlayerContextFilter(@NotNull PlayerContextFilter<E, P>... filters) {
         this.filterList = List.of(filters);
     }
 
     @NotNull
     @Override
-    public Collection<E> filter(@NotNull CorePlayer corePlayer, @NotNull Collection<E> list) {
-        for (PlayerContextFilter<E> filter : filterList) {
+    public Collection<E> filter(@NotNull P corePlayer, @NotNull Collection<E> list) {
+        for (PlayerContextFilter<E, P> filter : filterList) {
             list = filter.filter(corePlayer, list);
         }
         return list;

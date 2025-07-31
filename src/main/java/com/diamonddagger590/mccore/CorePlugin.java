@@ -58,11 +58,8 @@ public abstract class CorePlugin extends JavaPlugin {
         registryAccess.register(new PlayerSettingRegistry());
         registryAccess.registry(RegistryKey.MANAGER).register(new ReloadableContentManager(this));
         registryAccess.registry(RegistryKey.MANAGER).register(new ChatResponseManager(this));
+        registryAccess.registry(RegistryKey.MANAGER).register(new CoreCommandManager(this));
 
-        // We can't setup cloud when mocking so ignore if we are in unit test mode
-        if (!isUnitTest()) {
-            registryAccess.registry(RegistryKey.MANAGER).register(new CoreCommandManager(this));
-        }
 
         setupHooks();
     }
@@ -70,9 +67,8 @@ public abstract class CorePlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         adventure.close();
-        if (!isUnitTest()) {
-            getDatabase().shutdown();
-        }
+        getDatabase().shutdown();
+
     }
 
     /**
@@ -190,16 +186,6 @@ public abstract class CorePlugin extends JavaPlugin {
     @NotNull
     public final RegistryAccess registryAccess() {
         return registryAccess;
-    }
-
-    /**
-     * Checks to see if we are running in unit test mode
-     *
-     * @return {@code true} if we are running in unit test mode
-     */
-    @Deprecated(forRemoval = true, since = "1.0.0.13-SNAPSHOT")
-    public boolean isUnitTest() {
-        return (getClassLoader().getClass().getPackageName().startsWith("be.seeseemelk.mockbukkit"));
     }
 
     /**

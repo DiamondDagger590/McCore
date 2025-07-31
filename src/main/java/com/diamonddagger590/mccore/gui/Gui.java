@@ -17,7 +17,8 @@ import java.util.UUID;
  * <p>
  * Every gui also acts as a listener for itself, being registered and unregistered
  * whenever a player starts viewing and whenever no players are viewing the gui respectively.
- */public interface Gui<P extends CorePlayer> {
+ */
+public interface Gui<P extends CorePlayer> {
 
     /**
      * Gets the {@link UUID} for this gui.
