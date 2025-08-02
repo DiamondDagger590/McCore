@@ -1100,8 +1100,10 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
      *
      * @param itemStack The new {@link ItemStack} to use for this builder.
      */
-    protected final void setItemStack(@NotNull ItemStack itemStack) {
+    @NotNull
+    public final B setItemStack(@NotNull ItemStack itemStack) {
         this.itemStack = itemStack;
+        return (B) this;
     }
 
     /**
