@@ -111,7 +111,7 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
     @Nullable
     private String displayName = null;
     @Nullable
-    private Component  displayNameComponent = null;
+    private Component displayNameComponent = null;
     private ItemStack itemStack;
     private boolean staticItemName = true;
     private boolean applyAudienceSkullTexture = true;
@@ -120,12 +120,11 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
         this.itemStack = itemStack;
         if (itemStack.hasData(DataComponentTypes.CUSTOM_NAME)) {
             this.displayNameComponent = itemStack.getData(DataComponentTypes.CUSTOM_NAME);
-        }
-        else if (itemStack.hasData(DataComponentTypes.ITEM_NAME)) {
+        } else if (itemStack.hasData(DataComponentTypes.ITEM_NAME)) {
             this.displayNameComponent = itemStack.getData(DataComponentTypes.ITEM_NAME);
         }
         if (this.itemStack.getItemMeta().hasLore()) {
-            this.loreAsComponent  = itemStack.lore();
+            this.loreAsComponent = itemStack.lore();
         }
     }
 
@@ -147,8 +146,7 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
     public ItemStack asItemStack(@Nullable final Audience audience) {
         if (this.displayName != null) {
             this.itemStack.setData(this.staticItemName ? DataComponentTypes.ITEM_NAME : DataComponentTypes.CUSTOM_NAME, parseString(displayName, audience));
-        }
-        else if (this.displayNameComponent != null) {
+        } else if (this.displayNameComponent != null) {
             Component displayComponent = parseComponent(displayNameComponent);
             displayComponent.decoration(TextDecoration.ITALIC, false);
             this.itemStack.setData(DataComponentTypes.ITEM_NAME, displayComponent);
@@ -272,8 +270,7 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
         if (coreHeadDatabaseHook.isItem(skull)) {
             this.itemStack = coreHeadDatabaseHook.item(skull).orElse(ItemType.STONE.createItemStack(1));
             applyAudienceSkullTexture = false;
-        }
-        else {
+        } else {
             this.itemStack = ItemType.PLAYER_HEAD.createItemStack();
         }
         return (B) this;
@@ -447,6 +444,18 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
     }
 
     /**
+     * Sets the max stack size of the underlying {@link ItemStack}.
+     *
+     * @param maxStackSize The max stack size of the item.
+     * @return This builder.
+     */
+    @NotNull
+    public B setMaxStackSize(final int maxStackSize) {
+        this.itemStack.setData(DataComponentTypes.MAX_STACK_SIZE, Math.max(1, maxStackSize));
+        return (B) this;
+    }
+
+    /**
      * Sets the display name of the item being built.
      *
      * @param displayName    The display name to use when building an item.
@@ -456,7 +465,7 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
     @NotNull
     public B setDisplayName(@Nullable final String displayName, final boolean staticItemName) {
         if (displayNameComponent != null) {
-            throw new IllegalStateException("Can not set display name when there was already one created");
+            this.displayNameComponent = null;
         }
         this.displayName = displayName;
         this.staticItemName = staticItemName;
@@ -711,8 +720,8 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
     /**
      * Sets the trim for the underlying {@link ItemStack}.
      *
-     * @param pattern     The string representation of a {@link TrimPattern}.
-     * @param material    The string representation of a {@link TrimMaterial}.
+     * @param pattern  The string representation of a {@link TrimPattern}.
+     * @param material The string representation of a {@link TrimMaterial}.
      * @return This builder.
      */
     @NotNull
@@ -1034,7 +1043,7 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
      * Parses the provided {@link Component} using Placeholder API if available with the provided {@link Audience}
      * as the target for placeholders.
      *
-     * @param message  The message to be parsed.
+     * @param message The message to be parsed.
      * @return A parsed {@link Component}.
      */
     @NotNull

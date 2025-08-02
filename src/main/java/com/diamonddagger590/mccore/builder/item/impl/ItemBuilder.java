@@ -157,6 +157,24 @@ public class ItemBuilder extends BaseItemBuilder<ItemBuilder> {
         if (base64 != null && !base64.isEmpty()) {
             itemBuilder.withBase64(base64);
         }
+        return from(itemSection, itemBuilder.asItemStack());
+    }
+
+    /**
+     * Converts the provided {@link Section} into an {@link ItemBuilder} using predefined
+     * keys found in {@link ItemBuilderConfigurationKeys} to pull data from.
+     *
+     * @param itemSection      The {@link Section} containing configuration data.
+     * @param initialItemStack The initial underlying itemstack to apply the {@link Section} to.
+     * @return A new {@link ItemBuilder}.
+     */
+    @NotNull
+    public static ItemBuilder from(@NotNull Section itemSection, @NotNull ItemStack initialItemStack) {
+        ItemBuilder itemBuilder = new ItemBuilder(initialItemStack);
+        // We need to set max stack size before we set the amount
+        if (itemSection.contains(ItemBuilderConfigurationKeys.MAX_STACK_SIZE)) {
+            itemBuilder.setMaxStackSize(itemSection.getInt(ItemBuilderConfigurationKeys.MAX_STACK_SIZE));
+        }
         itemBuilder.setDisplayName(itemSection.getString(ItemBuilderConfigurationKeys.NAME, ""))
                 .withDisplayLore(itemSection.getStringList(ItemBuilderConfigurationKeys.LORE_ROUTE))
                 .setAmount(itemSection.getInt(ItemBuilderConfigurationKeys.AMOUNT, 1));
