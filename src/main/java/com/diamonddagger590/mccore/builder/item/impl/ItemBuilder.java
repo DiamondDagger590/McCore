@@ -5,6 +5,7 @@ import com.diamonddagger590.mccore.builder.item.ItemBuilderConfigurationKeys;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
 import dev.dejvokep.boostedyaml.route.Route;
 import org.bukkit.entity.EntityType;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ItemType;
 import org.bukkit.potion.PotionEffectType;
@@ -30,8 +31,9 @@ public class ItemBuilder extends BaseItemBuilder<ItemBuilder> {
 
     /**
      * Returns a {@link PotionBuilder} using the provided {@link ItemType}.
+     *
      * @param itemType The {@link ItemType} to use.
-     * @param amount The amount of the item.
+     * @param amount   The amount of the item.
      * @return A new {@link PotionBuilder}.
      */
     @NotNull
@@ -41,6 +43,7 @@ public class ItemBuilder extends BaseItemBuilder<ItemBuilder> {
 
     /**
      * Returns a {@link PotionBuilder} using the provided {@link ItemType}.
+     *
      * @param itemType The {@link ItemType} to use.
      * @return A new {@link PotionBuilder}.
      */
@@ -51,8 +54,9 @@ public class ItemBuilder extends BaseItemBuilder<ItemBuilder> {
 
     /**
      * Returns a {@link SkullBuilder} using the provided {@link ItemType}.
+     *
      * @param itemType The {@link ItemType} to use.
-     * @param amount The amount of the item.
+     * @param amount   The amount of the item.
      * @return A new {@link SkullBuilder}.
      */
     @NotNull
@@ -62,6 +66,7 @@ public class ItemBuilder extends BaseItemBuilder<ItemBuilder> {
 
     /**
      * Returns a {@link SkullBuilder} using the provided {@link ItemType}.
+     *
      * @param itemType The {@link ItemType} to use.
      * @return A new {@link SkullBuilder}.
      */
@@ -72,8 +77,9 @@ public class ItemBuilder extends BaseItemBuilder<ItemBuilder> {
 
     /**
      * Returns a {@link PatternBuilder} using the provided {@link ItemType}.
+     *
      * @param itemType The {@link ItemType} to use.
-     * @param amount The amount of the item.
+     * @param amount   The amount of the item.
      * @return A new {@link PatternBuilder}.
      */
     @NotNull
@@ -83,6 +89,7 @@ public class ItemBuilder extends BaseItemBuilder<ItemBuilder> {
 
     /**
      * Returns a {@link PatternBuilder} using the provided {@link ItemType}.
+     *
      * @param itemType The {@link ItemType} to use.
      * @return A new {@link PatternBuilder}.
      */
@@ -93,8 +100,9 @@ public class ItemBuilder extends BaseItemBuilder<ItemBuilder> {
 
     /**
      * Returns an {@link ItemBuilder} using the provided {@link ItemType}.
+     *
      * @param itemType The {@link ItemType} to use.
-     * @param amount The amount of the item.
+     * @param amount   The amount of the item.
      * @return A new {@link ItemBuilder}.
      */
     @NotNull
@@ -104,6 +112,7 @@ public class ItemBuilder extends BaseItemBuilder<ItemBuilder> {
 
     /**
      * Returns an {@link ItemBuilder} using the provided {@link ItemStack}.
+     *
      * @param itemStack The {@link ItemStack} to modify.
      * @return A new {@link ItemBuilder}.
      */
@@ -114,6 +123,7 @@ public class ItemBuilder extends BaseItemBuilder<ItemBuilder> {
 
     /**
      * Returns an {@link ItemBuilder} using the provided {@link ItemType}.
+     *
      * @param itemType The {@link ItemType} to use.
      * @return A new {@link ItemBuilder}.
      */
@@ -124,6 +134,7 @@ public class ItemBuilder extends BaseItemBuilder<ItemBuilder> {
 
     /**
      * Returns an {@link ItemBuilder} using the provided custom item string.
+     *
      * @param customItem The string of the custom item.
      * @return A new {@link ItemBuilder}.
      */
@@ -135,6 +146,7 @@ public class ItemBuilder extends BaseItemBuilder<ItemBuilder> {
     /**
      * Converts the provided {@link Section} into an {@link ItemBuilder} using predefined
      * keys found in {@link ItemBuilderConfigurationKeys} to pull data from.
+     *
      * @param itemSection The {@link Section} containing configuration data.
      * @return A new {@link ItemBuilder}.
      */
@@ -166,6 +178,8 @@ public class ItemBuilder extends BaseItemBuilder<ItemBuilder> {
                 itemBuilder.addEnchantment(enchantment, level);
             }
         }
+
+        itemSection.getStringList(ItemBuilderConfigurationKeys.ITEM_FLAGS).stream().map(ItemFlag::valueOf).forEach(itemBuilder::addItemFlag);
 
         final String player = itemSection.getString(ItemBuilderConfigurationKeys.PLAYER, "");
         if (player != null && !player.isEmpty()) {

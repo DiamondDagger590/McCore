@@ -29,6 +29,7 @@ public class ItemBuilderConfigurationKeys {
     public static final String CUSTOM_ITEM = toRoutePath("custom-item");
     public static final String HIDE_TOOLTIP = toRoutePath("hide-tool-tip");
     public static final String UNBREAKABLE_ITEM = toRoutePath("unbreakable-item");
+    public static final String ITEM_FLAGS = toRoutePath("item-flags");
 
     // Settings
     public static final String GLOWING = toRoutePath(SETTINGS_HEADER, "glowing");
