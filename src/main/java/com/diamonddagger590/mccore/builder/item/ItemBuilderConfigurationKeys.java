@@ -24,6 +24,7 @@ public class ItemBuilderConfigurationKeys {
     public static final String NAME = toRoutePath("name");
     public static final String LORE_ROUTE = toRoutePath("lore");
     public static final String AMOUNT = toRoutePath("amount");
+    public static final String MAX_STACK_SIZE = toRoutePath("max-stack-size");
     public static final String ENCHANTMENTS = toRoutePath("enchantments");
     public static final String CUSTOM_MODEL_DATA = toRoutePath("custom-model-data");
     public static final String CUSTOM_ITEM = toRoutePath("custom-item");
