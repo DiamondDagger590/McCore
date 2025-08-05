@@ -2,7 +2,10 @@ package com.diamonddagger590.mccore.player;
 
 import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.event.setting.setting.PlayerSettingChangeEvent;
+import com.diamonddagger590.mccore.external.common.AfkPluginHook;
 import com.diamonddagger590.mccore.mutex.Mutexable;
+import com.diamonddagger590.mccore.registry.RegistryAccess;
+import com.diamonddagger590.mccore.registry.RegistryKey;
 import com.diamonddagger590.mccore.setting.PlayerSetting;
 import com.diamonddagger590.mccore.statistic.Statistic;
 import com.google.common.collect.ImmutableSet;
@@ -64,7 +67,27 @@ public abstract class CorePlayer extends Mutexable {
         return Optional.ofNullable(Bukkit.getPlayer(uuid));
     }
 
+    /**
+     * Checks to see if this player should utilize mutex or not.
+     *
+     * @return {@code true} if mutex should be used.
+     */
     public abstract boolean useMutex();
+
+    /**
+     * Checks to see if this player is currently afk or not. This will only ever return {@code true}
+     * if a supported plugin hook is registered and enabled on the server.
+     *
+     * @return {@code true} if this player is currently afk.
+     */
+    public boolean isAfk() {
+        for (AfkPluginHook afkPluginHook : RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHooks(AfkPluginHook.class)) {
+            if (afkPluginHook.isAfk(this)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /**
      * Sets the provided {@link PlayerSetting} as the current setting option for that setting type.

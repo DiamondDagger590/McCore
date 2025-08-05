@@ -1,4 +1,4 @@
-package com.diamonddagger590.mccore.external;
+package com.diamonddagger590.mccore.external.common;
 
 import com.diamonddagger590.mccore.util.item.CustomItemWrapper;
 import org.bukkit.inventory.ItemStack;

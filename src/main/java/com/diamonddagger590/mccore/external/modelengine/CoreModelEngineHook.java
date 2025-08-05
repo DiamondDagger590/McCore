@@ -1,7 +1,7 @@
 package com.diamonddagger590.mccore.external.modelengine;
 
 import com.diamonddagger590.mccore.CorePlugin;
-import com.diamonddagger590.mccore.external.CustomEntityHook;
+import com.diamonddagger590.mccore.external.common.CustomEntityHook;
 import com.diamonddagger590.mccore.registry.plugin.PluginHook;
 import com.ticxo.modelengine.api.ModelEngineAPI;
 import com.ticxo.modelengine.api.model.ActiveModel;

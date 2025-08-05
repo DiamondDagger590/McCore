@@ -1,4 +1,4 @@
-package com.diamonddagger590.mccore.external;
+package com.diamonddagger590.mccore.external.common;
 
 import com.diamonddagger590.mccore.util.item.CustomEntityWrapper;
 import org.bukkit.entity.Entity;

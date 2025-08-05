@@ -1,7 +1,7 @@
 package com.diamonddagger590.mccore.external.mythicmobs;
 
 import com.diamonddagger590.mccore.CorePlugin;
-import com.diamonddagger590.mccore.external.CustomEntityHook;
+import com.diamonddagger590.mccore.external.common.CustomEntityHook;
 import com.diamonddagger590.mccore.registry.plugin.PluginHook;
 import io.lumine.mythic.bukkit.MythicBukkit;
 import org.bukkit.entity.Entity;

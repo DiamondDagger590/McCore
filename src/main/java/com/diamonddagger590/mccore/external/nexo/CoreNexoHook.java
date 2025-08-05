@@ -1,8 +1,8 @@
 package com.diamonddagger590.mccore.external.nexo;
 
 import com.diamonddagger590.mccore.CorePlugin;
-import com.diamonddagger590.mccore.external.CustomBlockHook;
-import com.diamonddagger590.mccore.external.CustomItemHook;
+import com.diamonddagger590.mccore.external.common.CustomBlockHook;
+import com.diamonddagger590.mccore.external.common.CustomItemHook;
 import com.diamonddagger590.mccore.registry.plugin.PluginHook;
 import com.nexomc.nexo.api.NexoBlocks;
 import com.nexomc.nexo.api.NexoItems;

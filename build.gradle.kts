@@ -100,6 +100,9 @@ dependencies {
 
     val hikariVersion = "6.1.0"
     api("com.zaxxer:HikariCP:$hikariVersion")
+
+    val cmiVersion = "9.7.14.3"
+    compileOnly("com.github.Zrips:CMI-API:$cmiVersion")
 }
 
 tasks {
