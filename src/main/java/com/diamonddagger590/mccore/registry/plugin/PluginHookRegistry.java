@@ -1,5 +1,6 @@
 package com.diamonddagger590.mccore.registry.plugin;
 
+import com.diamonddagger590.mccore.external.common.CustomBlockHook;
 import com.diamonddagger590.mccore.registry.Registry;
 import com.diamonddagger590.mccore.registry.RegistryKey;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +59,7 @@ public class PluginHookRegistry implements Registry<PluginHook<?>> {
     /**
      * Gets a list of all registered {@link PluginHook}s that are a child of the provided class.
      * <p>
-     * This allows for easy fetching of common plugin hooks such as providing {@link com.diamonddagger590.mccore.external.CustomBlockHook}
+     * This allows for easy fetching of common plugin hooks such as providing {@link CustomBlockHook}
      * to get all custom block hooks that are registered.
      *
      * @param extensible The class to get children plugin hooks of.

@@ -1,8 +1,8 @@
 package com.diamonddagger590.mccore.util.item;
 
 import com.diamonddagger590.mccore.builder.item.impl.ItemBuilder;
-import com.diamonddagger590.mccore.external.CustomBlockHook;
-import com.diamonddagger590.mccore.external.CustomItemHook;
+import com.diamonddagger590.mccore.external.common.CustomBlockHook;
+import com.diamonddagger590.mccore.external.common.CustomItemHook;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
 import com.diamonddagger590.mccore.registry.RegistryKey;
 import com.diamonddagger590.mccore.util.Methods;

@@ -1,6 +1,6 @@
 package com.diamonddagger590.mccore.util.item;
 
-import com.diamonddagger590.mccore.external.CustomEntityHook;
+import com.diamonddagger590.mccore.external.common.CustomEntityHook;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
 import com.diamonddagger590.mccore.registry.RegistryKey;
 import com.diamonddagger590.mccore.util.Methods;

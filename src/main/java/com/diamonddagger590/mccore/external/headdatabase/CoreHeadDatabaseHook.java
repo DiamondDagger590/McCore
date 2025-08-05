@@ -1,7 +1,7 @@
 package com.diamonddagger590.mccore.external.headdatabase;
 
 import com.diamonddagger590.mccore.CorePlugin;
-import com.diamonddagger590.mccore.external.CustomItemHook;
+import com.diamonddagger590.mccore.external.common.CustomItemHook;
 import com.diamonddagger590.mccore.registry.plugin.PluginHook;
 import me.arcaniax.hdb.api.HeadDatabaseAPI;
 import org.bukkit.inventory.ItemStack;

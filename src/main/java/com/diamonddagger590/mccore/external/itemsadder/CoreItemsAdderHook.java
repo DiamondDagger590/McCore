@@ -1,8 +1,8 @@
 package com.diamonddagger590.mccore.external.itemsadder;
 
 import com.diamonddagger590.mccore.CorePlugin;
-import com.diamonddagger590.mccore.external.CustomBlockHook;
-import com.diamonddagger590.mccore.external.CustomItemHook;
+import com.diamonddagger590.mccore.external.common.CustomBlockHook;
+import com.diamonddagger590.mccore.external.common.CustomItemHook;
 import com.diamonddagger590.mccore.registry.plugin.PluginHook;
 import dev.lone.itemsadder.api.CustomBlock;
 import dev.lone.itemsadder.api.CustomStack;

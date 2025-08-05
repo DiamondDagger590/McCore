@@ -6,6 +6,7 @@ import com.diamonddagger590.mccore.command.CoreCommandManager;
 import com.diamonddagger590.mccore.configuration.ReloadableContentManager;
 import com.diamonddagger590.mccore.database.Database;
 import com.diamonddagger590.mccore.database.driver.DriverManager;
+import com.diamonddagger590.mccore.external.cmi.CoreCMIHook;
 import com.diamonddagger590.mccore.external.headdatabase.CoreHeadDatabaseHook;
 import com.diamonddagger590.mccore.external.itemsadder.CoreItemsAdderHook;
 import com.diamonddagger590.mccore.external.modelengine.CoreModelEngineHook;
@@ -127,6 +128,10 @@ public abstract class CorePlugin extends JavaPlugin {
         if (Bukkit.getPluginManager().isPluginEnabled("MythicMobs")) {
             getLogger().info("MythicMobs found... registering placeholders translation support for core");
             registryAccess.registry(RegistryKey.PLUGIN_HOOK).register(new CoreMythicMobsHook(this));
+        }
+        if (Bukkit.getPluginManager().isPluginEnabled("CMI")) {
+            getLogger().info("CMI found... registering hooks for core");
+            registryAccess.registry(RegistryKey.PLUGIN_HOOK).register(new CoreCMIHook(this));
         }
     }
 
