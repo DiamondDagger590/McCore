@@ -1,4 +1,4 @@
-package com.diamonddagger590.mccore.configuration.parser;
+package com.diamonddagger590.mccore.configuration.common;
 
 import com.diamonddagger590.mccore.configuration.ReloadableContent;
 import com.diamonddagger590.mccore.parser.Parser;
