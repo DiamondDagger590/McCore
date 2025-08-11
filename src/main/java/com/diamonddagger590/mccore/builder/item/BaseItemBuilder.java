@@ -411,8 +411,7 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
         if (enchantGlintOverride && !this.itemStack.hasData(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE)) {
             this.itemStack.setData(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, enchantGlintOverride);
             return (B) this;
-        }
-        if (this.itemStack.hasData(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE)) {
+        } else if (!enchantGlintOverride && this.itemStack.hasData(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE)) {
             this.itemStack.unsetData(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE);
         }
         return (B) this;
