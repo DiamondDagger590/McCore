@@ -1,5 +1,6 @@
 package com.diamonddagger590.mccore.registry;
 
+import org.apiguardian.api.API;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -67,5 +68,14 @@ public final class RegistryAccess implements Registry<Registry<?>> {
     @NotNull
     public static RegistryAccess registryAccess() {
         return INSTANCE;
+    }
+
+    /**
+     * This function only exists to be used by unit tests to reset the internals
+     * of this registry.
+     */
+    @API(status = API.Status.INTERNAL)
+    private static void reset() {
+        INSTANCE.registryMap.clear();
     }
 }
