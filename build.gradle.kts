@@ -3,6 +3,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 plugins {
     java
     `java-library`
+    `java-test-fixtures`
     `maven-publish`
     id("io.github.goooler.shadow") version "8.1.7"
 }
@@ -58,6 +59,10 @@ dependencies {
     val intellijAnnotationVersion = "12.0"
     compileOnlyApi("com.intellij:annotations:$intellijAnnotationVersion")
 
+    val junitVersion = "5.11.0"
+    testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")
+    testFixturesApi("org.junit.jupiter:junit-jupiter:$junitVersion")
+
     val paperVersion = "1.21.8-R0.1-SNAPSHOT"
     compileOnlyApi("io.papermc.paper:paper-api:$paperVersion")
 
@@ -106,6 +111,10 @@ dependencies {
 }
 
 tasks {
+
+    test {
+        useJUnitPlatform()
+    }
 
     shadowJar {
         relocate("org.incendo", "com.diamonddagger590.mccore.cloud")
