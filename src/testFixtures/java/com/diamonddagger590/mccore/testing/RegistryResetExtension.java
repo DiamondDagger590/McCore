@@ -15,9 +15,11 @@ import org.junit.jupiter.api.extension.ExtensionContext;
  */
 public class RegistryResetExtension implements BeforeAllCallback, AfterAllCallback {
 
+    private static final String REGISTRY_CLASS_PATH = "com.diamonddagger590.mccore.registry.RegistryAccess";
+
     @Override
     public void beforeAll(@NotNull ExtensionContext context) {
-        RegistryTestTools.resetRegistryAccess();
+        InternalResetTestTools.resetRegistryAccess(REGISTRY_CLASS_PATH);
         RegistryAccess.registryAccess().register(new ManagerRegistry());
         RegistryAccess.registryAccess().register(new PluginHookRegistry());
         RegistryAccess.registryAccess().register(new PlayerSettingRegistry());
@@ -25,6 +27,6 @@ public class RegistryResetExtension implements BeforeAllCallback, AfterAllCallba
 
     @Override
     public void afterAll(@NotNull ExtensionContext context) {
-        RegistryTestTools.resetRegistryAccess();
+        InternalResetTestTools.resetRegistryAccess(REGISTRY_CLASS_PATH);
     }
 }
