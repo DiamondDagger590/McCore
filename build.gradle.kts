@@ -65,6 +65,8 @@ dependencies {
 
     val paperVersion = "1.21.8-R0.1-SNAPSHOT"
     compileOnlyApi("io.papermc.paper:paper-api:$paperVersion")
+    testImplementation("io.papermc.paper:paper-api:$paperVersion")
+    testFixturesImplementation("io.papermc.paper:paper-api:$paperVersion")
 
     val placeholderAPIVersion = "2.11.6"
     compileOnlyApi("me.clip:placeholderapi:$placeholderAPIVersion")

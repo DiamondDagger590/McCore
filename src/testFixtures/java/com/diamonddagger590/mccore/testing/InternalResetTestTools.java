@@ -10,17 +10,17 @@ import java.lang.reflect.Method;
  * in between tests to insure implementation doesn't bleed over while not exposing this functionality
  * outside of testing.
  */
-public class RegistryTestTools {
+public class InternalResetTestTools {
 
-    public static void resetRegistryAccess() {
+    public static void resetRegistryAccess(@NotNull String classPath) {
         try {
-            Class<?> raClass = Class.forName("com.diamonddagger590.mccore.registry.RegistryAccess");
+            Class<?> raClass = Class.forName(classPath);
             Method resetMethod = findRestMethod(raClass);
             assert resetMethod != null;
             resetMethod.setAccessible(true);
             resetMethod.invoke(null);
-        } catch (Throwable ignored) {
-            throw new RuntimeException(ignored);
+        } catch (Throwable throwable) {
+            throw new RuntimeException(throwable);
         }
     }
 
