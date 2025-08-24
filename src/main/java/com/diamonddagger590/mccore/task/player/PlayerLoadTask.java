@@ -5,6 +5,7 @@ import com.diamonddagger590.mccore.database.Database;
 import com.diamonddagger590.mccore.database.table.impl.MutexDAO;
 import com.diamonddagger590.mccore.event.player.PlayerLoadEvent;
 import com.diamonddagger590.mccore.player.CorePlayer;
+import com.diamonddagger590.mccore.registry.RegistryAccess;
 import com.diamonddagger590.mccore.registry.RegistryKey;
 import com.diamonddagger590.mccore.registry.manager.CoreManagerKey;
 import com.diamonddagger590.mccore.task.core.CoreTask;
@@ -34,7 +35,8 @@ public abstract class PlayerLoadTask extends ExpireableCoreTask {
     }
 
     private void runLoadPlayerTask() {
-        Database database = getPlugin().getDatabase();
+        Database database = RegistryAccess.registryAccess().registry(RegistryKey.MANAGER)
+                .manager(CoreManagerKey.CORE_DATABASE_MANAGER).getDatabase();
         /*
          If the player is already in the player manager, then that means they logged out then back in.
          We need to check for that and don't load their data until they are removed from the manager.

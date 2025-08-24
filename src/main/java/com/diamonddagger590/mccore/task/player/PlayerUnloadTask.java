@@ -5,6 +5,9 @@ import com.diamonddagger590.mccore.database.Database;
 import com.diamonddagger590.mccore.database.table.impl.MutexDAO;
 import com.diamonddagger590.mccore.event.player.PlayerUnloadEvent;
 import com.diamonddagger590.mccore.player.CorePlayer;
+import com.diamonddagger590.mccore.registry.RegistryAccess;
+import com.diamonddagger590.mccore.registry.RegistryKey;
+import com.diamonddagger590.mccore.registry.manager.CoreManagerKey;
 import com.diamonddagger590.mccore.task.core.CoreTask;
 import com.diamonddagger590.mccore.task.core.ExpireableCoreTask;
 import org.bukkit.Bukkit;
@@ -29,7 +32,8 @@ public abstract class PlayerUnloadTask extends ExpireableCoreTask {
     }
 
     private void runUnloadPlayerTask() {
-        Database database = getPlugin().getDatabase();
+        Database database = RegistryAccess.registryAccess().registry(RegistryKey.MANAGER)
+                .manager(CoreManagerKey.CORE_DATABASE_MANAGER).getDatabase();
         try (Connection connection = database.getConnection()) {
             //pause the task to prevent future iterations
             pauseTask();

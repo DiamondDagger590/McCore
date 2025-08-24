@@ -1,10 +1,11 @@
 package com.diamonddagger590.mccore.database;
 
 import com.diamonddagger590.mccore.CorePlugin;
+import com.diamonddagger590.mccore.database.driver.DatabaseDriver;
+import com.diamonddagger590.mccore.database.driver.DatabaseDriverType;
+import com.diamonddagger590.mccore.database.driver.DriverRegistry;
 import com.diamonddagger590.mccore.database.function.CreateTableFunction;
 import com.diamonddagger590.mccore.database.function.UpdateTableFunction;
-import com.diamonddagger590.mccore.database.driver.DatabaseDriverType;
-import com.diamonddagger590.mccore.database.driver.DatabaseDriver;
 import com.diamonddagger590.mccore.database.table.function.CreateCoreTablesFunction;
 import com.diamonddagger590.mccore.database.table.function.UpdateCoreTablesFunction;
 import com.diamonddagger590.mccore.event.database.PreTablesCreateEvent;
@@ -13,7 +14,6 @@ import com.diamonddagger590.mccore.event.database.TablesCreatedEvent;
 import com.diamonddagger590.mccore.event.database.TablesUpdatedEvent;
 import com.diamonddagger590.mccore.pair.Pair;
 import com.diamonddagger590.mccore.registry.RegistryKey;
-import com.diamonddagger590.mccore.registry.manager.ManagerKey;
 import com.zaxxer.hikari.HikariDataSource;
 import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * A database is initialized using a specific {@link DatabaseDriverType}.
  * <p>
- * The database will attempt to find a registered {@link DatabaseDriver} from the {@link com.diamonddagger590.mccore.database.driver.DriverManager}
+ * The database will attempt to find a registered {@link DatabaseDriver} from the {@link DriverRegistry}
  * that corresponds to the driver type, and initialize a database from that driver.
  */
 public abstract class Database {
@@ -170,11 +170,11 @@ public abstract class Database {
      * Gets the {@link DatabaseDriver} being used by this database.
      *
      * @return The {@link DatabaseDriver} being used by this database.
-     * @throws IllegalArgumentException if {@link com.diamonddagger590.mccore.database.driver.DriverManager#isDriverRegistered(DatabaseDriverType)} returns {@code false}.
+     * @throws IllegalArgumentException if {@link DriverRegistry#isDriverRegistered(DatabaseDriverType)} returns {@code false}.
      */
     @NotNull
     protected final DatabaseDriver getDriver() {
-        return plugin.registryAccess().registry(RegistryKey.MANAGER).manager(ManagerKey.DRIVER).getDriver(databaseDriverType)
+        return plugin.registryAccess().registry(RegistryKey.DRIVER).getDriver(databaseDriverType)
                 .orElseThrow(() -> new IllegalArgumentException(String.format("Database driver %s was not registered... unable to initialize database.", databaseDriverType.getDriverName())));
     }
 
