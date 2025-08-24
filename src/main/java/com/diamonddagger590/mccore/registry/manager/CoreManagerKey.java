@@ -1,5 +1,6 @@
 package com.diamonddagger590.mccore.registry.manager;
 
+import com.diamonddagger590.mccore.database.DatabaseManager;
 import com.diamonddagger590.mccore.gui.GuiManager;
 import com.diamonddagger590.mccore.player.PlayerManager;
 import org.jetbrains.annotations.ApiStatus;
@@ -18,4 +19,8 @@ public interface CoreManagerKey extends ManagerKey<Manager<?>> {
     @ApiStatus.Internal
     @SuppressWarnings("rawtypes")
     ManagerKey<PlayerManager> CORE_PLAYER_MANAGER = create(PlayerManager.class);
+    @ApiStatus.Internal
+    @SuppressWarnings("rawtypes")
+    ManagerKey<DatabaseManager> CORE_DATABASE_MANAGER = create(DatabaseManager.class);
+
 }

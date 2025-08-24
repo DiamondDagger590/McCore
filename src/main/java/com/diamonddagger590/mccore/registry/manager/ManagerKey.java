@@ -3,7 +3,6 @@ package com.diamonddagger590.mccore.registry.manager;
 import com.diamonddagger590.mccore.chat.ChatResponseManager;
 import com.diamonddagger590.mccore.command.CoreCommandManager;
 import com.diamonddagger590.mccore.configuration.ReloadableContentManager;
-import com.diamonddagger590.mccore.database.driver.DriverManager;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +22,6 @@ import static com.diamonddagger590.mccore.registry.manager.ManagerKeyImpl.create
 public interface ManagerKey<M> {
 
     ManagerKey<CoreCommandManager> COMMAND = create(CoreCommandManager.class);
-    ManagerKey<DriverManager> DRIVER = create(DriverManager.class);
     ManagerKey<ReloadableContentManager> RELOADABLE_CONTENT = create(ReloadableContentManager.class);
     ManagerKey<ChatResponseManager> CHAT_RESPONSE = create(ChatResponseManager.class);
 

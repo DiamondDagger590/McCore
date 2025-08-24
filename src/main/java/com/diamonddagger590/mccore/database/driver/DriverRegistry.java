@@ -1,8 +1,7 @@
 package com.diamonddagger590.mccore.database.driver;
 
-import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.database.Database;
-import com.diamonddagger590.mccore.registry.manager.Manager;
+import com.diamonddagger590.mccore.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -15,12 +14,11 @@ import java.util.Optional;
  * Any driver that is allowed to be used in a {@link Database} should be registered
  * here.
  */
-public final class DriverManager extends Manager<CorePlugin> {
+public final class DriverRegistry implements Registry<DatabaseDriver> {
 
     private final Map<DatabaseDriverType, DatabaseDriver> registeredDrivers;
 
-    public DriverManager(@NotNull CorePlugin corePlugin) {
-        super(corePlugin);
+    public DriverRegistry() {
         this.registeredDrivers = new HashMap<>();
     }
 
@@ -30,7 +28,7 @@ public final class DriverManager extends Manager<CorePlugin> {
      * @param databaseDriver The {@link DatabaseDriver} to register.
      * @throws RuntimeException If {@link DatabaseDriver#tryDriver()} returns {@code false}.
      */
-    public void registerDriver(@NotNull DatabaseDriver databaseDriver) {
+    public void register(@NotNull DatabaseDriver databaseDriver) {
         if (!databaseDriver.tryDriver()) {
             throw new RuntimeException(String.format("Driver class for %s is missing and therefore is unable to be registered...", databaseDriver.getDriverType().getDriverName()));
         }
@@ -43,7 +41,7 @@ public final class DriverManager extends Manager<CorePlugin> {
      * @param databaseDriver The {@link DatabaseDriver} to check.
      * @return {@code true} if the provided {@link DatabaseDriver} is registered.
      */
-    public boolean isDriverRegistered(@NotNull DatabaseDriver databaseDriver) {
+    public boolean registered(@NotNull DatabaseDriver databaseDriver) {
         return registeredDrivers.containsValue(databaseDriver);
     }
 

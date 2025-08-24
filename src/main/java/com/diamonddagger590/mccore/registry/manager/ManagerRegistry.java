@@ -34,6 +34,10 @@ public class ManagerRegistry implements Registry<Manager<?>> {
         return managers.containsKey(manager.getClass());
     }
 
+    public boolean registered(@NotNull ManagerKey<?> manager) {
+        return managers.containsKey(manager.getClass());
+    }
+
     /**
      * Gets the {@link Manager} belonging to the provided {@link ManagerKey}.
      *
