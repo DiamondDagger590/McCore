@@ -4,9 +4,6 @@ import com.diamonddagger590.mccore.bootstrap.CoreBootstrap;
 import com.diamonddagger590.mccore.bootstrap.StartupProfile;
 import com.diamonddagger590.mccore.builder.item.ItemPluginType;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
-import com.diamonddagger590.mccore.registry.RegistryKey;
-import com.diamonddagger590.mccore.registry.manager.CoreManagerKey;
-import com.diamonddagger590.mccore.registry.manager.ManagerRegistry;
 import com.diamonddagger590.mccore.setting.PlayerSettingRegistry;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -20,8 +17,6 @@ import org.jetbrains.annotations.NotNull;
 public abstract class CorePlugin extends JavaPlugin {
 
     private static CorePlugin instance;
-
-    private RegistryAccess registryAccess;
 
     private BukkitAudiences adventure;
     private MiniMessage miniMessage;
@@ -39,10 +34,6 @@ public abstract class CorePlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         adventure.close();
-        ManagerRegistry managerRegistry = RegistryAccess.registryAccess().registry(RegistryKey.MANAGER);
-        if (managerRegistry.registered(CoreManagerKey.CORE_DATABASE_MANAGER)) {
-            managerRegistry.manager(CoreManagerKey.CORE_DATABASE_MANAGER).getDatabase().shutdown();
-        }
     }
 
     @NotNull
@@ -89,7 +80,7 @@ public abstract class CorePlugin extends JavaPlugin {
      */
     @NotNull
     public final RegistryAccess registryAccess() {
-        return registryAccess;
+        return RegistryAccess.registryAccess();
     }
 
     /**
