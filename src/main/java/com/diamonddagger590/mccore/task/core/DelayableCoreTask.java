@@ -9,26 +9,24 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class DelayableCoreTask extends CoreTask {
 
-    private int taskDelay;
+    private final long taskDelay;
 
     /**
      * @param plugin    The {@link Plugin} initializing the task
      * @param taskDelay The delay in seconds before execution whenever {@link #runTask(boolean)} is called.
      */
-    public DelayableCoreTask(@NotNull Plugin plugin, int taskDelay) {
+    public DelayableCoreTask(@NotNull Plugin plugin, long taskDelay) {
         super(plugin);
         this.taskDelay = Math.max(0, taskDelay);
     }
 
     @Override
     public void runTask(boolean runAsync) {
-
         if (runAsync) {
-            bukkitTaskId = Bukkit.getScheduler().runTaskLaterAsynchronously(getPlugin(), this, taskDelay * 20L).getTaskId();
+            bukkitTaskId = Bukkit.getScheduler().runTaskLaterAsynchronously(getPlugin(), this, (taskDelay * 1000) * 20L).getTaskId();
             taskRunningAsync = true;
-        }
-        else {
-            bukkitTaskId = Bukkit.getScheduler().runTaskLater(getPlugin(), this, taskDelay * 20L).getTaskId();
+        } else {
+            bukkitTaskId = Bukkit.getScheduler().runTaskLater(getPlugin(), this, (taskDelay * 1000) * 20L).getTaskId();
             taskRunningAsync = false;
         }
 
@@ -37,9 +35,10 @@ public abstract class DelayableCoreTask extends CoreTask {
     }
 
     /**
-     * Gets the amount of ticks to delay execution of the task by whenever {@link #runTask(boolean)} is called.
+     * Gets the number of ticks to delay execution of the task by whenever {@link #runTask(boolean)} is called.
      *
-     * @return The positive, zero inclusive amount of ticks to delay execution of the task by whenever {@link #runTask(boolean)} is called.
+     * @return The positive, zero inclusive number of ticks to delay execution of the task
+     * by whenever {@link #runTask(boolean)} is called.
      */
     public long getTaskDelay() {
         return taskDelay;

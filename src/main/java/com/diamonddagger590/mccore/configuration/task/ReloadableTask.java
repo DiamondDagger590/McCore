@@ -1,7 +1,7 @@
 package com.diamonddagger590.mccore.configuration.task;
 
 import com.diamonddagger590.mccore.configuration.ReloadableContent;
-import com.diamonddagger590.mccore.task.core.CancellableCoreTask;
+import com.diamonddagger590.mccore.task.core.CancelableCoreTask;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import dev.dejvokep.boostedyaml.route.Route;
 import org.jetbrains.annotations.NotNull;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.BiFunction;
 
 /**
- * A Reloadable Task represents an intersection of {@link CancellableCoreTask}s and {@link ReloadableContent}.
+ * A Reloadable Task represents an intersection of {@link CancelableCoreTask}s and {@link ReloadableContent}.
  * <p>
  * This object wraps a task inside reloadable content which allows for tasks to be automatically canceled and started
  * again whenever {@link ReloadableContent#reloadContent()} is called.
@@ -17,9 +17,9 @@ import java.util.function.BiFunction;
  * The task inside of this object may not be at all equal to one that was retrieved earlier so this object should
  * be read from each time the desired task is needed to be used.
  *
- * @param <T> The {@link CancellableCoreTask} being stored inside this {@link ReloadableContent}.
+ * @param <T> The {@link CancelableCoreTask} being stored inside this {@link ReloadableContent}.
  */
-public class ReloadableTask<T extends CancellableCoreTask> extends ReloadableContent<T> {
+public class ReloadableTask<T extends CancelableCoreTask> extends ReloadableContent<T> {
 
     private final boolean async;
 

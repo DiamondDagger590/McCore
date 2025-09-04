@@ -52,9 +52,9 @@ public abstract class MultiExecutionCoreTask extends CoreTask {
     }
 
     /**
-     * Gets the amount of times that this task has been executed.
+     * Gets the number of times that this task has been executed.
      *
-     * @return The amount of times that this task has been executed.
+     * @return The number of times that this task has been executed.
      */
     public int getExecutions() {
         return executions;
