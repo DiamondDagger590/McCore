@@ -24,7 +24,7 @@ apply {
 }
 
 //RECODE.RELEASE.PATCH.DEVELOPMENT
-version = "1.0.0.16-SNAPSHOT"
+version = "1.0.0.17-SNAPSHOT"
 group = "com.diamonddagger590"
 
 java {
