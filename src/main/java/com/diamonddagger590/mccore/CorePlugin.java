@@ -1,10 +1,10 @@
 package com.diamonddagger590.mccore;
 
-import com.diamonddagger590.mccore.bootstrap.CoreBootstrap;
 import com.diamonddagger590.mccore.bootstrap.StartupProfile;
 import com.diamonddagger590.mccore.builder.item.ItemPluginType;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
 import com.diamonddagger590.mccore.setting.PlayerSettingRegistry;
+import com.diamonddagger590.mccore.util.TimeProvider;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -22,7 +22,7 @@ public abstract class CorePlugin extends JavaPlugin {
     private MiniMessage miniMessage;
 
     protected PlayerSettingRegistry playerSettingRegistry;
-    protected CoreBootstrap<?> bootstrap;
+    protected TimeProvider timeProvider;
 
     @Override
     public void onEnable() {
@@ -82,6 +82,14 @@ public abstract class CorePlugin extends JavaPlugin {
     public final RegistryAccess registryAccess() {
         return RegistryAccess.registryAccess();
     }
+
+    /**
+     * Gets the {@link TimeProvider} used by this plugin instance.
+     *
+     * @return The {@link TimeProvider} used by this plugin instance.
+     */
+    @NotNull
+    public abstract TimeProvider getTimeProvider();
 
     /**
      * Gets the instance of this plugin or throws a {@link NullPointerException} if not initialized.

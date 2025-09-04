@@ -13,7 +13,10 @@ import com.diamonddagger590.mccore.registry.manager.CoreManagerKey;
 import com.diamonddagger590.mccore.registry.manager.ManagerRegistry;
 import com.diamonddagger590.mccore.registry.plugin.PluginHookRegistry;
 import com.diamonddagger590.mccore.setting.PlayerSettingRegistry;
+import com.diamonddagger590.mccore.util.TimeProvider;
 import org.jetbrains.annotations.NotNull;
+
+import java.time.Clock;
 
 /**
  * A bootstrap is used to load features and functionality of a given plugin on plugin enablement
@@ -73,5 +76,15 @@ public abstract class CoreBootstrap<P extends CorePlugin> {
         if (managerRegistry.registered(CoreManagerKey.CORE_DATABASE_MANAGER)) {
             managerRegistry.manager(CoreManagerKey.CORE_DATABASE_MANAGER).getDatabase().shutdown();
         }
+    }
+
+    /**
+     * Gets the {@link TimeProvider} instance for this plugin to use.
+     *
+     * @return The {@link TimeProvider} instance for this plugin to use.
+     */
+    @NotNull
+    public TimeProvider getTimeProvider() {
+        return new TimeProvider(Clock.systemUTC());
     }
 }

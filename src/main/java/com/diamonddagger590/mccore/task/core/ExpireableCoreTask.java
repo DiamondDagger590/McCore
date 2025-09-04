@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * 1) The task executes a maximum amount of intervals
  * 2) The task's duration has reached a maximum length
  */
-public abstract class ExpireableCoreTask extends CancellableCoreTask {
+public abstract class ExpireableCoreTask extends CancelableCoreTask {
 
     protected long maxTaskDuration;
     protected int maxIntervals;
@@ -61,7 +61,6 @@ public abstract class ExpireableCoreTask extends CancellableCoreTask {
 
     @Override
     public void run() {
-
         //Expire task before passing it back up to check for cancellation state
         long currentTime = System.currentTimeMillis();
         if (getMaxTaskDuration() != -1 && currentTime >= getMaxTaskDuration()) {
