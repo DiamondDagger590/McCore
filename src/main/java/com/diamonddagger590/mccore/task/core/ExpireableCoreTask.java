@@ -1,7 +1,7 @@
 package com.diamonddagger590.mccore.task.core;
 
+import com.diamonddagger590.mccore.CorePlugin;
 import org.bukkit.Bukkit;
-import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -15,27 +15,27 @@ public abstract class ExpireableCoreTask extends CancelableCoreTask {
     protected long maxTaskDuration;
     protected int maxIntervals;
 
-    public ExpireableCoreTask(@NotNull Plugin plugin, double taskDelay, long maxTaskDurationSeconds) {
+    public ExpireableCoreTask(@NotNull CorePlugin plugin, double taskDelay, long maxTaskDurationSeconds) {
         super(plugin, taskDelay, 1);
-        this.maxTaskDuration = System.currentTimeMillis() + (maxTaskDurationSeconds * 1000);
+        this.maxTaskDuration = getPlugin().getTimeProvider().now().toEpochMilli() + (maxTaskDurationSeconds * 1000);
         this.maxIntervals = -1;
     }
 
-    public ExpireableCoreTask(@NotNull Plugin plugin, double taskDelay, double taskFrequency, long maxTaskDurationSeconds) {
+    public ExpireableCoreTask(@NotNull CorePlugin plugin, double taskDelay, double taskFrequency, long maxTaskDurationSeconds) {
         super(plugin, taskDelay, taskFrequency);
-        this.maxTaskDuration = System.currentTimeMillis() + (maxTaskDurationSeconds * 1000);
+        this.maxTaskDuration = getPlugin().getTimeProvider().now().toEpochMilli() + (maxTaskDurationSeconds * 1000);
         this.maxIntervals = -1;
     }
 
-    public ExpireableCoreTask(@NotNull Plugin plugin, double taskDelay, double taskFrequency, int maxIntervals) {
+    public ExpireableCoreTask(@NotNull CorePlugin plugin, double taskDelay, double taskFrequency, int maxIntervals) {
         super(plugin, taskDelay, taskFrequency);
         this.maxIntervals = Math.max(1, maxIntervals);
         this.maxTaskDuration = -1;
     }
 
-    public ExpireableCoreTask(@NotNull Plugin plugin, double taskDelay, double taskFrequency, long maxTaskDurationSeconds, int maxIntervals) {
+    public ExpireableCoreTask(@NotNull CorePlugin plugin, double taskDelay, double taskFrequency, long maxTaskDurationSeconds, int maxIntervals) {
         super(plugin, taskDelay, taskFrequency);
-        this.maxTaskDuration = System.currentTimeMillis() + (maxTaskDurationSeconds * 1000);
+        this.maxTaskDuration = getPlugin().getTimeProvider().now().toEpochMilli() + (maxTaskDurationSeconds * 1000);
         this.maxIntervals = Math.max(1, maxIntervals);
     }
 
@@ -62,7 +62,7 @@ public abstract class ExpireableCoreTask extends CancelableCoreTask {
     @Override
     public void run() {
         //Expire task before passing it back up to check for cancellation state
-        long currentTime = System.currentTimeMillis();
+        long currentTime = getPlugin().getTimeProvider().now().toEpochMilli();
         if (getMaxTaskDuration() != -1 && currentTime >= getMaxTaskDuration()) {
             expireTask();
             return;
@@ -81,7 +81,7 @@ public abstract class ExpireableCoreTask extends CancelableCoreTask {
 
     @Override
     protected void startInterval() {
-        intervalStartTime = System.currentTimeMillis();
+        intervalStartTime = getPlugin().getTimeProvider().now().toEpochMilli();
         currentInterval++;
 
         if (maxIntervals != -1 && currentInterval >= maxIntervals) {

@@ -1,7 +1,7 @@
 package com.diamonddagger590.mccore.task.core;
 
+import com.diamonddagger590.mccore.CorePlugin;
 import org.bukkit.Bukkit;
-import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,7 +23,7 @@ public abstract class RepeatableCoreTask extends MultiExecutionCoreTask {
     protected long intervalStartTime;
     protected boolean paused;
 
-    public RepeatableCoreTask(@NotNull Plugin plugin, double taskDelay, double taskFrequency) {
+    public RepeatableCoreTask(@NotNull CorePlugin plugin, double taskDelay, double taskFrequency) {
         super(plugin);
         this.taskDelay = taskDelay;
         this.taskFrequency = taskFrequency;
@@ -40,7 +40,7 @@ public abstract class RepeatableCoreTask extends MultiExecutionCoreTask {
         }
 
         taskExecuted = true;
-        taskStartTime = System.currentTimeMillis();
+        taskStartTime = getPlugin().getTimeProvider().now().toEpochMilli();
     }
 
     @Override
@@ -49,7 +49,7 @@ public abstract class RepeatableCoreTask extends MultiExecutionCoreTask {
             return;
         }
 
-        long currentTime = System.currentTimeMillis();
+        long currentTime = getPlugin().getTimeProvider().now().toEpochMilli();
         if (!delayExpired) {
             if (currentTime >= taskStartTime + (taskDelay * 1000)) {
                 delayExpired = true;
@@ -69,7 +69,7 @@ public abstract class RepeatableCoreTask extends MultiExecutionCoreTask {
      * Start a new interval for this task.
      */
     protected void startInterval() {
-        intervalStartTime = System.currentTimeMillis();
+        intervalStartTime = getPlugin().getTimeProvider().now().toEpochMilli();
         currentInterval++;
         onIntervalStart();
     }

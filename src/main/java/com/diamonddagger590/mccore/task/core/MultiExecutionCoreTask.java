@@ -1,6 +1,6 @@
 package com.diamonddagger590.mccore.task.core;
 
-import org.bukkit.plugin.Plugin;
+import com.diamonddagger590.mccore.CorePlugin;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,7 +14,7 @@ public abstract class MultiExecutionCoreTask extends CoreTask {
 
     private int executions;
 
-    public MultiExecutionCoreTask(@NotNull Plugin plugin) {
+    public MultiExecutionCoreTask(@NotNull CorePlugin plugin) {
         super(plugin);
     }
 

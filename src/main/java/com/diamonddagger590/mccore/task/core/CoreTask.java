@@ -1,8 +1,8 @@
 package com.diamonddagger590.mccore.task.core;
 
+import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.exception.TaskCompletedException;
 import org.bukkit.Bukkit;
-import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -10,23 +10,23 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class CoreTask implements Runnable {
 
-    private final Plugin plugin;
+    private final CorePlugin plugin;
     protected int bukkitTaskId = -1;
     protected long taskStartTime = -1;
     protected boolean taskRunningAsync;
     protected boolean taskExecuted;
 
-    public CoreTask(@NotNull Plugin plugin) {
+    public CoreTask(@NotNull CorePlugin plugin) {
         this.plugin = plugin;
     }
 
     /**
-     * Gets the {@link Plugin} that created this task.
+     * Gets the {@link CorePlugin} that created this task.
      *
-     * @return The {@link Plugin} that created this task.
+     * @return The {@link CorePlugin} that created this task.
      */
     @NotNull
-    public Plugin getPlugin() {
+    public CorePlugin getPlugin() {
         return plugin;
     }
 
@@ -102,6 +102,6 @@ public abstract class CoreTask implements Runnable {
         }
 
         taskExecuted = true;
-        taskStartTime = System.currentTimeMillis();
+        taskStartTime = getPlugin().getTimeProvider().now().toEpochMilli();
     }
 }
