@@ -4,15 +4,17 @@ import com.Zrips.CMI.CMI;
 import com.Zrips.CMI.Containers.CMIUser;
 import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.external.common.AfkPluginHook;
+import com.diamonddagger590.mccore.external.common.NpcPluginHook;
 import com.diamonddagger590.mccore.player.CorePlayer;
 import com.diamonddagger590.mccore.registry.plugin.PluginHook;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Hooks into {@link CMI} to provide utility methods such as checking if a player is AFK.
  */
-public class CoreCMIHook extends PluginHook<CorePlugin> implements AfkPluginHook {
+public class CoreCMIHook extends PluginHook<CorePlugin> implements AfkPluginHook, NpcPluginHook {
 
     public CoreCMIHook(@NotNull CorePlugin plugin) {
         super(plugin);
@@ -27,5 +29,10 @@ public class CoreCMIHook extends PluginHook<CorePlugin> implements AfkPluginHook
             return user != null && user.isAfk();
         }
         return false;
+    }
+
+    @Override
+    public boolean isEntityNpc(@NotNull Entity entity) {
+        return entity instanceof Player player && CMI.getInstance().getUtilManager().isNPC(player);
     }
 }

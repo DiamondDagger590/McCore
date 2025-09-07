@@ -41,6 +41,7 @@ repositories {
     maven("https://repo.nexomc.com/releases") // Nexo
     maven("https://maven.devs.beer/") // ItemsAdder
     maven("https://mvn.lumine.io/repository/maven-public/") //MythicMobs + Model Engine
+    maven("https://maven.citizensnpcs.co/repo") // Citizens
 
     //Spigot
     maven("https://oss.sonatype.org/content/repositories/snapshots/")
@@ -110,6 +111,11 @@ dependencies {
 
     val cmiVersion = "9.7.14.3"
     compileOnly("com.github.Zrips:CMI-API:$cmiVersion")
+
+    val citizensVersion = "2.0.35-SNAPSHOT"
+    compileOnly("net.citizensnpcs:citizens-main:2.0.39-SNAPSHOT") {
+        exclude(group = "*", module = "*")
+    }
 }
 
 tasks {

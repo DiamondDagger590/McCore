@@ -1,5 +1,6 @@
 package com.diamonddagger590.mccore.registry.plugin;
 
+import com.diamonddagger590.mccore.external.citizens.CoreCitizensHook;
 import com.diamonddagger590.mccore.external.cmi.CoreCMIHook;
 import com.diamonddagger590.mccore.external.headdatabase.CoreHeadDatabaseHook;
 import com.diamonddagger590.mccore.external.itemsadder.CoreItemsAdderHook;
@@ -31,4 +32,6 @@ public interface CorePluginHookKey extends PluginHookKey<PluginHook<?>> {
     PluginHookKey<CoreMythicMobsHook> CORE_MYTHIC_MOBS = create(CoreMythicMobsHook.class);
     @ApiStatus.Internal
     PluginHookKey<CoreCMIHook> CORE_CMI = create(CoreCMIHook.class);
+    @ApiStatus.Internal
+    PluginHookKey<CoreCitizensHook> CORE_CITIZENS = create(CoreCitizensHook.class);
 }
