@@ -2,6 +2,7 @@ package com.diamonddagger590.mccore.bootstrap.registrar;
 
 import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.bootstrap.BootstrapContext;
+import com.diamonddagger590.mccore.external.citizens.CoreCitizensHook;
 import com.diamonddagger590.mccore.external.cmi.CoreCMIHook;
 import com.diamonddagger590.mccore.external.headdatabase.CoreHeadDatabaseHook;
 import com.diamonddagger590.mccore.external.itemsadder.CoreItemsAdderHook;
@@ -50,6 +51,10 @@ public class HooksRegistrar<P extends CorePlugin> implements Registrar<P> {
         if (Bukkit.getPluginManager().isPluginEnabled("CMI")) {
             logger.info("CMI found... registering hooks for core");
             registryAccess.registry(RegistryKey.PLUGIN_HOOK).register(new CoreCMIHook(plugin));
+        }
+        if (Bukkit.getPluginManager().isPluginEnabled("Citizens")) {
+            logger.info("Citizens found... registering hooks for core");
+            registryAccess.registry(RegistryKey.PLUGIN_HOOK).register(new CoreCitizensHook(plugin));
         }
     }
 }

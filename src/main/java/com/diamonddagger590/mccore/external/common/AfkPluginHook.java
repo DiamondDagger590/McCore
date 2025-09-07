@@ -4,7 +4,7 @@ import com.diamonddagger590.mccore.player.CorePlayer;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This plugin hooks allows for checking if a player is afk or not based on the
+ * This plugin hook allows for checking if a player is afk or not based on the
  * criteria of the plugin is being hooked into.
  */
 public interface AfkPluginHook {
