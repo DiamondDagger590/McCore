@@ -5,7 +5,6 @@ import com.diamonddagger590.mccore.builder.item.ItemPluginType;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
 import com.diamonddagger590.mccore.setting.PlayerSettingRegistry;
 import com.diamonddagger590.mccore.util.TimeProvider;
-import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +17,6 @@ public abstract class CorePlugin extends JavaPlugin {
 
     private static CorePlugin instance;
 
-    private BukkitAudiences adventure;
     private MiniMessage miniMessage;
 
     protected PlayerSettingRegistry playerSettingRegistry;
@@ -27,13 +25,11 @@ public abstract class CorePlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
-        adventure = BukkitAudiences.create(this);
         miniMessage = MiniMessage.miniMessage();
     }
 
     @Override
     public void onDisable() {
-        adventure.close();
     }
 
     @NotNull
@@ -51,16 +47,6 @@ public abstract class CorePlugin extends JavaPlugin {
     @NotNull
     public ItemPluginType getItemPlugin() {
         return ItemPluginType.NONE;
-    }
-
-    /**
-     * Gets the {@link BukkitAudiences} used by {@link net.kyori.adventure.Adventure}
-     *
-     * @return The {@link BukkitAudiences} used by {@link net.kyori.adventure.Adventure}
-     */
-    @NotNull
-    public final BukkitAudiences getAdventure() {
-        return adventure;
     }
 
     /**
