@@ -98,9 +98,6 @@ dependencies {
     val cloudAnnotationsVersion = "2.0.0-rc.2"
     api("org.incendo:cloud-annotations:$cloudAnnotationsVersion")
 
-    val adventureBukkitVersion = "4.3.3"
-    api("net.kyori:adventure-platform-bukkit:$adventureBukkitVersion")
-
     val boostedYamlVersion = "1.3.7"
     api("dev.dejvokep:boosted-yaml:$boostedYamlVersion")
     val boostedYamlSpigotVersion = "1.5"

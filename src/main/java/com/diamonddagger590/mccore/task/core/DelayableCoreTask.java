@@ -24,10 +24,10 @@ public abstract class DelayableCoreTask extends CoreTask {
     @Override
     public void runTask(boolean runAsync) {
         if (runAsync) {
-            bukkitTaskId = Bukkit.getScheduler().runTaskLaterAsynchronously(getPlugin(), this, (taskDelay * 1000) * 20L).getTaskId();
+            bukkitTaskId = Bukkit.getScheduler().runTaskLaterAsynchronously(getPlugin(), this, taskDelay * 20L).getTaskId();
             taskRunningAsync = true;
         } else {
-            bukkitTaskId = Bukkit.getScheduler().runTaskLater(getPlugin(), this, (taskDelay * 1000) * 20L).getTaskId();
+            bukkitTaskId = Bukkit.getScheduler().runTaskLater(getPlugin(), this, taskDelay * 20L).getTaskId();
             taskRunningAsync = false;
         }
 

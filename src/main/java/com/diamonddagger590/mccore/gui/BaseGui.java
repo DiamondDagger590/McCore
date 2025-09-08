@@ -91,9 +91,10 @@ public abstract class BaseGui<P extends CorePlayer> implements Listener, Gui<P> 
         }
         Preconditions.checkNotNull(inventory, "Inventory most not be null before a slot can be added");
         Preconditions.checkArgument(index < inventory.getSize());
+        Preconditions.checkArgument(creatingPlayer.getAsBukkitPlayer().isPresent());
         slots.put(index, slot);
         ItemBuilder itemBuilder = slot.getItem(creatingPlayer);
-        inventory.setItem(index, itemBuilder.asItemStack(creatingPlayer.getPlugin().getAdventure().player(creatingPlayer.getUUID())));
+        inventory.setItem(index, itemBuilder.asItemStack(creatingPlayer.getAsBukkitPlayer().get()));
     }
 
     /**
