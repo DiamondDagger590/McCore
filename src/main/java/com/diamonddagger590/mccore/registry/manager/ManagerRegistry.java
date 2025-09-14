@@ -31,11 +31,20 @@ public class ManagerRegistry implements Registry<Manager<?>> {
 
     @Override
     public boolean registered(@NotNull Manager<?> manager) {
-        return managers.containsKey(manager.getClass());
-    }
+        for (Map.Entry<Class<?>, Manager<?>> entry : managers.entrySet()) {
+            if (manager.getClass().isAssignableFrom(entry.getKey())) {
+                return true;
+            }
+        }
+        return false;    }
 
     public boolean registered(@NotNull ManagerKey<?> manager) {
-        return managers.containsKey(manager.getClass());
+        for (Map.Entry<Class<?>, Manager<?>> entry : managers.entrySet()) {
+            if (manager.managerClass().isAssignableFrom(entry.getKey())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
