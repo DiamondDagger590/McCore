@@ -97,6 +97,9 @@ dependencies {
     api("org.incendo:cloud-minecraft-extras:$cloudVersion")
     val cloudAnnotationsVersion = "2.0.0-rc.2"
     api("org.incendo:cloud-annotations:$cloudAnnotationsVersion")
+    val cloudConfirmationVersion = "1.0.0-rc.1"
+    api("org.incendo:cloud-processors-confirmation:$cloudConfirmationVersion")
+
 
     val boostedYamlVersion = "1.3.7"
     api("dev.dejvokep:boosted-yaml:$boostedYamlVersion")
