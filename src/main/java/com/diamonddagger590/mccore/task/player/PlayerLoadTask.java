@@ -35,6 +35,10 @@ public abstract class PlayerLoadTask extends ExpireableCoreTask {
     }
 
     private void runLoadPlayerTask() {
+        if (completed) {
+            cancelTask();
+            return;
+        }
         Database database = RegistryAccess.registryAccess().registry(RegistryKey.MANAGER)
                 .manager(CoreManagerKey.CORE_DATABASE_MANAGER).getDatabase();
         /*
