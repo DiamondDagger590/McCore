@@ -112,6 +112,8 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
     private String displayName = null;
     @Nullable
     private Component displayNameComponent = null;
+    @Nullable
+    private String customItem;
     private ItemStack itemStack;
     private boolean staticItemName = true;
     private boolean applyAudienceSkullTexture = true;
@@ -123,7 +125,7 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
         } else if (itemStack.hasData(DataComponentTypes.ITEM_NAME)) {
             this.displayNameComponent = itemStack.getData(DataComponentTypes.ITEM_NAME);
         }
-        if (this.itemStack.getItemMeta().hasLore()) {
+        if (this.itemStack.hasItemMeta() && this.itemStack.getItemMeta().hasLore()) {
             this.loreAsComponent = itemStack.lore();
         }
     }
@@ -188,6 +190,18 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
     }
 
     /**
+     * Gets the custom item id for this item builder. This is
+     * used to integrate with custom item plugins like Nexo.
+     *
+     * @return An {@link Optional} containing the custom item id
+     * for this item builder if present.
+     */
+    @NotNull
+    public Optional<String> getCustomItem() {
+        return Optional.ofNullable(this.customItem);
+    }
+
+    /**
      * Builds any item specific builders into the underlying {@link ItemStack}.
      *
      * @return This builder.
@@ -237,6 +251,7 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
      */
     @NotNull
     public B withCustomItem(@NotNull final String item) {
+        this.customItem = item;
         this.itemStack = corePlugin.getItemPlugin().getCustomItem(item);
         return (B) this;
     }

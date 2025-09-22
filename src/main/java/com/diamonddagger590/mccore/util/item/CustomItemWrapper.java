@@ -44,7 +44,7 @@ public class CustomItemWrapper {
         ItemType itemType = io.papermc.paper.registry.RegistryAccess.registryAccess().getRegistry(io.papermc.paper.registry.RegistryKey.ITEM).get(Methods.getMinecraftKey(customItem));
         if (itemType != null) {
             this.material = itemType.asMaterial();
-            this.customItem = customItem;
+            this.customItem = null;
         }
         else {
             this.material = null;

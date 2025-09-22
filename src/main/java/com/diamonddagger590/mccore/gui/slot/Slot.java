@@ -48,6 +48,7 @@ public interface Slot<P extends CorePlayer> {
      * @return A {@link Set} of all {@link BaseGui} classes that can accept this slot.
      * If the slot should be accepted into any gui, an empty set will be returned.
      */
+    @NotNull
     default Set<Class<?>> getValidGuiTypes() {
         return new HashSet<>();
     }
