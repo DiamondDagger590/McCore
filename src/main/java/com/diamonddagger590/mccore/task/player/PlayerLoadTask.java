@@ -31,10 +31,10 @@ public abstract class PlayerLoadTask extends ExpireableCoreTask {
         this.corePlayer = corePlayer;
         this.result = new CompletableFuture<>();
         completed = false;
-        runTask(true);
     }
 
     private void runLoadPlayerTask() {
+        System.out.println("Running player load task. Completed: " + completed);
         if (completed) {
             cancelTask();
             return;
@@ -46,6 +46,7 @@ public abstract class PlayerLoadTask extends ExpireableCoreTask {
          We need to check for that and don't load their data until they are removed from the manager.
          */
         if (CorePlugin.getInstance().registryAccess().registry(RegistryKey.MANAGER).manager(CoreManagerKey.CORE_PLAYER_MANAGER).getPlayer(corePlayer.getUUID()).isPresent()) {
+            System.out.println("Player already stored");
             resumeTask();
             startInterval();
             return;

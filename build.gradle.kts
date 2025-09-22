@@ -112,8 +112,8 @@ dependencies {
     val cmiVersion = "9.7.14.3"
     compileOnly("com.github.Zrips:CMI-API:$cmiVersion")
 
-    val citizensVersion = "2.0.35-SNAPSHOT"
-    compileOnly("net.citizensnpcs:citizens-main:2.0.39-SNAPSHOT") {
+    val citizensVersion = "2.0.39-SNAPSHOT"
+    compileOnly("net.citizensnpcs:citizens-main:$citizensVersion") {
         exclude(group = "*", module = "*")
     }
 }

@@ -35,6 +35,7 @@ public abstract class PreviousPageSlot<P extends CorePlayer> implements Slot<P> 
         return true;
     }
 
+    @NotNull
     @Override
     public Set<Class<?>> getValidGuiTypes() {
         return VALID_GUIS;
