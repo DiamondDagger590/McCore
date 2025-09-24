@@ -17,6 +17,7 @@ import dev.dejvokep.boostedyaml.block.implementation.Section;
 import dev.dejvokep.boostedyaml.route.Route;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Bukkit;
@@ -77,7 +78,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
      */
     @NotNull
     public Component getLocalizedMessageAsComponent(@NotNull T corePlayer, @NotNull Route route) {
-        return plugin().getMiniMessage().deserialize(getLocalizedMessage(corePlayer, route));
+        return plugin().getMiniMessage().deserialize(getLocalizedMessage(corePlayer, route)).decoration(TextDecoration.ITALIC, false);
     }
 
     /**
@@ -93,7 +94,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
      */
     @NotNull
     public Component getLocalizedMessageAsComponent(@NotNull Audience audience, @NotNull Route route) {
-        return plugin().getMiniMessage().deserialize(getLocalizedMessage(audience, route));
+        return plugin().getMiniMessage().deserialize(getLocalizedMessage(audience, route)).decoration(TextDecoration.ITALIC, false);
     }
 
     /**
@@ -106,7 +107,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
      */
     @NotNull
     public Component getLocalizedMessageAsComponent(@NotNull Route route) {
-        return plugin().getMiniMessage().deserialize(getLocalizedMessage(route));
+        return plugin().getMiniMessage().deserialize(getLocalizedMessage(route)).decoration(TextDecoration.ITALIC, false);
     }
 
     /**
@@ -121,7 +122,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
      */
     @NotNull
     public Component getLocalizedMessageAsComponent(@NotNull T corePlayer, @NotNull Route route, @NotNull Map<String, String> placeholders) {
-        return plugin().getMiniMessage().deserialize(getLocalizedMessage(corePlayer, route), getPlaceholders(placeholders));
+        return plugin().getMiniMessage().deserialize(getLocalizedMessage(corePlayer, route), getPlaceholders(placeholders)).decoration(TextDecoration.ITALIC, false);
     }
 
     /**
@@ -138,7 +139,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
      */
     @NotNull
     public Component getLocalizedMessageAsComponent(@NotNull Audience audience, @NotNull Route route, @NotNull Map<String, String> placeholders) {
-        return plugin().getMiniMessage().deserialize(getLocalizedMessage(audience, route), getPlaceholders(placeholders));
+        return plugin().getMiniMessage().deserialize(getLocalizedMessage(audience, route), getPlaceholders(placeholders)).decoration(TextDecoration.ITALIC, false);
     }
 
     /**
@@ -152,7 +153,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
      */
     @NotNull
     public Component getLocalizedMessageAsComponent(@NotNull Route route, @NotNull Map<String, String> placeholders) {
-        return plugin().getMiniMessage().deserialize(getLocalizedMessage(route), getPlaceholders(placeholders));
+        return plugin().getMiniMessage().deserialize(getLocalizedMessage(route), getPlaceholders(placeholders)).decoration(TextDecoration.ITALIC, false);
     }
 
     /**
@@ -168,7 +169,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
     @NotNull
     public List<Component> getLocalizedMessageAsComponents(@NotNull T player, @NotNull Route route) {
         return getLocalizedMessages(player, route).stream()
-                .map(message -> plugin().getMiniMessage().deserialize(message))
+                .map(message -> plugin().getMiniMessage().deserialize(message).decoration(TextDecoration.ITALIC, false))
                 .collect(Collectors.toList());
     }
 
@@ -185,7 +186,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
     @NotNull
     public List<Component> getLocalizedMessageAsComponents(@NotNull Audience audience, @NotNull Route route) {
         return getLocalizedMessages(audience, route).stream()
-                .map(message -> plugin().getMiniMessage().deserialize(message))
+                .map(message -> plugin().getMiniMessage().deserialize(message).decoration(TextDecoration.ITALIC, false))
                 .collect(Collectors.toList());
     }
 
@@ -201,7 +202,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
     @NotNull
     public List<Component> getLocalizedMessageAsComponents(@NotNull Route route) {
         return getLocalizedMessages(route).stream()
-                .map(message -> plugin().getMiniMessage().deserialize(message))
+                .map(message -> plugin().getMiniMessage().deserialize(message).decoration(TextDecoration.ITALIC, false))
                 .collect(Collectors.toList());
     }
 
@@ -219,7 +220,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
     @NotNull
     public List<Component> getLocalizedMessageAsComponents(@NotNull T player, @NotNull Route route, @NotNull Map<String, String> placeholders) {
         return getLocalizedMessages(player, route).stream()
-                .map(message -> plugin().getMiniMessage().deserialize(message, getPlaceholders(placeholders)))
+                .map(message -> plugin().getMiniMessage().deserialize(message, getPlaceholders(placeholders)).decoration(TextDecoration.ITALIC, false))
                 .collect(Collectors.toList());
     }
 
@@ -237,7 +238,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
     @NotNull
     public List<Component> getLocalizedMessageAsComponents(@NotNull Audience audience, @NotNull Route route, @NotNull Map<String, String> placeholders) {
         return getLocalizedMessages(audience, route).stream()
-                .map(message -> plugin().getMiniMessage().deserialize(message, getPlaceholders(placeholders)))
+                .map(message -> plugin().getMiniMessage().deserialize(message, getPlaceholders(placeholders)).decoration(TextDecoration.ITALIC, false))
                 .collect(Collectors.toList());
     }
 
@@ -254,7 +255,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
     @NotNull
     public List<Component> getLocalizedMessageAsComponents(@NotNull Route route, @NotNull Map<String, String> placeholders) {
         return getLocalizedMessages(route).stream()
-                .map(message -> plugin().getMiniMessage().deserialize(message, getPlaceholders(placeholders)))
+                .map(message -> plugin().getMiniMessage().deserialize(message, getPlaceholders(placeholders)).decoration(TextDecoration.ITALIC, false))
                 .collect(Collectors.toList());
     }
 
