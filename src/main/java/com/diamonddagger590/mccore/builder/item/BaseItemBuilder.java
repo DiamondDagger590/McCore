@@ -127,6 +127,8 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
         }
         if (this.itemStack.hasItemMeta() && this.itemStack.getItemMeta().hasLore()) {
             this.loreAsComponent = itemStack.lore();
+        } else if (this.itemStack.hasData(DataComponentTypes.LORE)) {
+            this.loreAsComponent = this.itemStack.getData(DataComponentTypes.LORE).lines();
         }
     }
 
@@ -558,6 +560,32 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
     public B addDisplayLore(@NotNull final List<String> displayLore) {
         if (displayLore.isEmpty()) return (B) this;
         this.lore.addAll(displayLore);
+        return (B) this;
+    }
+
+    // TODO remove as part of https://github.com/DiamondDagger590/McRPG/issues/168
+    /**
+     * Adds to the lore to be used for the item being built.
+     *
+     * @param displayLore The line of lore to be added.
+     * @return This builder.
+     */
+    @NotNull
+    public B addDisplayLoreComponent(@NotNull final Component displayLore) {
+        this.loreAsComponent.add(displayLore);
+        return (B) this;
+    }
+
+    /**
+     * Adds the provided {@link List} of strings
+     * to the lore to be used for the item being built.
+     *
+     * @param displayLore The {@link List} of lore to be added.
+     * @return This builder.
+     */
+    @NotNull
+    public B addDisplayLoreComponent(@NotNull final List<Component> displayLore) {
+        this.loreAsComponent.addAll(displayLore);
         return (B) this;
     }
 
