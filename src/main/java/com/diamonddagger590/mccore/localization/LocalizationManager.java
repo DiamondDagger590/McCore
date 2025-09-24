@@ -389,6 +389,8 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
                             for (String line : message) {
                                 returnList.add(papiHookOptional.get().translateMessage(playerOptional.get(), line));
                             }
+                        } else {
+                            returnList = message;
                         }
                         return returnList;
                     }
