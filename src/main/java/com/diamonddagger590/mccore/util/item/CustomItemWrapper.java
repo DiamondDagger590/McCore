@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
@@ -165,8 +166,24 @@ public class CustomItemWrapper {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof CustomItemWrapper other)) return false;
+
+        if (this.material != null && other.material != null) {
+            return this.material == other.material;
+        }
+
+        if (this.customItem != null && other.customItem != null) {
+            return this.customItem.equalsIgnoreCase(other.customItem);
+        }
+
+        return false;
+    }
+
+    @Override
     public int hashCode() {
-        return material != null ? material.hashCode() : customItem.hashCode();
+        return material != null ? material.hashCode() : customItem.toLowerCase(Locale.ROOT).hashCode();
     }
 
     /**
