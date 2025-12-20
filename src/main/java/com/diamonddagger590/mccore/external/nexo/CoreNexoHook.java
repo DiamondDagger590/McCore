@@ -8,6 +8,7 @@ import com.nexomc.nexo.api.NexoBlocks;
 import com.nexomc.nexo.api.NexoItems;
 import com.nexomc.nexo.items.ItemBuilder;
 import com.nexomc.nexo.mechanics.custom_block.CustomBlockMechanic;
+import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -107,5 +108,13 @@ public class CoreNexoHook extends PluginHook<CorePlugin> implements CustomItemHo
             return Optional.empty();
         }
         return Optional.of(Set.of(customBlockMechanic.getItemID()));
+    }
+
+    @Override
+    public void placeCustomBlock(@NotNull Location location, @NotNull String blockId) {
+        if (!isCustomBlock(blockId)) {
+            throw new IllegalArgumentException("Block " + blockId + " is not a valid Nexo block.");
+        }
+        NexoBlocks.place(blockId, location);
     }
 }

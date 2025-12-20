@@ -1,6 +1,7 @@
 package com.diamonddagger590.mccore.external.common;
 
 import com.diamonddagger590.mccore.util.item.CustomBlockWrapper;
+import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,6 +47,14 @@ public interface CustomBlockHook {
      * @return {@code true} if the provided {@link Block} has the specified model on it.
      */
     boolean isCustomBlockOfType(@NotNull Block block, @NotNull String customBlockType);
+
+    /**
+     * Places a custom block at the provided location with the specified model.
+     *
+     * @param location The location to place the block at.
+     * @param blockId  The custom model id of the block to be placed.
+     */
+    void placeCustomBlock(@NotNull Location location, @NotNull String blockId);
 
     /**
      * Gets an {@link Optional} containing all the models that the provided {@link Block} has on it.

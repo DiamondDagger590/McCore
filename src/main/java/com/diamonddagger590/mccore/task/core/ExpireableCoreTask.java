@@ -17,13 +17,13 @@ public abstract class ExpireableCoreTask extends CancelableCoreTask {
 
     public ExpireableCoreTask(@NotNull CorePlugin plugin, double taskDelay, long maxTaskDurationSeconds) {
         super(plugin, taskDelay, 1);
-        this.maxTaskDuration = getPlugin().getTimeProvider().now().toEpochMilli() + (maxTaskDurationSeconds * 1000);
+        this.maxTaskDuration = getPlugin().getTimeProvider().now().toEpochMilli() + (maxTaskDurationSeconds * 1000) + (long) (taskDelay * 1000);
         this.maxIntervals = -1;
     }
 
     public ExpireableCoreTask(@NotNull CorePlugin plugin, double taskDelay, double taskFrequency, long maxTaskDurationSeconds) {
         super(plugin, taskDelay, taskFrequency);
-        this.maxTaskDuration = getPlugin().getTimeProvider().now().toEpochMilli() + (maxTaskDurationSeconds * 1000);
+        this.maxTaskDuration = getPlugin().getTimeProvider().now().toEpochMilli() + (maxTaskDurationSeconds * 1000) + (long) (taskDelay * 1000);
         this.maxIntervals = -1;
     }
 
@@ -35,7 +35,7 @@ public abstract class ExpireableCoreTask extends CancelableCoreTask {
 
     public ExpireableCoreTask(@NotNull CorePlugin plugin, double taskDelay, double taskFrequency, long maxTaskDurationSeconds, int maxIntervals) {
         super(plugin, taskDelay, taskFrequency);
-        this.maxTaskDuration = getPlugin().getTimeProvider().now().toEpochMilli() + (maxTaskDurationSeconds * 1000);
+        this.maxTaskDuration = getPlugin().getTimeProvider().now().toEpochMilli() + (maxTaskDurationSeconds * 1000) + (long) (taskDelay * 1000);
         this.maxIntervals = Math.max(1, maxIntervals);
     }
 
