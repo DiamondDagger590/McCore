@@ -6,6 +6,7 @@ import com.diamonddagger590.mccore.external.common.CustomItemHook;
 import com.diamonddagger590.mccore.registry.plugin.PluginHook;
 import dev.lone.itemsadder.api.CustomBlock;
 import dev.lone.itemsadder.api.CustomStack;
+import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -97,5 +98,13 @@ public class CoreItemsAdderHook extends PluginHook<CorePlugin> implements Custom
             return Optional.empty();
         }
         return Optional.of(Set.of(customBlock.getModelPath()));
+    }
+
+    @Override
+    public void placeCustomBlock(@NotNull Location location, @NotNull String blockId) {
+        if (!isCustomBlock(blockId)) {
+            throw new IllegalArgumentException("Block " + blockId + " is not a valid ItemsAdder block.");
+        }
+        CustomBlock.place(blockId, location);
     }
 }
