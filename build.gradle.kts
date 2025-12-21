@@ -79,7 +79,7 @@ dependencies {
     // Custom items
     val itemsAdderVersion = "4.0.2-beta-release-11"
     compileOnly("dev.lone:api-itemsadder:$itemsAdderVersion")
-    val nexoVersion = "1.2.0"
+    val nexoVersion = "1.16.0"
     compileOnly("com.nexomc:nexo:$nexoVersion") {
         exclude(group = "net.byteflux")
     }
