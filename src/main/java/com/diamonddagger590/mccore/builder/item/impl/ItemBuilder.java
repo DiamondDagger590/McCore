@@ -170,7 +170,19 @@ public class ItemBuilder extends BaseItemBuilder<ItemBuilder> {
      */
     @NotNull
     public static ItemBuilder from(@NotNull Section itemSection, @NotNull ItemStack initialItemStack) {
-        ItemBuilder itemBuilder = new ItemBuilder(initialItemStack);
+        return from(itemSection, new ItemBuilder(initialItemStack));
+    }
+
+    /**
+     * Converts the provided {@link Section} into an {@link ItemBuilder} using predefined
+     * keys found in {@link ItemBuilderConfigurationKeys} to pull data from.
+     *
+     * @param itemSection      The {@link Section} containing configuration data.
+     * @param itemBuilder The initial underlying {@link ItemBuilder} to apply the {@link Section} to.
+     * @return A new {@link ItemBuilder}.
+     */
+    @NotNull
+    public static ItemBuilder from(@NotNull Section itemSection, @NotNull ItemBuilder itemBuilder) {
         // We need to set max stack size before we set the amount
         if (itemSection.contains(ItemBuilderConfigurationKeys.MAX_STACK_SIZE)) {
             itemBuilder.setMaxStackSize(itemSection.getInt(ItemBuilderConfigurationKeys.MAX_STACK_SIZE));
