@@ -14,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
@@ -145,7 +144,7 @@ public class CustomItemWrapper {
      */
     public boolean equals(@NotNull String customItem) {
         if (this.customItem != null) {
-            return this.customItem.equalsIgnoreCase(customItem);
+            return this.customItem.equals(customItem);
         }
         return false;
     }
@@ -160,7 +159,7 @@ public class CustomItemWrapper {
      */
     public boolean equals(@NotNull CustomItemWrapper customMaterial) {
         if (this.customItem != null && customMaterial.customItem().isPresent()) {
-            return customItem.equalsIgnoreCase(customMaterial.customItem().get());
+            return customItem.equals(customMaterial.customItem().get());
         } else
             return this.material != null && customMaterial.material().isPresent() && customMaterial.material().get().equals(material);
     }
@@ -175,7 +174,7 @@ public class CustomItemWrapper {
         }
 
         if (this.customItem != null && other.customItem != null) {
-            return this.customItem.equalsIgnoreCase(other.customItem);
+            return this.customItem.equals(other.customItem);
         }
 
         return false;
@@ -183,7 +182,7 @@ public class CustomItemWrapper {
 
     @Override
     public int hashCode() {
-        return material != null ? material.hashCode() : customItem.toLowerCase(Locale.ROOT).hashCode();
+        return material != null ? material.hashCode() : customItem.hashCode();
     }
 
     /**

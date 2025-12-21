@@ -7,10 +7,18 @@ import com.diamonddagger590.mccore.registry.plugin.PluginHook;
 import dev.lone.itemsadder.api.CustomBlock;
 import dev.lone.itemsadder.api.CustomStack;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.SoundGroup;
+import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.entity.Entity;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -106,5 +114,49 @@ public class CoreItemsAdderHook extends PluginHook<CorePlugin> implements Custom
             throw new IllegalArgumentException("Block " + blockId + " is not a valid ItemsAdder block.");
         }
         CustomBlock.place(blockId, location);
+    }
+
+    @NotNull
+    @Override
+    public List<ItemStack> drops(@NotNull Block block, @NotNull ItemStack itemToBreakWith, @Nullable Entity entityBreaking) {
+        if (isCustomBlock(block)) {
+            return CustomBlock.getLoot(block, itemToBreakWith, true);
+        } else {
+            return List.copyOf(block.getDrops(itemToBreakWith, entityBreaking));
+        }
+    }
+
+    @Override
+    public void playBlockDropEffects(@NotNull Block block) {
+        if (isCustomBlock(block)) {
+            CustomBlock customBlock = CustomBlock.byAlreadyPlaced(block);
+            customBlock.playBreakEffect();
+            customBlock.playBreakSound();
+            customBlock.playBreakParticles();
+            return;
+        }
+        World world = block.getWorld();
+        BlockData data = block.getBlockData();
+        SoundGroup soundGroup = block.getBlockSoundGroup();
+        world.playSound(block.getLocation(), soundGroup.getBreakSound(), soundGroup.getVolume(), soundGroup.getPitch());
+        world.spawnParticle(
+                Particle.BLOCK,
+                block.getLocation().clone().add(0.5, 0.5, 0.5),
+                20,
+                0.25, 0.25, 0.25,
+                0.05,
+                data);
+    }
+
+    @Override
+    public void removeBlock(@NotNull Block block) {
+        if (isCustomBlock(block)) {
+            CustomBlock customBlock = CustomBlock.byAlreadyPlaced(block);
+            if(!customBlock.remove()) {
+                throw new IllegalStateException("Failed to remove ItemsAdder block " + customBlock.getModelPath() + " at block " + block.getLocation());
+            }
+        } else {
+            block.setType(Material.AIR);
+        }
     }
 }

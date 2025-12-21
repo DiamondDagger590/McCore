@@ -3,8 +3,12 @@ package com.diamonddagger590.mccore.external.common;
 import com.diamonddagger590.mccore.util.item.CustomBlockWrapper;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -55,6 +59,31 @@ public interface CustomBlockHook {
      * @param blockId  The custom model id of the block to be placed.
      */
     void placeCustomBlock(@NotNull Location location, @NotNull String blockId);
+
+    /**
+     * Gets a list of drops that this block would drop if broken with the provided {@link ItemStack}.
+     *
+     * @param block           The block to get drops from.
+     * @param itemToBreakWith The item to break the block with.
+     * @param entityBreaking  The entity breaking the block.
+     * @return A list of drops that this block would drop if broken with the provided {@link ItemStack}.
+     */
+    @NotNull
+    List<ItemStack> drops(@NotNull Block block, @NotNull ItemStack itemToBreakWith, @Nullable Entity entityBreaking);
+
+    /**
+     * Plays visual and/or auditory effects for when a block is dropped.
+     *
+     * @param block The block for which to play the drop effects.
+     */
+    void playBlockDropEffects(@NotNull Block block);
+
+    /**
+     * Removes the specified block from the world.
+     *
+     * @param block The block to remove.
+     */
+    void removeBlock(@NotNull Block block);
 
     /**
      * Gets an {@link Optional} containing all the models that the provided {@link Block} has on it.

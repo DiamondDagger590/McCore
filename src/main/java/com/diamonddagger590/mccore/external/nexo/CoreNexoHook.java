@@ -7,12 +7,24 @@ import com.diamonddagger590.mccore.registry.plugin.PluginHook;
 import com.nexomc.nexo.api.NexoBlocks;
 import com.nexomc.nexo.api.NexoItems;
 import com.nexomc.nexo.items.ItemBuilder;
+import com.nexomc.nexo.mechanics.breakable.Breakable;
 import com.nexomc.nexo.mechanics.custom_block.CustomBlockMechanic;
+import com.nexomc.nexo.utils.blocksounds.BlockSounds;
+import com.nexomc.nexo.utils.drops.Loot;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.SoundGroup;
+import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -116,5 +128,58 @@ public class CoreNexoHook extends PluginHook<CorePlugin> implements CustomItemHo
             throw new IllegalArgumentException("Block " + blockId + " is not a valid Nexo block.");
         }
         NexoBlocks.place(blockId, location);
+    }
+
+    @NotNull
+    @Override
+    public List<ItemStack> drops(@NotNull Block block, @NotNull ItemStack itemToBreakWith, @Nullable Entity entityBreaking) {
+        if (isCustomBlock(block)) {
+            CustomBlockMechanic customBlockMechanic = NexoBlocks.customBlockMechanic(block.getLocation());
+            if (customBlockMechanic != null && entityBreaking instanceof Player player) {
+                Breakable breakable = customBlockMechanic.getBreakable();
+                List<Loot> lootDrops = breakable.getDrop().lootToDrop(player);
+                return lootDrops.stream().map(Loot::getItemStack).toList();
+            } else {
+                return List.of();
+            }
+        } else {
+            return List.copyOf(block.getDrops(itemToBreakWith, entityBreaking));
+        }
+    }
+
+    @Override
+    public void removeBlock(@NotNull Block block) {
+        if (isCustomBlock(block)) {
+            if (!NexoBlocks.remove(block.getLocation())) {
+                var customMechanic = NexoBlocks.customBlockMechanic(block.getLocation());
+                throw new IllegalStateException("Failed to remove Nexo block " + customMechanic.getItemID() + " at block " + block.getLocation());
+            }
+        } else {
+            block.setType(Material.AIR);
+        }
+    }
+
+    @Override
+    public void playBlockDropEffects(@NotNull Block block) {
+        if (isCustomBlock(block)) {
+            var customMechanic = NexoBlocks.customBlockMechanic(block.getLocation());
+            if (customMechanic != null && customMechanic.hasBlockSounds()) {
+                BlockSounds blockSounds = customMechanic.getBlockSounds();
+                assert(blockSounds != null);
+                block.getWorld().playSound(block.getLocation(), blockSounds.getBreakSound(), blockSounds.getBreakVolume(), blockSounds.getBreakPitch());
+                return;
+            }
+        }
+        World world = block.getWorld();
+        BlockData data = block.getBlockData();
+        SoundGroup soundGroup = block.getBlockSoundGroup();
+        world.playSound(block.getLocation(), soundGroup.getBreakSound(), soundGroup.getVolume(), soundGroup.getPitch());
+        world.spawnParticle(
+                Particle.BLOCK,
+                block.getLocation().clone().add(0.5, 0.5, 0.5),
+                20,
+                0.25, 0.25, 0.25,
+                0.05,
+                data);
     }
 }

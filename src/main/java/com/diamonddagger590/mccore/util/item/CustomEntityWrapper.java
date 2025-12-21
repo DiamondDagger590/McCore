@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
@@ -133,7 +132,7 @@ public class CustomEntityWrapper {
      * this wrapper.
      */
     public boolean equals(@NotNull String customEntity) {
-        return this.customEntity != null && this.customEntity.equalsIgnoreCase(customEntity);
+        return this.customEntity != null && this.customEntity.equals(customEntity);
     }
 
     /**
@@ -146,7 +145,7 @@ public class CustomEntityWrapper {
      */
     public boolean equals(@NotNull CustomEntityWrapper customEntity) {
         if (this.customEntity != null) {
-            return this.customEntity.equalsIgnoreCase(customEntity.customEntity);
+            return this.customEntity.equals(customEntity.customEntity);
         }
         return this.entityType == customEntity.entityType;
     }
@@ -161,7 +160,7 @@ public class CustomEntityWrapper {
         }
 
         if (this.customEntity != null && other.customEntity != null) {
-            return this.customEntity.equalsIgnoreCase(other.customEntity);
+            return this.customEntity.equals(other.customEntity);
         }
 
         return false;
@@ -169,7 +168,7 @@ public class CustomEntityWrapper {
 
     @Override
     public int hashCode() {
-        return entityType != null ? entityType.hashCode() : customEntity.toLowerCase(Locale.ROOT).hashCode();
+        return entityType != null ? entityType.hashCode() : customEntity.hashCode();
     }
 
     /**

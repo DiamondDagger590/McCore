@@ -7,15 +7,19 @@ import com.diamonddagger590.mccore.registry.RegistryAccess;
 import com.diamonddagger590.mccore.registry.RegistryKey;
 import com.diamonddagger590.mccore.util.Methods;
 import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.SoundGroup;
+import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockType;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.entity.Entity;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.ItemType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
@@ -43,12 +47,11 @@ public class CustomBlockWrapper {
     }
 
     public CustomBlockWrapper(@NotNull String customBlock) {
-        ItemType itemType = io.papermc.paper.registry.RegistryAccess.registryAccess().getRegistry(io.papermc.paper.registry.RegistryKey.ITEM).get(Methods.getMinecraftKey(customBlock));
-        if (itemType != null) {
-            this.material = itemType.asMaterial();
+        BlockType blockType = io.papermc.paper.registry.RegistryAccess.registryAccess().getRegistry(io.papermc.paper.registry.RegistryKey.BLOCK).get(Methods.getMinecraftKey(customBlock));
+        if (blockType != null) {
+            this.material = blockType.asMaterial();
             this.customBlock = null;
-        }
-        else {
+        } else {
             this.material = null;
             this.customBlock = customBlock;
         }
@@ -61,7 +64,7 @@ public class CustomBlockWrapper {
             if (hook.isCustomBlock(block)) {
                 var blockModelsOptional = hook.blockModels(block);
                 if (blockModelsOptional.isPresent() && !blockModelsOptional.get().isEmpty()) {
-                    customBlockResult =  blockModelsOptional.get().iterator().next();
+                    customBlockResult = blockModelsOptional.get().iterator().next();
                     break;
                 }
             }
@@ -96,6 +99,12 @@ public class CustomBlockWrapper {
         return Optional.ofNullable(customBlock);
     }
 
+    /**
+     * Get an {@link ItemBuilder} representation of this custom block, meant to allow for conversion between
+     * custom blocks and custom items.
+     *
+     * @return A new {@link ItemBuilder} for this custom block.
+     */
     @NotNull
     public ItemBuilder itemBuilder() {
         if (customBlock != null) {
@@ -139,8 +148,7 @@ public class CustomBlockWrapper {
                 }
             }
             return false;
-        }
-        else return material == block.getType();
+        } else return material == block.getType();
     }
 
     /**
@@ -153,7 +161,7 @@ public class CustomBlockWrapper {
      */
     public boolean equals(@NotNull String customBlock) {
         if (this.customBlock != null) {
-            return this.customBlock.equalsIgnoreCase(customBlock);
+            return this.customBlock.equals(customBlock);
         }
         return false;
     }
@@ -168,9 +176,9 @@ public class CustomBlockWrapper {
      */
     public boolean equals(@NotNull CustomItemWrapper customMaterial) {
         if (this.customBlock != null && customMaterial.customItem().isPresent()) {
-            return customBlock.equalsIgnoreCase(customMaterial.customItem().get());
-        }
-        else return this.material != null && customMaterial.material().isPresent() && customMaterial.material().get().equals(material);
+            return customBlock.equals(customMaterial.customItem().get());
+        } else
+            return this.material != null && customMaterial.material().isPresent() && customMaterial.material().get().equals(material);
     }
 
     @Override
@@ -183,7 +191,7 @@ public class CustomBlockWrapper {
         }
 
         if (this.customBlock != null && other.customBlock != null) {
-            return this.customBlock.equalsIgnoreCase(other.customBlock);
+            return this.customBlock.equals(other.customBlock);
         }
 
         return false;
@@ -191,8 +199,14 @@ public class CustomBlockWrapper {
 
     @Override
     public int hashCode() {
-        return material != null ? material.hashCode() : customBlock.toLowerCase(Locale.ROOT).hashCode();
+        return material != null ? material.hashCode() : customBlock.hashCode();
     }
+
+    @Override
+    public String toString() {
+        return "CustomBlockWrapper - [material=" + material + ", customBlock=" + customBlock + "]";
+    }
+
 
     /**
      * Gets an {@link Optional} containing all the block models that the provided {@link Block}
@@ -211,4 +225,60 @@ public class CustomBlockWrapper {
         }
         return Optional.of(customModels);
     }
+
+    /**
+     * Gets a list of drops that this block would drop if broken with the provided {@link ItemStack}.
+     *
+     * @param block           The block to get drops from.
+     * @param itemToBreakWith The item to break the block with.
+     * @param entityBreaking  The entity breaking the block.
+     * @return A list of drops that this block would drop if broken with the provided {@link ItemStack}.
+     */
+    @NotNull
+    public static List<ItemStack> drops(@NotNull Block block, @NotNull ItemStack itemToBreakWith, @Nullable Entity entityBreaking) {
+        List<CustomBlockHook> pluginHooks = RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHooks(CustomBlockHook.class);
+        for (CustomBlockHook hook : pluginHooks) {
+            return hook.drops(block, itemToBreakWith, entityBreaking);
+        }
+        return List.copyOf(block.getDrops(itemToBreakWith, entityBreaking));
+    }
+
+    /**
+     * Plays visual and/or auditory effects for when a block is dropped.
+     *
+     * @param block The block for which to play the drop effects.
+     */
+    public static void playBlockDropEffects(@NotNull Block block) {
+        List<CustomBlockHook> pluginHooks = RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHooks(CustomBlockHook.class);
+        for (CustomBlockHook hook : pluginHooks) {
+            hook.playBlockDropEffects(block);
+            return;
+        }
+        World world = block.getWorld();
+        BlockData data = block.getBlockData();
+        SoundGroup soundGroup = block.getBlockSoundGroup();
+        world.playSound(block.getLocation(), soundGroup.getBreakSound(), soundGroup.getVolume(), soundGroup.getPitch());
+        world.spawnParticle(
+                Particle.BLOCK,
+                block.getLocation().clone().add(0.5, 0.5, 0.5),
+                20,
+                0.25, 0.25, 0.25,
+                0.05,
+                data);
+    }
+
+    /**
+     * Removes the specified block from the world.
+     *
+     * @param block The block to remove.
+     */
+    public static void removeBlock(@NotNull Block block) {
+        List<CustomBlockHook> pluginHooks = RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHooks(CustomBlockHook.class);
+        for (CustomBlockHook hook : pluginHooks) {
+            hook.removeBlock(block);
+            return;
+        }
+        block.setType(Material.AIR);
+    }
+
 }
