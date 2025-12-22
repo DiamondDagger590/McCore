@@ -114,7 +114,6 @@ public class SkullBuilder extends BaseItemBuilder<SkullBuilder> {
     @NotNull
     @Override
     public SkullBuilder build() {
-        Bukkit.broadcastMessage("1");
         getItemStack().setData(DataComponentTypes.PROFILE, this.builder.build());
         this.hideSkullDynamicToolTip();
         return this;
