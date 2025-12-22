@@ -614,7 +614,7 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
     @NotNull
     public B hideToolTip() {
         if (!this.itemStack.hasData(DataComponentTypes.TOOLTIP_DISPLAY)) {
-            this.itemStack.setData(DataComponentTypes.TOOLTIP_DISPLAY, TooltipDisplay.tooltipDisplay().hideTooltip(true).build());
+            this.itemStack.setData(DataComponentTypes.TOOLTIP_DISPLAY, TooltipDisplay.tooltipDisplay().addHiddenComponents(DataComponentTypes.PROFILE).hideTooltip(true).build());
         }
         return (B) this;
     }
