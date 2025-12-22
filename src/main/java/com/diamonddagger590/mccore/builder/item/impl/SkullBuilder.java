@@ -3,10 +3,13 @@ package com.diamonddagger590.mccore.builder.item.impl;
 import com.destroystokyo.paper.profile.PlayerProfile;
 import com.destroystokyo.paper.profile.ProfileProperty;
 import com.diamonddagger590.mccore.builder.item.BaseItemBuilder;
+import io.papermc.paper.datacomponent.DataComponentType;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.ResolvableProfile;
+import io.papermc.paper.datacomponent.item.TooltipDisplay;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.identity.Identity;
+import org.bukkit.Bukkit;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.profile.PlayerTextures;
 import org.jetbrains.annotations.NotNull;
@@ -111,7 +114,26 @@ public class SkullBuilder extends BaseItemBuilder<SkullBuilder> {
     @NotNull
     @Override
     public SkullBuilder build() {
+        Bukkit.broadcastMessage("1");
         getItemStack().setData(DataComponentTypes.PROFILE, this.builder.build());
+        this.hideSkullDynamicToolTip();
         return this;
+    }
+
+    /**
+     * Hides the "Dynamic" text that appears on player skulls.
+     */
+    public void hideSkullDynamicToolTip() {
+        if (this.getItemStack().hasData(DataComponentTypes.TOOLTIP_DISPLAY)) {
+            TooltipDisplay tooltipDisplay = this.getItemStack().getData(DataComponentTypes.TOOLTIP_DISPLAY);
+            this.getItemStack().unsetData(DataComponentTypes.TOOLTIP_DISPLAY);
+            DataComponentType[] dataComponentTypes = tooltipDisplay.hiddenComponents().toArray(new DataComponentType[0]);
+            this.getItemStack().setData(DataComponentTypes.TOOLTIP_DISPLAY, TooltipDisplay.tooltipDisplay()
+                    .addHiddenComponents(DataComponentTypes.PROFILE)
+                    .addHiddenComponents(dataComponentTypes)
+                    .build());
+        } else {
+            this.getItemStack().setData(DataComponentTypes.TOOLTIP_DISPLAY, TooltipDisplay.tooltipDisplay().addHiddenComponents(DataComponentTypes.PROFILE).build());
+        }
     }
 }
