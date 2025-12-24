@@ -304,6 +304,39 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
     }
 
     /**
+     * Checks to see if any locale in the player's locale chain contains the provided {@link Route}.
+     *
+     * @param player The {@link T} to localize for.
+     * @param route  The {@link Route} to check for a translated message.
+     * @return {@code true} if any locale in the player's locale chain contains the provided {@link Route}.
+     */
+    public boolean doesAnyLocaleContainRoute(@NotNull T player, @NotNull Route route) {
+        LinkedNode<Locale> locales = getLocaleChain(player);
+        Set<Locale> processedLocales = new HashSet<>();
+        while (locales.hasNext()) {
+            Locale locale = locales.getNodeValue();
+            locales = locales.getNextNode();
+            // We don't want to process locales twice
+            if (processedLocales.contains(locale)) {
+                continue;
+            }
+            // Mark that it has now been processed
+            processedLocales.add(locale);
+            // If we support this localization
+            if (localizations.containsKey(locale)) {
+                List<YamlDocument> documents = localizations.get(locale);
+                // Check all registered configurations for the message
+                for (YamlDocument yamlDocument : documents) {
+                    if (yamlDocument.contains(route)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Gets a localized message using the provided {@link Route} to find a translated message. If the
      * provided {@link Audience} is an instance of a {@link Player}, then it will use that player's locale chain to
      * get the message. Otherwise, the default locale chain is used.
