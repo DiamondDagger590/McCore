@@ -64,7 +64,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")
     testFixturesApi("org.junit.jupiter:junit-jupiter:$junitVersion")
 
-    val paperVersion = "1.21.10-R0.1-SNAPSHOT"
+    val paperVersion = "1.21.11-R0.1-SNAPSHOT"
     compileOnlyApi("io.papermc.paper:paper-api:$paperVersion")
     testImplementation("io.papermc.paper:paper-api:$paperVersion")
     testFixturesImplementation("io.papermc.paper:paper-api:$paperVersion")
@@ -91,11 +91,11 @@ dependencies {
     compileOnly("com.ticxo.modelengine:ModelEngine:$modelEngineVersion")
 
     // Command annotations
-    val cloudMinecraftVersion = "2.0.0-beta.9"
+    val cloudMinecraftVersion = "2.0.0-beta.14"
     api("org.incendo:cloud-paper:$cloudMinecraftVersion")
-    val cloudVersion = "2.0.0-beta.9"
+    val cloudVersion = "2.0.0-beta.14"
     api("org.incendo:cloud-minecraft-extras:$cloudVersion")
-    val cloudAnnotationsVersion = "2.0.0-rc.2"
+    val cloudAnnotationsVersion = "2.0.0"
     api("org.incendo:cloud-annotations:$cloudAnnotationsVersion")
     val cloudConfirmationVersion = "1.0.0-rc.1"
     api("org.incendo:cloud-processors-confirmation:$cloudConfirmationVersion")
