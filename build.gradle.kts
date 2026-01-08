@@ -100,7 +100,6 @@ dependencies {
     val cloudConfirmationVersion = "1.0.0-rc.1"
     api("org.incendo:cloud-processors-confirmation:$cloudConfirmationVersion")
 
-
     val boostedYamlVersion = "1.3.7"
     api("dev.dejvokep:boosted-yaml:$boostedYamlVersion")
     val boostedYamlSpigotVersion = "1.5"
@@ -116,6 +115,9 @@ dependencies {
     compileOnly("net.citizensnpcs:citizens-main:$citizensVersion") {
         exclude(group = "*", module = "*")
     }
+
+    val caffeineVersion = "3.1.8"
+    api("com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
 }
 
 tasks {
@@ -126,6 +128,7 @@ tasks {
 
     shadowJar {
         relocate("org.incendo", "com.diamonddagger590.mccore.cloud")
+        relocate("com.github.benmanes.caffeine", "com.diamonddagger590.mccore.caffeine")
         archiveClassifier.set("")
     }
 
