@@ -1104,7 +1104,7 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
      */
     @NotNull
     protected TagResolver[] getPlaceHolders(@Nullable CorePapiHook papiHook, @Nullable Audience audience) {
-        TagResolver[] placeholderArray = new TagResolver.Single[placeholders.size() + (papiHook != null && audience instanceof Player ? 1 : 0)];
+        TagResolver[] placeholderArray = new TagResolver[placeholders.size() + (papiHook != null && audience instanceof Player ? 1 : 0)];
         int index = 0;
         for (String key : placeholders.keySet()) {
             String value = placeholders.get(key);
