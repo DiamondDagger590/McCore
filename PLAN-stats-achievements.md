@@ -2,8 +2,9 @@
 
 ## Overview
 
-This plan adds two systems across three plugins:
+This plan adds two systems across three plugins, with a critical prerequisite change:
 
+0. **McCore → Standalone Server Plugin** (PREREQUISITE) - McCore must become a real Bukkit plugin (its own JAR on the server) instead of being shaded into downstream plugins. This enables shared runtime classes, events, and registries across McRPG, Runic Achievements, and any future McCore-dependent plugins.
 1. **Statistics Framework** (McCore) - Generic, fully-typed statistic tracking for any McCore plugin
 2. **Runic Achievements** (NEW standalone plugin) - Multi-stage achievement system powered by statistics
 3. **McRPG Integration** - McRPG soft-depends on Runic Achievements to register game-specific stats and achievements
@@ -11,13 +12,15 @@ This plan adds two systems across three plugins:
 ### Plugin Dependency Graph
 
 ```
-McCore (statistics framework)
-  ├── Runic Achievements (hard depends on McCore)
+McCore.jar (standalone server plugin - statistics framework, shared registries, events)
+  ├── RunicAchievements.jar (hard depends on McCore)
   │     └── Achievement core, rewards, global stats, PAPI
-  └── McRPG (hard depends on McCore, soft depends on Runic Achievements)
+  └── McRPG.jar (hard depends on McCore, soft depends on Runic Achievements)
         ├── Registers McRPG-specific statistics into McCore
         └── Registers McRPG-specific achievements into Runic Achievements (when present)
 ```
+
+**Critical Architecture Note:** McCore is currently a library JAR that gets shaded (relocated) into each downstream plugin. McRPG relocates `com.diamonddagger590.mccore` → `us.eunoians.mcrpg.mccore`. If Runic Achievements also shaded McCore, each plugin would have its own isolated copy of `RegistryAccess`, `CorePlayer`, events, etc. Events fired by one plugin's McCore copy would never be seen by the other. The statistics framework would be completely isolated between plugins. **Phase 0 resolves this by making McCore a standalone server plugin that all downstream plugins share at runtime.**
 
 ### Branding
 
@@ -25,6 +28,376 @@ McCore (statistics framework)
 - Package: `us.eunoians.runic.achievements`
 - New repository: `DiamondDagger590/RunicAchievements`
 - Future potential: `Runic Core` as McCore rebrand, other `Runic X` products
+
+---
+
+## Part 0: McCore Becomes a Standalone Server Plugin (PREREQUISITE)
+
+This is the foundational prerequisite for the entire plan. Currently, McCore is a library JAR published to Maven and consumed as an `implementation` dependency by McRPG (and would be by Runic Achievements). Each consumer shades McCore into its own JAR with package relocation. This means:
+
+- McRPG's copy: `us.eunoians.mcrpg.mccore.registry.RegistryAccess` (relocated)
+- Runic Achievements' copy would be: `us.eunoians.runic.achievements.mccore.registry.RegistryAccess` (relocated)
+- These are **completely different classes at runtime** - they share no state, no events, no registries
+
+This section covers the changes needed to make McCore a real Bukkit server plugin.
+
+### 0.1 McCore Changes
+
+#### Add `plugin.yml`
+
+McCore currently has **no** `plugin.yml` - it's not a Bukkit plugin. We need to add one:
+
+```yaml
+# src/main/resources/plugin.yml
+name: McCore
+version: ${version}
+main: com.diamonddagger590.mccore.McCoreBukkitPlugin
+api-version: '1.21'
+description: Core framework library providing shared registries, database, player management, and statistics
+authors: [DiamondDagger590]
+```
+
+And a Paper plugin descriptor:
+
+```yaml
+# src/main/resources/paper-plugin.yml
+name: McCore
+version: ${version}
+main: com.diamonddagger590.mccore.McCoreBukkitPlugin
+api-version: '1.21'
+description: Core framework library providing shared registries, database, player management, and statistics
+authors: [DiamondDagger590]
+```
+
+#### Create Concrete Plugin Class: `McCoreBukkitPlugin`
+
+`CorePlugin` is currently abstract (has abstract `getTimeProvider()`). We need a concrete entry point:
+
+```java
+package com.diamonddagger590.mccore;
+
+import com.diamonddagger590.mccore.bootstrap.CoreBootstrap;
+import com.diamonddagger590.mccore.bootstrap.StartupProfile;
+import com.diamonddagger590.mccore.util.TimeProvider;
+import org.jetbrains.annotations.NotNull;
+
+import java.time.Clock;
+
+/**
+ * The concrete Bukkit plugin class for McCore when running as a standalone server plugin.
+ * This initializes the core framework (registries, database tables, etc.) before any
+ * dependent plugins load.
+ */
+public class McCoreBukkitPlugin extends CorePlugin {
+
+    private TimeProvider timeProvider;
+
+    @Override
+    public void onEnable() {
+        super.onEnable();
+        StartupProfile profile = resolveProfile();
+        CoreBootstrap<McCoreBukkitPlugin> bootstrap = new CoreBootstrap<>(this) {};
+        this.timeProvider = bootstrap.getTimeProvider();
+        bootstrap.start(profile);
+    }
+
+    @Override
+    public void onDisable() {
+        // CoreBootstrap.stop() handles database shutdown
+        super.onDisable();
+    }
+
+    @NotNull
+    @Override
+    public TimeProvider getTimeProvider() {
+        return timeProvider;
+    }
+}
+```
+
+**Design Decision: Thin wrapper, not a full rearchitect**
+
+The goal is minimal change. `McCoreBukkitPlugin` is a thin concrete class that starts the `CoreBootstrap`. This initializes:
+- `ManagerRegistry`, `PluginHookRegistry`, `PlayerSettingRegistry` (via `CoreBootstrap.start()`)
+- `DriverRegistry` (in PROD profile)
+- Core command infrastructure
+
+McCore does NOT initialize its own database at this stage - it has no credentials/connection details of its own. The `core_player_statistics` table will be created by whichever downstream plugin initializes the first `Database` instance (via `CreateCoreTablesFunction`). This matches the existing pattern where `CreateCoreTablesFunction` creates `table_history`, `player_mutex`, and `player_settings` tables.
+
+#### Fix the `CorePlugin` Singleton Problem
+
+Currently `CorePlugin.onEnable()` sets `instance = this`, and `CorePlugin.getInstance()` returns it. With McCore as its own plugin, this would be overwritten when McRPG loads:
+
+1. McCore loads → `instance = McCoreBukkitPlugin`
+2. McRPG loads → `instance = McRPG` (overwrites!)
+
+**Solution: Per-plugin instance tracking**
+
+```java
+// In CorePlugin - replace the single static instance with a registry
+public abstract class CorePlugin extends JavaPlugin {
+
+    private static final Map<Class<? extends CorePlugin>, CorePlugin> instances = new ConcurrentHashMap<>();
+
+    @Override
+    public void onEnable() {
+        instances.put(this.getClass(), this);
+        miniMessage = MiniMessage.miniMessage();
+    }
+
+    @Override
+    public void onDisable() {
+        instances.remove(this.getClass());
+    }
+
+    /**
+     * Gets the instance of a specific CorePlugin subclass.
+     */
+    @NotNull
+    @SuppressWarnings("unchecked")
+    public static <T extends CorePlugin> T getInstance(@NotNull Class<T> pluginClass) {
+        T plugin = (T) instances.get(pluginClass);
+        if (plugin == null) {
+            throw new IllegalStateException("Plugin " + pluginClass.getSimpleName() + " was not initialized.");
+        }
+        return plugin;
+    }
+
+    /**
+     * @deprecated Use {@link #getInstance(Class)} instead for type-safe access.
+     * Returns the most recently enabled CorePlugin instance for backwards compatibility.
+     */
+    @Deprecated
+    @NotNull
+    public static CorePlugin getInstance() {
+        if (instances.isEmpty()) {
+            throw new NullPointerException("No CorePlugin was initialized.");
+        }
+        // Return any instance - maintained for backwards compat during migration
+        return instances.values().iterator().next();
+    }
+}
+```
+
+Usage changes:
+```java
+// Old (ambiguous when multiple CorePlugins exist):
+CorePlugin.getInstance()
+
+// New (type-safe):
+McRPG.getInstance(McRPG.class)
+CorePlugin.getInstance(McCoreBukkitPlugin.class)
+```
+
+McRPG's existing `McRPG.getInstance()` static method can remain as a convenience that delegates to `CorePlugin.getInstance(McRPG.class)`.
+
+#### Fix the `RegistryAccess` Singleton
+
+`RegistryAccess` uses a static singleton: `private static final RegistryAccess INSTANCE = new RegistryAccess()`. When McCore is a shared runtime class, this singleton is now truly shared across all plugins - which is exactly what we want! No changes needed to `RegistryAccess` itself.
+
+However, this means `CoreBootstrap.start()` must be idempotent for shared registries. Currently it does:
+```java
+registryAccess.register(new ManagerRegistry());  // throws if already registered
+```
+
+If McCore's bootstrap registers `ManagerRegistry` and then McRPG's bootstrap calls `super.start()` which tries to register it again, it will throw `IllegalArgumentException("Registry already registered")`.
+
+**Solution: Make `CoreBootstrap.start()` check before registering:**
+
+```java
+public void start(@NotNull StartupProfile startupProfile) {
+    RegistryAccess registryAccess = plugin.registryAccess();
+
+    // Only register core registries if not already registered (McCore may have done this)
+    if (!registryAccess.hasRegistry(RegistryKey.MANAGER)) {
+        registryAccess.register(new ManagerRegistry());
+    }
+    if (!registryAccess.hasRegistry(RegistryKey.PLUGIN_HOOK)) {
+        registryAccess.register(new PluginHookRegistry());
+    }
+    if (!registryAccess.hasRegistry(RegistryKey.PLAYER_SETTING)) {
+        registryAccess.register(new PlayerSettingRegistry());
+    }
+    // Managers are per-plugin, always register
+    registryAccess.registry(RegistryKey.MANAGER).register(new ReloadableContentManager(plugin));
+    registryAccess.registry(RegistryKey.MANAGER).register(new ChatResponseManager(plugin));
+    // ... etc
+}
+```
+
+This requires adding a `hasRegistry(RegistryKey)` method to `RegistryAccess`:
+
+```java
+public boolean hasRegistry(@NotNull RegistryKey<?> registryKey) {
+    return registryMap.containsKey(registryKey.registryClass());
+}
+```
+
+#### McCore `build.gradle.kts` Changes
+
+McCore's build already produces a shadow JAR (for the `org.incendo` cloud commands relocation). The output JAR needs to be deployable as a server plugin:
+
+```kotlin
+// No changes needed to shadow config - it already relocates cloud commands
+// The addition of plugin.yml in src/main/resources/ is sufficient
+
+// Optional: rename output for clarity
+shadowJar {
+    relocate("org.incendo", "com.diamonddagger590.mccore.cloud")
+    archiveClassifier.set("")
+    archiveBaseName.set("McCore")
+}
+```
+
+McCore will continue to be published to Maven for compile-time dependency resolution. The shadow JAR is what gets deployed to the server.
+
+### 0.2 McRPG Changes
+
+#### Build Configuration (`build.gradle.kts`)
+
+McRPG must stop shading McCore and instead declare it as a compile-only dependency:
+
+```kotlin
+dependencies {
+    val mccoreVersion = "1.0.0.18-SNAPSHOT"  // version bump for server-plugin McCore
+    // Changed from: implementation("com.diamonddagger590:McCore:$mccoreVersion")
+    compileOnly("com.diamonddagger590:McCore:$mccoreVersion")
+    testImplementation(testFixtures("com.diamonddagger590:McCore:$mccoreVersion"))
+    testFixturesImplementation(testFixtures("com.diamonddagger590:McCore:$mccoreVersion"))
+    // ... rest unchanged
+}
+
+tasks {
+    shadowJar {
+        // ... existing config ...
+        relocate("org.bstats", "us.eunoians.mcrpg")
+        // REMOVED: relocate("com.diamonddagger590.mccore", "us.eunoians.mcrpg.mccore")
+        relocate("com.jeff_media.customblockdata", "us.eunoians.mcrpg.customblockdata")
+        relocate("fr.skytasul.glowingentites", "us.eunoians.mcrpg.glowingentites")
+    }
+}
+```
+
+Key changes:
+1. `implementation` → `compileOnly` for McCore (no longer bundled in JAR)
+2. **Remove** the `relocate("com.diamonddagger590.mccore", ...)` line from shadow config
+3. Version bump to the new McCore version that includes `plugin.yml`
+
+#### Plugin Descriptors
+
+**`plugin.yml`** - Add `McCore` as a hard dependency:
+```yaml
+# Add to existing depend list (or create if only soft-depend exists)
+depend: [McCore]
+soft-depend: [PlaceholderAPI, WorldGuard, mcMMO, ...]
+```
+
+**`paper-plugin.yml`** - Add McCore as required dependency:
+```yaml
+dependencies:
+  server:
+    McCore:
+      required: true
+      load: BEFORE
+    # ... existing soft dependencies unchanged
+```
+
+#### Import Path Changes
+
+Since McCore classes are no longer relocated, all McRPG source files that import McCore classes will work as-is - they already use the canonical `com.diamonddagger590.mccore.*` paths. The relocation was only applied at build time by the shadow plugin, so **no source code changes are needed for imports**.
+
+However, if there are any reflection-based references to relocated class names (unlikely but worth checking), those would need updating.
+
+#### `McRPG.getInstance()` Update
+
+McRPG's static `getInstance()` method should delegate to the new type-safe pattern:
+
+```java
+// In McRPG.java
+@NotNull
+public static McRPG getInstance() {
+    return CorePlugin.getInstance(McRPG.class);
+}
+```
+
+### 0.3 Runic Achievements Implications
+
+Runic Achievements, when created in Phase 3, will follow the same pattern as McRPG's updated build:
+
+```kotlin
+// In RunicAchievements build.gradle.kts
+dependencies {
+    compileOnly("com.diamonddagger590:McCore:$mccoreVersion")
+}
+// No McCore relocation in shadow config
+```
+
+```yaml
+# plugin.yml
+depend: [McCore]
+```
+
+This means at runtime, McCore.jar, RunicAchievements.jar, and McRPG.jar all share the same `com.diamonddagger590.mccore.*` classes from McCore.jar. Events fired by one plugin are visible to all. `RegistryAccess` is a single shared instance. `CorePlayer` is a single class hierarchy.
+
+### 0.4 Server Deployment Changes
+
+Server owners will need McCore.jar in their `plugins/` folder alongside McRPG.jar:
+
+```
+server/
+  plugins/
+    McCore.jar              ← NEW (required)
+    McRPG.jar               ← smaller (no longer bundles McCore)
+    RunicAchievements.jar   ← future (optional, depends on McCore)
+```
+
+**Migration for existing servers:**
+1. Download McCore.jar and place in `plugins/`
+2. Replace McRPG.jar with the new version (that no longer bundles McCore)
+3. Start server - McCore loads first (via `depend`), then McRPG
+
+If a server owner forgets McCore.jar, McRPG will fail to load with a clear error:
+```
+[SEVERE] Could not load 'plugins/McRPG.jar' in folder 'plugins'
+org.bukkit.plugin.UnknownDependencyException: Unknown dependency: McCore
+```
+
+### 0.5 Testing Implications
+
+McRPG's test fixtures currently rely on McCore's test fixtures via `testFixtures("com.diamonddagger590:McCore:...")`. This should continue to work since test dependencies are resolved at compile time, not runtime. The `testImplementation` dependency type is unaffected by the `implementation` → `compileOnly` change for the main source set.
+
+MockBukkit tests may need adjustment since McCore is now a separate plugin that needs to be loaded first. The test bootstrap pattern (`StartupProfile.TEST`) should handle this, but integration tests might need to:
+1. Create and enable a `McCoreBukkitPlugin` mock instance first
+2. Then create and enable the `McRPG` test instance
+
+### 0.6 Criticism of Phase 0
+
+**Risk 1: Breaking change for existing servers**
+Server owners must now install an additional JAR. This is a significant deployment change.
+
+*Mitigation:* Clear documentation, migration guide, and prominent changelog entry. McRPG version that requires standalone McCore should have a major or minor version bump (not just a patch). Consider including a check in McRPG that detects the old shaded McCore and logs a helpful error message.
+
+**Risk 2: Version mismatch**
+Server owner could have McCore v1.0.0.17 and McRPG built against v1.0.0.18, causing runtime errors.
+
+*Mitigation:* McRPG should check McCore's version on startup and log a warning if the version is older than expected. Critical API additions should be checked defensively. Semantic versioning should be followed strictly from this point forward.
+
+**Risk 3: McCore singleton RegistryAccess is shared but not thread-safe for registration**
+`RegistryAccess.registryMap` is a `HashMap`, not `ConcurrentHashMap`. With multiple plugins registering during startup (main thread), this is safe since Bukkit loads plugins sequentially on the main thread. But if any plugin registers on an async thread, there could be issues.
+
+*Mitigation:* Change `RegistryAccess.registryMap` to `ConcurrentHashMap` as a defensive measure. Registration still happens on the main thread, but this prevents any future async issues.
+
+**Risk 4: Manager key collisions**
+Multiple plugins registering managers into the same shared `ManagerRegistry` could collide if they use the same key.
+
+*Mitigation:* Manager keys are already namespaced by their class type (e.g., `McRPGManagerKey.DATABASE` maps to `McRPGDatabaseManager.class`). Since each plugin has its own manager classes, there's no collision risk. The existing `ManagerKeyImpl.create(Class)` pattern ensures uniqueness.
+
+**Risk 5: HikariCP and other transitive dependencies**
+McCore depends on HikariCP, BoostedYAML, cloud commands, etc. via `api()` scope. When McCore was shaded into McRPG, these were bundled. Now they need to be either:
+- Bundled in McCore's shadow JAR (already the case for cloud commands via relocation)
+- Available on the server classpath
+
+*Mitigation:* McCore's shadow JAR already bundles its `api` dependencies. HikariCP and BoostedYAML should be added to the shadow config if they aren't already being bundled. Check the shadow JAR output to ensure all runtime dependencies are included. McRPG can remove any duplicate dependencies that McCore now provides.
 
 ---
 
@@ -843,6 +1216,11 @@ rewards:
 
 ### Critical Flaws Identified
 
+**0. McCore shading creates isolated class hierarchies (RESOLVED by Phase 0)**
+McRPG shades McCore with `relocate("com.diamonddagger590.mccore", "us.eunoians.mcrpg.mccore")`. If Runic Achievements also shaded McCore, each plugin would have completely separate copies of `RegistryAccess`, `CorePlayer`, all events, and all registries. `PostStatisticModifyEvent` fired by McRPG's copy of McCore would never be seen by Runic Achievements' copy. The statistics framework would be completely useless across plugin boundaries.
+
+*Resolution:* Phase 0 converts McCore into a standalone server plugin. All downstream plugins share the same McCore classes at runtime. This is the foundational prerequisite for the entire plan.
+
 **1. Two-plugin data synchronization**
 McCore statistics and Runic Achievements player data are loaded/saved independently. If McCore loads stats but Runic Achievements hasn't loaded achievement data yet, a stat change could trigger achievement evaluation before the player's achievement state is ready.
 
@@ -903,6 +1281,16 @@ The `runic_pending_rewards` table needs reward serialization/deserialization, cl
 
 ## Part 5: Pros & Cons Summary
 
+### Phase 0: McCore as Standalone Server Plugin
+
+| Pros | Cons |
+|------|------|
+| Shared runtime classes - events, registries, player data work across plugins | Breaking change for existing server deployments (need extra JAR) |
+| Enables the entire multi-plugin architecture | Version mismatch risk between McCore and downstream plugins |
+| McRPG JAR size decreases (no longer bundles McCore) | Server owners must manage an additional dependency |
+| Third-party developers can depend on McCore directly | Testing requires mock McCore plugin instance |
+| Future-proof for any number of McCore-based plugins | One-time migration effort for existing users |
+
 ### Statistics System (McCore)
 
 | Pros | Cons |
@@ -939,6 +1327,30 @@ The `runic_pending_rewards` table needs reward serialization/deserialization, cl
 
 ## Part 6: Implementation Order (Phased)
 
+### Phase 0: McCore Becomes a Standalone Server Plugin (PREREQUISITE)
+Files: ~3-5 modified/new files in McCore, ~3-4 modified files in McRPG
+**McCore changes:**
+1. Add `plugin.yml` and `paper-plugin.yml` to `src/main/resources/`
+2. Create `McCoreBukkitPlugin` concrete class extending `CorePlugin`
+3. Fix `CorePlugin` singleton: replace single static instance with `Map<Class, CorePlugin>` + type-safe `getInstance(Class<T>)`
+4. Add `hasRegistry(RegistryKey)` method to `RegistryAccess`
+5. Make `CoreBootstrap.start()` idempotent for shared registries (check before register)
+6. Change `RegistryAccess.registryMap` from `HashMap` to `ConcurrentHashMap` (defensive)
+7. Ensure shadow JAR bundles all runtime dependencies (HikariCP, BoostedYAML, cloud commands)
+
+**McRPG changes:**
+1. Change McCore dependency from `implementation` to `compileOnly` in `build.gradle.kts`
+2. **Remove** `relocate("com.diamonddagger590.mccore", "us.eunoians.mcrpg.mccore")` from shadow config
+3. Add `McCore` to `depend` list in `plugin.yml` and `paper-plugin.yml`
+4. Update `McRPG.getInstance()` to use new type-safe pattern
+5. Verify all tests pass with McCore as external dependency
+
+**Validation:**
+- McCore.jar loads as a standalone plugin on a test server
+- McRPG.jar loads after McCore with `depend: [McCore]`
+- All existing McRPG tests pass
+- `RegistryAccess.registryAccess()` returns the same singleton across both plugins
+
 ### Phase 1: Statistics Framework (McCore)
 Files: ~8-10 new files in McCore
 1. Add `StatisticType` enum
@@ -961,7 +1373,7 @@ Files: ~5-8 new files in McRPG
 
 ### Phase 3: Runic Achievements - Core Plugin Scaffold
 Files: ~15-20 new files (new repository)
-1. Create repository, project structure, build configuration (Maven/Gradle)
+1. Create repository, project structure, build configuration (Gradle)
 2. `RunicAchievements` main plugin class extending `CorePlugin`
 3. `RunicAchievementsBootstrap` extending `CoreBootstrap`
 4. `RunicAchievementsDatabase` extending `Database`
