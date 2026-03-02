@@ -1,0 +1,153 @@
+---
+description: McCore GUI implementation patterns — Gui/Slot composition, BaseGui, PaginatedGui, GuiManager, PlayerSettingSlot
+globs: ["src/**/gui/**/*.java"]
+alwaysApply: false
+---
+
+# McCore GUI System
+
+## Key Classes
+
+| Class | Purpose |
+|-------|---------|
+| `Gui<P extends CorePlayer>` | Interface for an inventory-backed GUI |
+| `BaseGui<P>` | Abstract implementation; manages slots, click dispatch, listener lifecycle |
+| `ClosableGui<P>` | `BaseGui` variant with a hook for when the last viewer closes |
+| `PaginatedGui<P>` | `BaseGui` variant supporting multi-page inventory navigation |
+| `GuiManager<P, CP>` | Manager that tracks which GUI each player currently has open |
+| `Slot<P>` | A reusable inventory cell: holds an `ItemStack` and defines `onClick` behavior |
+| `PlayerSettingSlot<P>` | Built-in slot for toggling a `PlayerSetting` |
+| `NextPageSlot<P>` | Built-in slot for advancing a `PaginatedGui` |
+| `PreviousPageSlot<P>` | Built-in slot for going back in a `PaginatedGui` |
+
+## Checklist: Creating a New GUI
+
+1. Subclass `BaseGui` (or `PaginatedGui` / `ClosableGui` as needed)
+2. Pass `plugin`, `viewer`, title string, and inventory size to `super()`
+3. Override `paintInventory()` — call `setSlot(index, slot)` for each cell
+4. Create `Slot` implementations for each interactive cell (see below)
+5. Open for a player via `GuiManager.trackPlayerGui()` then `player.openInventory(gui.getInventory())`
+
+## Minimal BaseGui Template
+
+```java
+public class MyGui extends BaseGui<MyPlayer> {
+
+    public MyGui(@NotNull MyPlugin plugin, @NotNull MyPlayer viewer) {
+        super(plugin, viewer, "My GUI Title", 54); // 54 slots = 6 rows
+    }
+
+    @Override
+    public void paintInventory() {
+        setSlot(0, new MyActionSlot());
+        setSlot(8, new PlayerSettingSlot<>(getViewer(), MySetting.MY_SETTING_KEY));
+        // Unset slots use the default empty slot — no need to fill manually
+    }
+}
+```
+
+## Implementing a Slot
+
+Slots are typically anonymous classes or static inner classes, not separate files, unless shared across GUIs.
+
+```java
+public class MyActionSlot extends Slot<MyPlayer> {
+
+    public MyActionSlot() {
+        super(new ItemBuilder(Material.DIAMOND).setName("<aqua>Click Me").build());
+    }
+
+    @Override
+    public boolean onClick(@NotNull MyPlayer viewer, @NotNull ClickType clickType) {
+        // Perform action
+        viewer.getAsBukkitPlayer().ifPresent(p -> p.sendMessage("Clicked!"));
+        return true; // true = cancel the underlying InventoryClickEvent
+    }
+}
+```
+
+## Listener Lifecycle (Automatic)
+
+`BaseGui` implements `Listener`. It **self-registers** with the Bukkit plugin manager when the first player opens it and **self-deregisters** when the last player closes it. Do not manually register or unregister GUI instances.
+
+## Opening and Tracking
+
+```java
+GuiManager<MyPlayer, MyPlugin> guiManager = plugin.registryAccess()
+    .registry(RegistryKey.MANAGER)
+    .manager(CoreManagerKey.CORE_GUI_MANAGER);
+
+MyGui gui = new MyGui(plugin, corePlayer);
+guiManager.trackPlayerGui(corePlayer, gui);
+gui.paintInventory();
+corePlayer.getAsBukkitPlayer().ifPresent(p -> p.openInventory(gui.getInventory()));
+```
+
+## Closing and Cleanup
+
+```java
+// Stop tracking when a player's GUI is closed programmatically
+guiManager.stopTrackingPlayer(corePlayer);
+
+// Check and retrieve the open GUI
+Optional<Gui<MyPlayer>> openGui = guiManager.getOpenedGui(corePlayer);
+```
+
+## Refreshing a GUI
+
+To update a GUI that one or more players are currently viewing:
+
+```java
+// Repaint all inventories for every player viewing this GUI instance
+guiManager.refreshGui(gui);
+```
+
+This fires a `GuiRefreshEvent` and re-calls `paintInventory()` across all open views.
+
+## PaginatedGui
+
+```java
+public class MyPaginatedGui extends PaginatedGui<MyPlayer> {
+
+    private final List<MyItem> items;
+
+    public MyPaginatedGui(@NotNull MyPlugin plugin, @NotNull MyPlayer viewer, @NotNull List<MyItem> items) {
+        super(plugin, viewer, "My Paged GUI", 54);
+        this.items = items;
+    }
+
+    @Override
+    public int getMaximumPage() {
+        return Math.max(1, (int) Math.ceil(items.size() / (double) CONTENT_SLOTS_PER_PAGE));
+    }
+
+    @Override
+    public void paintInventoryForPage(@NotNull Inventory inventory, int page) {
+        // Place NextPageSlot / PreviousPageSlot at fixed positions
+        setSlot(inventory, 53, new NextPageSlot<>(this));
+        setSlot(inventory, 45, new PreviousPageSlot<>(this));
+
+        // Populate content slots for the current page
+        int start = (page - 1) * CONTENT_SLOTS_PER_PAGE;
+        for (int i = start; i < Math.min(start + CONTENT_SLOTS_PER_PAGE, items.size()); i++) {
+            int slotIndex = i - start;
+            setSlot(inventory, slotIndex, new MyItemSlot(items.get(i)));
+        }
+    }
+}
+```
+
+## PlayerSettingSlot
+
+Renders a toggle-able `PlayerSetting`. The slot automatically reflects the current value and updates it on click.
+
+```java
+// In paintInventory():
+setSlot(22, new PlayerSettingSlot<>(getViewer(), MySetting.MY_SETTING_KEY));
+```
+
+`PlayerSetting` must be registered in `PlayerSettingRegistry` during bootstrap for persistence to work.
+
+---
+
+> **Maintenance:** If you introduce a new GUI pattern, slot type, or lifecycle behavior not described here, update this file and `CLAUDE.md` in the same PR.

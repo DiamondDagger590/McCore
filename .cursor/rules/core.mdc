@@ -1,0 +1,85 @@
+---
+description: Core McCore project conventions, architecture, and domain knowledge — applied to every prompt
+alwaysApply: true
+---
+
+# McCore Core Rules
+
+McCore is a Java 21 Paper plugin framework library. It provides shared infrastructure (registry/manager system, GUI, database, tasks, player management, plugin hooks) that downstream plugins extend to build their own features. McCore is **not** a standalone plugin.
+
+## Downstream Impact
+
+Changes to McCore public APIs, interfaces, and registries affect every plugin that depends on it. Prefer additive, non-breaking changes. When a breaking change is necessary, coordinate it explicitly and consider a deprecation path first.
+
+## Build Commands
+
+- `./gradlew shadowJar` — build shaded jar (recommended)
+- `./gradlew test` — tests only
+- `./gradlew publishToMavenLocal` — publish snapshot for local downstream consumption
+
+## Registry Access Pattern
+
+All services are accessed through `RegistryAccess`. Never instantiate managers or registries directly.
+
+```java
+// Get a manager
+GuiManager guiManager = plugin.registryAccess()
+    .registry(RegistryKey.MANAGER)
+    .manager(CoreManagerKey.CORE_GUI_MANAGER);
+
+// Get a plugin hook (may be absent)
+Optional<AfkPluginHook> afkHook = plugin.registryAccess()
+    .registry(RegistryKey.PLUGIN_HOOK)
+    .pluginHook(CorePluginHookKey.AFK_PLUGIN_HOOK);
+```
+
+Built-in `RegistryKey` constants: `MANAGER`, `PLUGIN_HOOK`, `PLAYER_SETTING`, `DRIVER`
+
+Built-in `CoreManagerKey` constants: `CORE_GUI_MANAGER`, `CORE_PLAYER_MANAGER`, `CORE_DATABASE_MANAGER`
+
+## Naming Conventions
+
+| Type | Convention | Example |
+|------|-----------|---------|
+| Framework base classes | `Core` prefix | `CorePlugin`, `CorePlayer`, `CoreTask` |
+| Registries | `Registry` suffix | `ManagerRegistry`, `DriverRegistry` |
+| Managers | `Manager` suffix | `GuiManager`, `PlayerManager` |
+| Registry keys | `Key` suffix | `RegistryKey`, `ManagerKey`, `PluginHookKey` |
+| Key constant interfaces | key type + `Key` | `CoreManagerKey`, `CorePluginHookKey` |
+| Plugin hooks | `Hook` suffix | `AfkPluginHook`, `CoreCitizensHook` |
+| DAOs | `DAO` suffix | `MutexDAO`, `PlayerSettingDAO` |
+| Tasks | `Task` suffix | `PlayerLoadTask`, `ChatResponseExpireTask` |
+| GUIs | `Gui` suffix | `BaseGui`, `PaginatedGui` |
+| Slots | `Slot` suffix | `PlayerSettingSlot`, `NextPageSlot` |
+| Bukkit events | `Event` suffix | `PlayerLoadEvent`, `TablesCreatedEvent` |
+| Registrars | `Registrar` suffix | `CommandRegistrar`, `HooksRegistrar` |
+| Reloadable wrappers | `Reloadable` prefix | `ReloadableSet`, `ReloadableBoolean` |
+| Item builders | `Builder` suffix | `ItemBuilder`, `SkullBuilder` |
+| Custom wrappers | `Wrapper` suffix | `CustomItemWrapper`, `CustomBlockWrapper` |
+
+## Required Annotations
+
+- `@NotNull` (IntelliJ v12) on all non-null return types and parameters
+- `@Override` on all overridden methods
+
+## Code Style
+
+- 4-space indentation, K&R brace style (standard Java)
+- Prefer `var` for local variables when the declared type is long/nested; otherwise prefer explicit types
+- Javadoc on all public methods with `@param` and `@return` semantics
+- **Third-party developer mindset:** Public APIs are consumed by downstream plugins. Write and review changes as if you are that downstream developer.
+
+## Anti-Patterns
+
+- **No downstream-plugin-specific logic in McCore** — logic for a specific plugin belongs in that plugin
+- **No synchronous DB calls on the main thread** — use `getDatabaseExecutorService()` or `CompletableFuture`; only block during bootstrap when `blockMainThreadOnStart()` returns `true`
+- **No breaking API changes without coordination** — additive changes only unless intentional
+- **No direct field access across boundaries** — use getters
+- **No singleton abuse** — use `RegistryAccess`; only `CorePlugin.getInstance()` is acceptable as a static shortcut
+- **No state stored in Registry/Manager objects beyond their scope** — domain state belongs on domain objects
+- **No hard-coded strings for namespaced keys or config routes** — define as constants
+- **No direct entity casting without guard** — use `instanceof` pattern matching: `if (entity instanceof Player player) { ... }`
+
+---
+
+> **Maintenance:** If you introduce a new pattern, naming convention, or anti-pattern not described here, update this file and `CLAUDE.md` in the same PR.
