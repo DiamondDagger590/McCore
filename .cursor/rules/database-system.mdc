@@ -1,0 +1,251 @@
+---
+description: McCore database patterns — driver registration, Database subclassing, table creation/migration, transactions, DAO authoring, async operations
+globs: ["src/**/database/**/*.java"]
+alwaysApply: false
+---
+
+# McCore Database System
+
+## Key Classes
+
+| Class | Purpose |
+|-------|---------|
+| `Database` | Abstract base; owns HikariCP pool, async executor, `CreateTableFunction`/`UpdateTableFunction` chains |
+| `DatabaseManager<CP>` | Abstract manager that provides a `Database` instance to the rest of the plugin |
+| `DatabaseDriver` | Interface for a SQL dialect: JDBC class, connection URL, HikariCP credential population |
+| `DatabaseDriverType` | Enum of supported driver types (e.g., `SQLITE`) |
+| `DriverRegistry` | Registry for `DatabaseDriver` implementations; looked up by `DatabaseDriverType` |
+| `CreateTableFunction` | Functional interface — called once at init to create tables that don't exist |
+| `UpdateTableFunction` | Functional interface — called after table creation to apply schema migrations |
+| `Transaction` | Helper for a single SQL statement in a managed connection |
+| `BatchTransaction` | Helper for multiple SQL statements in one connection/transaction |
+| `FailSafeTransaction` | Transaction that handles its own error recovery without propagating exceptions |
+
+## Checklist: Adding Database Support to a Plugin
+
+1. Implement `DatabaseDriver` for your SQL dialect (or use the built-in `SQLiteDatabaseDriver`)
+2. Register the driver in `DriverRegistry` during bootstrap (PROD profile only)
+3. Subclass `Database` — provide `Credentials`, `ConnectionDetails`, and register your table functions
+4. Subclass `DatabaseManager` — implement `createDatabase()` returning your `Database` subclass
+5. Register your `DatabaseManager` via `ManagerRegistry` in bootstrap
+6. Call `database.initializeDatabase()` after registration
+
+## Implementing a DatabaseDriver
+
+```java
+public class MyDriver implements DatabaseDriver {
+
+    @Override
+    public @NotNull String getDatabaseDriverClass() {
+        return "org.sqlite.JDBC"; // JDBC driver class name
+    }
+
+    @Override
+    public @NotNull String getConnectionUrl(@NotNull Credentials credentials) {
+        return "jdbc:sqlite:" + credentials.database();
+    }
+
+    @Override
+    public void populateDataSourceCredentials(@NotNull HikariDataSource dataSource,
+                                              @NotNull Credentials credentials) {
+        // SQLite needs no username/password; MySQL would set them here
+    }
+
+    @Override
+    public @NotNull DatabaseDriverType getDriverType() {
+        return DatabaseDriverType.SQLITE;
+    }
+}
+```
+
+Register during bootstrap (PROD only):
+
+```java
+registryAccess.registry(RegistryKey.DRIVER).register(new MyDriver());
+```
+
+## Subclassing Database
+
+```java
+public class MyDatabase extends Database {
+
+    public MyDatabase(@NotNull MyPlugin plugin) {
+        super(plugin, DatabaseDriverType.SQLITE);
+        // Register table lifecycle functions in order
+        addCreateTableFunction(new MyCreateTablesFunction());
+        addUpdateTableFunction(new MyUpdateTablesFunction());
+    }
+
+    @Override
+    protected @NotNull Credentials getCredentials() {
+        return new Credentials("", "", "plugins/MyPlugin/data.db", "");
+    }
+
+    @Override
+    protected @NotNull ConnectionDetails getConnectionDetails() {
+        return new ConnectionDetails(30000, 600000, 1800000, 0, 1, 8);
+        // args: connectionTimeout, idleTimeout, maxLifetime, leakDetection, minIdle, maxPool
+    }
+
+    // Override to false if you don't want to block the main thread at startup
+    @Override
+    protected boolean blockMainThreadOnStart() {
+        return true;
+    }
+}
+```
+
+## Table Functions
+
+`CreateTableFunction` — create tables if they don't exist:
+
+```java
+public class MyCreateTablesFunction implements CreateTableFunction {
+
+    @Override
+    public @NotNull CompletableFuture<Void> createTables(@NotNull Database database) {
+        return CompletableFuture.runAsync(() -> {
+            try (Connection conn = database.getConnection();
+                 Statement stmt = conn.createStatement()) {
+                stmt.executeUpdate("""
+                    CREATE TABLE IF NOT EXISTS my_table (
+                        uuid VARCHAR(36) NOT NULL PRIMARY KEY,
+                        value INTEGER NOT NULL DEFAULT 0
+                    )
+                """);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }, database.getDatabaseExecutorService());
+    }
+}
+```
+
+`UpdateTableFunction` — apply schema migrations:
+
+```java
+public class MyUpdateTablesFunction implements UpdateTableFunction {
+
+    @Override
+    public @NotNull CompletableFuture<Void> updateTables(@NotNull Database database) {
+        return CompletableFuture.runAsync(() -> {
+            // Check TableVersionHistoryDAO to decide which migrations to apply
+            try (Connection conn = database.getConnection()) {
+                int version = TableVersionHistoryDAO.getTableVersion(conn, "my_table");
+                if (version < 2) {
+                    // Apply migration to version 2
+                    conn.createStatement().executeUpdate("ALTER TABLE my_table ADD COLUMN extra TEXT");
+                    TableVersionHistoryDAO.updateTableVersion(conn, "my_table", 2);
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }, database.getDatabaseExecutorService());
+    }
+}
+```
+
+## Database Lifecycle Events
+
+| Event | Fired when |
+|-------|-----------|
+| `PreTablesCreateEvent` | Just before `CreateTableFunction`s run |
+| `TablesCreatedEvent` | After all `CreateTableFunction`s complete |
+| `PreTablesUpdateEvent` | Just before `UpdateTableFunction`s run |
+| `TablesUpdatedEvent` | After all `UpdateTableFunction`s complete |
+
+Listen to `PreTablesCreateEvent` or `PreTablesUpdateEvent` to register additional table functions from a downstream plugin before McCore's chain executes.
+
+## Async Operations
+
+All database I/O must be async. Use `getDatabaseExecutorService()`:
+
+```java
+Database db = plugin.registryAccess()
+    .registry(RegistryKey.MANAGER)
+    .manager(CoreManagerKey.CORE_DATABASE_MANAGER)
+    .getDatabase();
+
+CompletableFuture.supplyAsync(() -> {
+    try (Connection conn = db.getConnection()) {
+        return MyDAO.getData(conn, playerUUID);
+    } catch (SQLException e) {
+        throw new RuntimeException(e);
+    }
+}, db.getDatabaseExecutorService()).thenAccept(data -> {
+    // Back on the calling thread — schedule back to main if Bukkit API is needed
+    Bukkit.getScheduler().runTask(plugin, () -> applyData(data));
+});
+```
+
+**Never call `getConnection()` or execute SQL on the main server thread** outside of the bootstrap `blockMainThreadOnStart()` window.
+
+## DAO Pattern
+
+DAOs are static utility classes — all methods take `Connection` as the first argument. No instance state.
+
+```java
+public final class MyDAO {
+
+    private MyDAO() {} // Non-instantiable
+
+    public static @NotNull Optional<MyData> getData(@NotNull Connection connection,
+                                                    @NotNull UUID uuid) throws SQLException {
+        try (PreparedStatement ps = connection.prepareStatement(
+                "SELECT value FROM my_table WHERE uuid = ?")) {
+            ps.setString(1, uuid.toString());
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return Optional.of(new MyData(rs.getInt("value")));
+            }
+        }
+        return Optional.empty();
+    }
+
+    public static void saveData(@NotNull Connection connection,
+                                @NotNull UUID uuid,
+                                @NotNull MyData data) throws SQLException {
+        try (PreparedStatement ps = connection.prepareStatement(
+                "INSERT OR REPLACE INTO my_table (uuid, value) VALUES (?, ?)")) {
+            ps.setString(1, uuid.toString());
+            ps.setInt(2, data.value());
+            ps.executeUpdate();
+        }
+    }
+}
+```
+
+## Transaction Helpers
+
+For multi-statement operations, use `BatchTransaction` to ensure all statements succeed or roll back together:
+
+```java
+new BatchTransaction(db.getConnection()) {
+    @Override
+    protected void executeTransaction(@NotNull Connection connection) throws SQLException {
+        MyDAO.saveData(connection, uuid, data);
+        OtherDAO.saveRelated(connection, uuid, related);
+    }
+}.execute();
+```
+
+`FailSafeTransaction` swallows exceptions and logs them rather than propagating — use for best-effort fire-and-forget writes:
+
+```java
+new FailSafeTransaction(db.getConnection()) {
+    @Override
+    protected void executeTransaction(@NotNull Connection connection) throws SQLException {
+        AuditDAO.logEvent(connection, event);
+    }
+}.execute();
+```
+
+## HikariCP Notes
+
+- Default pool: 1 min idle, 8 max connections, 30-second thread keep-alive
+- Do not tune pool sizes without a clear profiling justification — the defaults are intentionally conservative
+- `blockMainThreadOnStart()` returning `true` (the default) means `CompletableFuture.get()` is called on the main thread during plugin enable — tables must finish before gameplay begins
+
+---
+
+> **Maintenance:** If you introduce a new driver, transaction type, or table migration strategy not described here, update this file and `CLAUDE.md` in the same PR.
