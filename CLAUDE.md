@@ -424,5 +424,8 @@ After any commit or PR that introduces one of the following, **update `CLAUDE.md
 | New coding standard adopted | `CLAUDE.md` Coding Standards section |
 | New GUI pattern added | `CLAUDE.md` + `gui-system.mdc` |
 | New database pattern added | `CLAUDE.md` + `database-system.mdc` |
+| New public API pattern or breaking-change rule | `persona-extensibility.mdc` + `.claude/commands/review-extensibility.md` |
+| New test structural pattern or anti-pattern | `persona-testing.mdc` + `.claude/commands/review-testing.md` |
+| CI review file-pattern for a new domain | `.github/workflows/pr-review.yml` detect-changes step |
 
 These files are the project's living technical contract — stale steering files produce stale AI output.
