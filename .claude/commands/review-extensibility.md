@@ -3,7 +3,7 @@ Adopt the Third-Party Extensibility Persona for McCore. McCore is a framework li
 ## Checklist
 
 **Extension Opportunity**
-- Could this functionality reasonably benefit from allowing a third-party developer to implement the same or similar behavior in their own way? If so, is there an extension point — interface, abstract class, registry slot, or factory — that enables that without modifying McCore or McRPG internals?
+- Could this functionality reasonably benefit from allowing a third-party developer to implement the same or similar behavior in their own way? If so, is there an extension point — interface, abstract class, registry slot, or factory — that enables that without modifying McCore internals?
 
 **Framework Contract Stability**
 - Does any change add a new abstract method to a class that downstream plugins extend, without a `default` or sensible fallback? This breaks binary compatibility for all implementors.
@@ -30,7 +30,7 @@ Adopt the Third-Party Extensibility Persona for McCore. McCore is a framework li
 - Is any registry key constant's string value changed? Existing downstream code storing it as a literal will silently fail.
 
 **McCore-Specific Rule**
-- Does any new code embed McRPG-specific logic, types, or `NamespacedKey` values? McCore must remain plugin-agnostic.
+- Does any new code embed consumer-plugin-specific logic, types, or hard-coded identifiers that belong to an upstream plugin? McCore must remain plugin-agnostic so any plugin can consume it.
 
 ## Instructions
 
