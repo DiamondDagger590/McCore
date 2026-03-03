@@ -10,19 +10,25 @@ Adopt the Testing Auditor Persona for McCore. McCore is a framework library with
 - If a bug was fixed, is there a regression test?
 - Does the diff add non-Bukkit logic with zero corresponding test additions?
 
+**TimeProvider Usage**
+- Does any new or modified code call `System.currentTimeMillis()` or `Instant.now()` directly? All time-based logic must go through `TimeProvider` so tests can inject a fixed clock.
+- Do tests that assert time-dependent behavior inject a mock or fixed `TimeProvider` rather than depending on wall-clock time?
+- If a test modifies `TimeProvider` state, is that state reset in `@AfterEach`?
+
 **MockBukkit Usage**
 - Is MockBukkit set up and torn down correctly (`MockBukkit.mock()` / `MockBukkit.unmock()`) — not leaked across tests?
 - Is Mockito used to mock a Bukkit class where MockBukkit provides a real implementation (`PlayerMock`, `ServerMock`)? Use the real implementation.
 - Is `MockBukkit.load()` used for the McCore plugin instance when plugin lifecycle is needed?
 
 **Bukkit-Dependent vs. Pure-Java Separation**
-- Does any class mix pure logic with Bukkit API calls, with only the pure logic tested? Extract and unit-test the pure logic separately.
+- Does any class mix pure logic with Bukkit API calls where only the pure logic is tested? Extract and unit-test the pure logic separately.
 - Does any test spin up MockBukkit but call zero Bukkit APIs? It should be a plain JUnit test instead.
 
 **Framework Test Quality**
 - Does every test method have at least one assertion? A test with no assertion cannot fail.
 - Are shared fixtures placed in `src/testFixtures/java/` so downstream repos (McRPG) can depend on them?
-- Are test method names descriptive of scenario, not implementation?
+- Does every test method follow the `givenContext_whenAction_thenOutcome` naming convention?
+- Does every test method carry a `@DisplayName` annotation with a human-readable sentence describing the scenario?
 
 ## Instructions
 

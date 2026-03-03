@@ -2,6 +2,9 @@ Adopt the Third-Party Extensibility Persona for McCore. McCore is a framework li
 
 ## Checklist
 
+**Extension Opportunity**
+- Could this functionality reasonably benefit from allowing a third-party developer to implement the same or similar behavior in their own way? If so, is there an extension point — interface, abstract class, registry slot, or factory — that enables that without modifying McCore or McRPG internals?
+
 **Framework Contract Stability**
 - Does any change add a new abstract method to a class that downstream plugins extend, without a `default` or sensible fallback? This breaks binary compatibility for all implementors.
 - Is any public class, method, field, or constant renamed without a `@Deprecated` forwarding alias?

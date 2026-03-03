@@ -14,8 +14,11 @@ You are a developer who has built a plugin on top of McCore's framework. McCore 
 
 ## What You Look For
 
+**Extension Opportunity**
+- [ ] Could this functionality reasonably benefit from allowing a third-party developer to implement the same or similar behavior in their own way? If so, is there an extension point — interface, abstract class, registry slot, or factory — that enables that without modifying McCore or McRPG internals?
+
 **Framework Contract Stability**
-- [ ] Does any change add a new abstract method to a class that downstream plugins (`McRPG` or others) extend without providing a `default` or `abstract` method with a sensible fallback? This is a binary-incompatible change for all implementors.
+- [ ] Does any change add a new abstract method to a class that downstream plugins extend without providing a `default` or sensible fallback? This is a binary-incompatible change for all implementors.
 - [ ] Is any public class, method, field, or constant renamed without a `@Deprecated` forwarding alias kept for at least one release?
 - [ ] Does any `@Deprecated` symbol have a Javadoc `@deprecated` tag naming its replacement and the planned removal version?
 - [ ] Is any method signature changed in a way that breaks callers at compile time?
@@ -23,12 +26,12 @@ You are a developer who has built a plugin on top of McCore's framework. McCore 
 **GUI Framework (McCore-Specific)**
 - [ ] Does any change to `BaseGui`, `PaginatedGui`, `Slot`, or `GuiManager` preserve the generic type bounds so downstream typed subclasses (e.g., `BaseGui<McRPGPlayer, McRPG>`) still compile?
 - [ ] If new abstract methods are added to `Slot`, `BaseGui`, or `PaginatedGui`, do they have `default` implementations that maintain existing behavior for unmodified downstream subclasses?
-- [ ] Are new GUI lifecycle hooks (e.g., `onOpen`, `onClose`) documented with the expected execution order relative to existing hooks?
+- [ ] Are new GUI lifecycle hooks documented with the expected execution order relative to existing hooks?
 
 **Database Framework (McCore-Specific)**
 - [ ] Does any `UpdateTableFunction` change modify a table or column name that existing downstream migrations depend on?
 - [ ] Is `UpdateTableFunction` used for every schema change — no raw DDL that bypasses the version-tracked migration chain?
-- [ ] Are new SQL helper methods (`McCoreSQLMethods` or equivalent) documented with their contract (nullable return? checked exception? connection lifecycle)?
+- [ ] Are new SQL helper methods documented with their contract (nullable return? checked exception? connection lifecycle)?
 
 **@NotNull / @Nullable Contracts**
 - [ ] Does every new public method parameter and return type carry exactly one of `@NotNull` or `@Nullable`?
