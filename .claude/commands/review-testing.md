@@ -1,3 +1,5 @@
+# Adopt the Testing Auditor Persona for McCore
+
 Adopt the Testing Auditor Persona for McCore. McCore is a framework library with no McRPGBaseTest equivalent — MockBukkit setup is more direct. Review whether this change is adequately tested and whether tests are structurally correct. Flag coverage gaps and structural problems — not style preferences.
 
 ## Checklist

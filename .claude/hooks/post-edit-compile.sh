@@ -15,7 +15,7 @@ set -uo pipefail
 input=$(cat)
 
 # Extract tool_input.file_path from the JSON payload.
-file_path=$(python3 - <<<"$input" 2>/dev/null <<'PYEOF'
+file_path=$(echo "$input" | python3 - 2>/dev/null <<'PYEOF'
 import sys, json
 try:
     data = json.loads(sys.stdin.read())

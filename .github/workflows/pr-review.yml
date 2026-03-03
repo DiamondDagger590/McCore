@@ -3,7 +3,7 @@ name: AI PR Review
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-    branches: [main, develop]
+    branches: [master, develop, recode]
 
 jobs:
   # ------------------------------------------------------------------
@@ -13,7 +13,7 @@ jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      needs_api:  ${{ steps.detect.outputs.api }}
+      needs_api: ${{ steps.detect.outputs.api }}
       needs_test: ${{ steps.detect.outputs.test }}
     steps:
       - uses: actions/checkout@v4
@@ -37,6 +37,8 @@ jobs:
             [[ "$f" =~ src/.*/registry/.*\.java ]] && api=true
             [[ "$f" =~ src/.*/gui/.*\.java ]]      && api=true
             [[ "$f" =~ src/.*/database/.*\.java ]] && api=true
+            [[ "$f" =~ src/main/.*\.java ]]        && api=true
+            [[ "$f" =~ src/.*/.*\.java ]]          && api=true
             [[ "$f" =~ src/main/.*\.java ]]        && test=true
           done <<< "$CHANGED"
 
@@ -54,6 +56,7 @@ jobs:
       needs.detect-changes.outputs.needs_api  == 'true' ||
       needs.detect-changes.outputs.needs_test == 'true'
     permissions:
+      contents: read
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
@@ -87,12 +90,12 @@ jobs:
         if: steps.check-key.outputs.available == 'true'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          REVIEW_MODEL:      ${{ vars.REVIEW_MODEL || 'claude-haiku-4-5-20251001' }}
-          NEEDS_GUI:         "false"
-          NEEDS_CONFIG:      "false"
-          NEEDS_API:         ${{ needs.detect-changes.outputs.needs_api }}
-          NEEDS_TEST:        ${{ needs.detect-changes.outputs.needs_test }}
-          DIFF_FILE:         /tmp/pr.diff
+          REVIEW_MODEL: ${{ vars.REVIEW_MODEL || 'claude-haiku-4-5-20251001' }}
+          NEEDS_GUI: "false"
+          NEEDS_CONFIG: "false"
+          NEEDS_API: ${{ needs.detect-changes.outputs.needs_api }}
+          NEEDS_TEST: ${{ needs.detect-changes.outputs.needs_test }}
+          DIFF_FILE: /tmp/pr.diff
         run: python3 .github/scripts/pr-review.py
 
       - name: Post review comment

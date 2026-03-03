@@ -1,3 +1,5 @@
+# Verify: Build shadowJar
+
 Run `./gradlew shadowJar` from the project root and report the outcome.
 
 Steps:

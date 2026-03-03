@@ -1,3 +1,5 @@
+# Review Extensibility
+
 Adopt the Third-Party Extensibility Persona for McCore. McCore is a framework library — every public change is a contract change. Evaluate this diff from the perspective of a developer whose plugin depends on McCore: will it compile and behave correctly after this change? Can the new functionality be extended without modifying McCore internals?
 
 ## Checklist
