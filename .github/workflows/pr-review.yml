@@ -45,10 +45,10 @@ jobs:
           echo "test=$test" >> "$GITHUB_OUTPUT"
 
   # ------------------------------------------------------------------
-  # Step 2: Run the AI personas for each triggered domain.
-  # Skips silently if ANTHROPIC_API_KEY is not configured (fork PRs).
+  # Step 2: Generate diff and upload it with metadata as an artifact
+  # so the secret-holding workflow_run job never executes PR head code.
   # ------------------------------------------------------------------
-  review:
+  prepare-review:
     needs: detect-changes
     runs-on: ubuntu-latest
     if: |
@@ -56,58 +56,31 @@ jobs:
       needs.detect-changes.outputs.needs_test == 'true'
     permissions:
       contents: read
-      pull-requests: write
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
           fetch-depth: 0
 
-      - name: Generate PR diff
+      - name: Generate diff and save metadata
         run: |
           BASE="${{ github.event.pull_request.base.sha }}"
           HEAD="${{ github.event.pull_request.head.sha }}"
-          git diff "$BASE" "$HEAD" > /tmp/pr.diff 2>/dev/null || \
-            git diff origin/${{ github.base_ref }}...HEAD > /tmp/pr.diff
+          git diff "$BASE" "$HEAD" > pr.diff 2>/dev/null || \
+            git diff origin/${{ github.base_ref }}...HEAD > pr.diff
 
-      - name: Set up Python
-        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b  # v5.3.0
+          cat > review-meta.json << 'EOF_META'
+          {
+            "pr_number": "${{ github.event.pull_request.number }}",
+            "needs_api": "${{ needs.detect-changes.outputs.needs_api }}",
+            "needs_test": "${{ needs.detect-changes.outputs.needs_test }}"
+          }
+          EOF_META
+
+      - name: Upload review inputs
+        uses: actions/upload-artifact@v4
         with:
-          python-version: "3.12"
-
-      - name: Check API key
-        id: check-key
-        run: |
-          if [ -n "$ANTHROPIC_API_KEY" ]; then
-            echo "available=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "available=false" >> "$GITHUB_OUTPUT"
-          fi
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-
-      - name: Run AI persona reviews
-        if: steps.check-key.outputs.available == 'true'
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          REVIEW_MODEL: ${{ vars.REVIEW_MODEL || 'claude-haiku-4-5-20251001' }}
-          NEEDS_GUI: "false"
-          NEEDS_CONFIG: "false"
-          NEEDS_API: ${{ needs.detect-changes.outputs.needs_api }}
-          NEEDS_TEST: ${{ needs.detect-changes.outputs.needs_test }}
-          DIFF_FILE: /tmp/pr.diff
-        run: python3 .github/scripts/pr-review.py
-
-      - name: Post review comment
-        if: steps.check-key.outputs.available == 'true' && hashFiles('review_comment.txt') != ''
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if [ ! -s review_comment.txt ]; then
-            echo "review_comment.txt is empty — not posting."
-            exit 0
-          fi
-          if [[ "$(head -c 4 review_comment.txt)" == "<!--" ]]; then
-            echo "Suppressed comment — not posting."
-            exit 0
-          fi
-          gh pr comment ${{ github.event.pull_request.number }} --body-file review_comment.txt
+          name: pr-review-inputs
+          path: |
+            pr.diff
+            review-meta.json
+          retention-days: 1
