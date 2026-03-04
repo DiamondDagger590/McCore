@@ -1,0 +1,45 @@
+language: "en"
+
+reviews:
+  profile: "assertive"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - "master"
+      - "develop"
+      - "recode"
+  path_filters:
+    - "!gradle/wrapper/gradle-wrapper.jar"
+  path_instructions:
+    - path: "**/*.java"
+      instructions: |
+        This is McCore, a plugin-agnostic framework library consumed by Minecraft
+        plugins built on the Paper/Bukkit API.
+
+        Accept the following patterns without flagging:
+        - Generic type parameters (e.g., PlayerProfile, McPlugin,
+          T extends McPlugin) are intentional API design. Do not suggest removing
+          generics or simplifying the type hierarchy.
+        - Async scheduling via BukkitRunnable, Bukkit.getScheduler(), or
+          CompletableFuture chains is intentional. Do not flag as thread-safety issues.
+        - Abstract base classes and interfaces with multiple type parameters are an
+          intentional extensibility design — consumers bind the type parameters.
+        - Events under com.diamonddagger590.mccore.event are framework events
+          intended to be consumed by downstream plugins.
+
+        Flag immediately:
+        - Any class, method, or field that references a specific consumer plugin
+          by name or imports from a consumer plugin package (e.g., us.eunoians.*).
+          McCore must remain fully plugin-agnostic.
+
+        Deprioritize primary review of API extension points and test structure;
+        if persona automation is unavailable or skipped, include these domains
+        in the review.
+
+chat:
+  auto_reply: true
