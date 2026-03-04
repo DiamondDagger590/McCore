@@ -37,9 +37,8 @@ jobs:
             [[ "$f" =~ src/.*/registry/.*\.java ]] && api=true
             [[ "$f" =~ src/.*/gui/.*\.java ]]      && api=true
             [[ "$f" =~ src/.*/database/.*\.java ]] && api=true
-            [[ "$f" =~ src/main/.*\.java ]]        && api=true
             [[ "$f" =~ src/.*/.*\.java ]]          && api=true
-            [[ "$f" =~ src/main/.*\.java ]]        && test=true
+            [[ "$f" =~ src/test/.*\.java ]]        && test=true
           done <<< "$CHANGED"
 
           echo "api=$api"   >> "$GITHUB_OUTPUT"
@@ -103,9 +102,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          BODY=$(cat review_comment.txt)
-          if [[ "$BODY" == "<!--"* ]]; then
+          if [[ "$(head -c 4 review_comment.txt)" == "<!--" ]]; then
             echo "Suppressed comment — not posting."
             exit 0
           fi
-          gh pr comment ${{ github.event.pull_request.number }} --body "$BODY"
+          gh pr comment ${{ github.event.pull_request.number }} --body-file review_comment.txt
