@@ -1,0 +1,141 @@
+---
+description: McCore task scheduling — CoreTask variants, when to use each, player lifecycle tasks, and scheduling anti-patterns
+globs: ["src/**/task/**/*.java"]
+alwaysApply: false
+---
+
+# McCore Task System
+
+## CoreTask Variants
+
+All tasks extend `CoreTask` and are executed via the Bukkit scheduler. Each variant adds a specific capability.
+
+| Variant | Use when you need |
+|---------|------------------|
+| `CoreTask` | A one-shot task with no extra behavior |
+| `DelayableCoreTask` | A one-shot task that starts after a tick delay |
+| `CancelableCoreTask` | A repeating task that can be cancelled externally |
+| `RepeatableCoreTask` | A task that repeats on a fixed interval (extends `CancelableCoreTask`) |
+| `ExpireableCoreTask` | A repeating task that auto-cancels after a time limit or a maximum number of intervals |
+| `MultiExecutionCoreTask` | A one-shot task designed to be `runTask()`-ed multiple times (tracks execution count) |
+
+## Code Templates
+
+### One-shot sync task
+
+```java
+new CoreTask(plugin) {
+    @Override
+    public void run() {
+        // executes once on the main thread
+    }
+}.runTask();
+```
+
+### Delayed async task
+
+```java
+new DelayableCoreTask(plugin, delayTicks) {
+    @Override
+    public void run() {
+        // executes once after delayTicks, off the main thread
+    }
+}.runTask(true); // true = async
+```
+
+### Repeating task (cancellable)
+
+```java
+CancelableCoreTask task = new RepeatableCoreTask(plugin, delayTicks, periodTicks) {
+    @Override
+    public void run() {
+        // executes every periodTicks, starting after delayTicks
+    }
+};
+task.runTask(); // sync; pass true for async
+// Later: task.cancelTask();
+```
+
+### Expireable task — auto-cancel after duration
+
+```java
+new ExpireableCoreTask(plugin, delayTicks, maxDurationSeconds) {
+    @Override
+    public void run() {
+        // repeats every tick until maxDurationSeconds elapses
+    }
+}.runTask();
+```
+
+### Expireable task — auto-cancel after N intervals
+
+```java
+new ExpireableCoreTask(plugin, delayTicks, periodTicks, maxIntervals) {
+    @Override
+    public void run() {
+        // repeats up to maxIntervals times
+    }
+}.runTask();
+```
+
+### Multi-execution task
+
+```java
+MultiExecutionCoreTask task = new MultiExecutionCoreTask(plugin) {
+    @Override
+    public void run() {
+        // body runs once per runTask() call
+        // task.getExecutions() tracks how many times it has been run
+    }
+};
+task.runTask();
+// Later, run again:
+task.runTask();
+```
+
+Use this when you need to re-trigger the same task logic without constructing a new object each time.
+
+## Task State
+
+All `CoreTask` instances track:
+- `isTaskExecuted()` — whether `run()` has been called at least once
+- `isAsync()` — whether the task runs off the main thread
+- `getStartTime()` — `Instant` when the task was scheduled
+
+Prefer calling `isTaskExecuted()` over maintaining your own boolean flag.
+
+## Player Lifecycle Tasks
+
+McCore provides two built-in tasks for player lifecycle management:
+
+| Task | When it fires | Purpose |
+|------|--------------|---------|
+| `PlayerLoadTask` | Player join | Loads player data from DB into `CorePlayer`; fires `PlayerLoadEvent` when done |
+| `PlayerUnloadTask` | Player quit | Saves player data to DB; fires `PlayerUnloadEvent`; removes from `PlayerManager` |
+
+**Do not duplicate player load/unload logic inline in Bukkit listeners.** Use the events fired by these tasks:
+
+```java
+@EventHandler
+public void onPlayerLoad(PlayerLoadEvent event) {
+    // Safe — player data is fully loaded at this point
+    McRPGPlayer player = (McRPGPlayer) event.getCorePlayer();
+}
+```
+
+## Seconds vs Ticks
+
+`DelayableCoreTask` and `ExpireableCoreTask` accept delay/period in **seconds as `double`**, not ticks. Internally the value is converted to ticks (20 ticks/second). Keep this in mind when reading constructor arguments.
+
+`RepeatableCoreTask` uses ticks directly for both delay and period — check the constructor signature carefully.
+
+## Anti-Patterns
+
+- **No mutable plugin-level state on task objects** — a task object may be garbage-collected after it runs; don't rely on field values persisting across executions unless you manage the reference yourself
+- **No `Thread.sleep()` inside `run()`** — use `DelayableCoreTask` instead
+- **No Bukkit API calls from async tasks** — if a task runs async, schedule back to the main thread via `Bukkit.getScheduler().runTask(plugin, ...)` before touching entities, worlds, or inventories
+- **No anonymous subclasses with captured mutable closures** — capture only effectively-final references; mutable state should live on the task object itself
+
+---
+
+> **Maintenance:** If a new `CoreTask` variant is added or player lifecycle task behavior changes, update this file and `CLAUDE.md` → Task Scheduling section in the same PR.
