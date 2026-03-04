@@ -37,8 +37,8 @@ jobs:
             [[ "$f" =~ src/.*/registry/.*\.java ]] && api=true
             [[ "$f" =~ src/.*/gui/.*\.java ]]      && api=true
             [[ "$f" =~ src/.*/database/.*\.java ]] && api=true
-            [[ "$f" =~ src/.*/.*\.java ]]          && api=true
             [[ "$f" =~ src/test/.*\.java ]]        && test=true
+            [[ "$f" =~ src/.*/.*\.java ]] && [[ ! "$f" =~ src/test/ ]] && api=true
           done <<< "$CHANGED"
 
           echo "api=$api"   >> "$GITHUB_OUTPUT"
