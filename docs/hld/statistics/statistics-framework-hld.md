@@ -307,17 +307,20 @@ PAPI, leaderboards, and a future achievements plugin may need to query stats for
 
 **Approach:** `PlayerStatisticDAO.getPlayerStatistic(Connection, UUID, NamespacedKey)` already supports single-stat lookups. For PAPI, this is called on demand. For bulk queries (leaderboards, achievement evaluation), `PlayerStatisticDAO.getAllPlayerStatistics()` handles it.
 
-**Caching:** An LRU cache with configurable TTL (default 5 minutes) wraps offline stat queries to prevent database hammering from scoreboards that refresh every tick. The cache is per-key, not per-player, to keep memory bounded.
+**Caching:** A [Caffeine](https://github.com/ben-manes/caffeine) cache wraps offline stat queries to prevent database hammering from scoreboards that refresh every tick. Caffeine is already a dependency in the McRPG ecosystem and provides high-performance, thread-safe caching with configurable max size, TTL-based expiration, and a W-TinyLfu eviction policy (superior hit rates compared to a traditional LRU cache). The cache is keyed by `(UUID, NamespacedKey)` pairs.
 
 ```
 com.diamonddagger590.mccore.statistic.cache.StatisticCache
+├── Backed by: Cache<StatisticCacheKey, StatisticEntry>  // Caffeine cache
 ├── get(UUID, NamespacedKey): Optional<StatisticEntry>
-├── invalidate(UUID)                                    // called on player join (live data takes over)
-├── invalidate(UUID, NamespacedKey)                     // called on save
+├── invalidate(UUID)                                     // called on player join (live data takes over)
+├── invalidate(UUID, NamespacedKey)                      // called on save
 └── size(): int
 ```
 
-The cache is optional — if no plugin configures it, no cache is created. Configuration lives in McCore's config under a `statistics` section.
+`StatisticCacheKey` is a record of `(UUID uuid, NamespacedKey key)` used as the Caffeine cache key.
+
+The cache is optional — if disabled in config, no cache is created and all offline queries go directly to the database. Configuration lives in McCore's config under a `statistics` section.
 
 ---
 
