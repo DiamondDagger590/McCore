@@ -210,10 +210,14 @@ com.diamonddagger590.mccore.event.statistic.ModificationType (Enum)
 
 ```sql
 CREATE TABLE IF NOT EXISTS core_player_statistics (
-    uuid          VARCHAR(36) NOT NULL,
-    statistic_key VARCHAR(256) NOT NULL,  -- NamespacedKey as "namespace:key"
-    stat_type     VARCHAR(32) NOT NULL,   -- Enum name: INT, LONG, DOUBLE, STRING, TIMESTAMP, SET_STRING
-    stat_value    TEXT NOT NULL,           -- All values serialized as text
+    uuid            VARCHAR(36) NOT NULL,
+    statistic_key   VARCHAR(256) NOT NULL,  -- NamespacedKey as "namespace:key"
+    stat_type       VARCHAR(32) NOT NULL,   -- Enum name: INT, LONG, DOUBLE, STRING, TIMESTAMP, SET_STRING
+    int_value       INTEGER,                -- Used by INT type
+    long_value      BIGINT,                 -- Used by LONG type
+    double_value    DOUBLE,                 -- Used by DOUBLE type
+    string_value    TEXT,                   -- Used by STRING and SET_STRING (JSON array) types
+    timestamp_value BIGINT,                 -- Used by TIMESTAMP type (epoch millis)
     PRIMARY KEY (uuid, statistic_key)
 );
 
@@ -221,10 +225,11 @@ CREATE INDEX IF NOT EXISTS idx_core_stats_uuid ON core_player_statistics (uuid);
 ```
 
 **Design Decisions:**
-- **Single table with text serialization**: Simple schema, no joins, works with any `StatisticType`. Adding new statistics requires zero schema migration — just register and go.
-- **`stat_type` column stored alongside value**: Enables deserialization without needing the `StatisticRegistry` (useful for data migration tools, admin queries).
-- **`TEXT` for `stat_value`**: `SET_STRING` is serialized as a JSON array `["value1","value2"]`. `TIMESTAMP` is stored as ISO-8601 string. Numerics are stored as their string representation.
-- **Tradeoff**: No SQL-level numeric aggregation without casting. Leaderboard queries would need application-level sorting. This is acceptable for the initial design — leaderboards can be added later with a materialized view or separate summary table if needed.
+- **Typed columns**: Each `StatisticType` writes to its native column (`INT` → `int_value`, `LONG` → `long_value`, etc.). Numbers are stored in their binary representation rather than as text strings, making storage more data-efficient. Unused columns are `NULL` which costs almost nothing in storage overhead. This also enables SQL-level numeric operations — `ORDER BY long_value DESC` works directly for future leaderboard queries without casting.
+- **`stat_type` column stored alongside values**: Tells the DAO which column to read without needing the `StatisticRegistry`. Also useful for data migration tools, admin queries, and defensive deserialization.
+- **`STRING` and `SET_STRING` share `string_value`**: Both are text-based. `SET_STRING` is serialized as a JSON array `["value1","value2"]`. The `stat_type` column distinguishes them during deserialization.
+- **`TIMESTAMP` stored as epoch millis in `timestamp_value`**: `BIGINT` is more portable across database engines and directly sortable. Converted to/from `java.time.Instant` in the DAO layer.
+- **One row per stat, one table total**: Avoids the complexity of separate tables per type (6 tables, 6 indexes, 6 queries to load a player). A single `SELECT * FROM core_player_statistics WHERE uuid = ?` loads all stats for a player in one query.
 - **UUID index**: Matches the pattern used by `PlayerSettingDAO` for efficient per-player lookups.
 
 ### `StatisticEntry` (Record)
