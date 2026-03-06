@@ -286,14 +286,17 @@ Statistics are saved alongside existing player data in `McRPGPlayer.savePlayer()
 ```java
 // In McRPGPlayer.savePlayer():
 if (getStatisticData().isDirty()) {
-    failsafeTransaction.addAll(
+    FailSafeTransaction statisticTransaction = new FailSafeTransaction(connection);
+    statisticTransaction.addAll(
         PlayerStatisticDAO.savePlayerStatistics(connection, getUUID(), getStatisticData().getModifiedEntries())
     );
-    getStatisticData().markClean();
+    if (statisticTransaction.executeTransaction()) {
+        getStatisticData().markClean();
+    }
 }
 ```
 
-The dirty tracking ensures only modified stats are written, reducing database load during periodic saves.
+`markClean()` is only called after the transaction succeeds. If the transaction fails, the dirty entries are preserved and will be retried on the next save cycle. The dirty tracking ensures only modified stats are written, reducing database load during periodic saves.
 
 ### New Players
 
