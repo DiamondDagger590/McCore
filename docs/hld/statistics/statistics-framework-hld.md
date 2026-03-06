@@ -198,7 +198,7 @@ com.diamonddagger590.mccore.event.statistic.ModificationType (Enum)
 ### Event Firing Rules
 
 - `setValue()`, `incrementX()`, `setMaxX()`, `setTimestampIfAbsent()` — each fires one pre-event and (if not cancelled) one post-event.
-- `bulkIncrementLong()` — fires ONE pre-event with the total delta and ONE post-event. This prevents event spam when mining 64 blocks at once.
+- `bulkIncrementLong()` — fires ONE pre-event with the total delta and ONE post-event. This is **caller-driven**, not automatic batching — the listener code is responsible for accumulating a count (e.g., counting blocks in a `BlockBreakEvent` batch or TNT chain) and calling `bulkIncrementLong(key, totalCount)` once. The framework does not do any periodic or automatic batching.
 - `addToSet()` / `removeFromSet()` — fires events only if the set actually changed (element was new / was present).
 - Conditional mutators (`setMaxX`, `setTimestampIfAbsent`) — fire events only if the value actually changes.
 
@@ -270,6 +270,25 @@ Statistics are loaded as part of the player load pipeline. In McCore, `PlayerLoa
 
 **Approach:** Add a `loadPlayerStatistics()` method to `PlayerLoadTask` that downstream plugins call from their `loadPlayer()` implementation. This follows the same pattern as `PlayerSettingDAO.getPlayerSettings()` being called from `McRPGPlayerLoadTask.loadPlayerSettings()`.
 
+```mermaid
+sequenceDiagram
+    participant PJ as PlayerJoinEvent
+    participant LT as McRPGPlayerLoadTask
+    participant DAO as PlayerStatisticDAO
+    participant DB as Database
+    participant CP as CorePlayer
+    participant Cache as StatisticCache
+
+    PJ->>LT: loadPlayer(connection)
+    LT->>DAO: getAllPlayerStatistics(conn, uuid)
+    DAO->>DB: SELECT * FROM core_player_statistics WHERE uuid = ?
+    DB-->>DAO: ResultSet (all stat rows)
+    DAO-->>LT: Map<NamespacedKey, StatisticEntry>
+    LT->>CP: getStatisticData().loadFromDatabase(entries)
+    LT->>Cache: invalidate(uuid)
+    Note over Cache: Live data takes over;<br/>cache entries evicted
+```
+
 ```java
 // In McRPGPlayerLoadTask.loadPlayer():
 updatePlayerDataSyncFunctions.add(loadPlayerStatistics(connection));  // NEW
@@ -282,6 +301,38 @@ The statistics load calls `PlayerStatisticDAO.getAllPlayerStatistics()` and popu
 ### Saving
 
 Statistics are saved alongside existing player data in `McRPGPlayer.savePlayer()`:
+
+```mermaid
+sequenceDiagram
+    participant ST as Save Trigger (periodic/quit)
+    participant MP as McRPGPlayer
+    participant PSD as PlayerStatisticData
+    participant FST as FailSafeTransaction
+    participant DAO as PlayerStatisticDAO
+    participant DB as Database
+
+    ST->>MP: savePlayer(connection)
+    MP->>PSD: isDirty()?
+    alt No dirty entries
+        PSD-->>MP: false
+        Note over MP: Skip stat save
+    else Has dirty entries
+        PSD-->>MP: true
+        MP->>PSD: getModifiedEntries()
+        PSD-->>MP: Map<NamespacedKey, StatisticEntry> (dirty only)
+        MP->>FST: new FailSafeTransaction(connection)
+        MP->>DAO: savePlayerStatistics(conn, uuid, modifiedEntries)
+        DAO-->>FST: List<PreparedStatement>
+        FST->>DB: executeTransaction()
+        alt Transaction succeeds
+            DB-->>FST: true
+            MP->>PSD: markClean()
+        else Transaction fails
+            DB-->>FST: false
+            Note over PSD: Dirty entries preserved;<br/>retried next save cycle
+        end
+    end
+```
 
 ```java
 // In McRPGPlayer.savePlayer():
@@ -297,6 +348,31 @@ if (getStatisticData().isDirty()) {
 ```
 
 `markClean()` is only called after the transaction succeeds. If the transaction fails, the dirty entries are preserved and will be retried on the next save cycle. The dirty tracking ensures only modified stats are written, reducing database load during periodic saves.
+
+### Stat Modification Flow
+
+```mermaid
+sequenceDiagram
+    participant L as Listener (e.g., MiningStatisticListener)
+    participant PSD as PlayerStatisticData
+    participant Pre as StatisticModifyEvent
+    participant Bukkit as Bukkit Event Bus
+    participant Post as PostStatisticModifyEvent
+
+    L->>PSD: incrementLong(key, delta)
+    PSD->>Pre: new StatisticModifyEvent(player, key, oldVal, newVal, INCREMENT)
+    PSD->>Bukkit: callEvent(preEvent)
+    alt Event cancelled
+        Bukkit-->>PSD: cancelled = true
+        Note over PSD: Value unchanged
+    else Event not cancelled
+        PSD->>PSD: Apply value (possibly adjusted by listeners)
+        PSD->>PSD: Mark entry dirty
+        PSD->>Post: new PostStatisticModifyEvent(player, key, oldVal, finalVal, INCREMENT)
+        PSD->>Bukkit: callEvent(postEvent)
+        Note over Bukkit: Achievements plugin,<br/>other reactive systems listen here
+    end
+```
 
 ### New Players
 
@@ -369,7 +445,7 @@ The achievements plugin would also benefit from a `StatisticRepository` pattern 
 
 **SET_STRING Unbounded Growth:** A "unique players killed" set could grow indefinitely. `Statistic` interface includes an optional `getMaxSetSize()` method (default `-1` = unlimited). When the limit is reached, the oldest entries (insertion order via `LinkedHashSet`) are evicted. Plugins define the cap per-statistic at registration time.
 
-**Bulk Stat Operations:** Mining 64 blocks shouldn't fire 64 separate events. `bulkIncrementLong()` fires a single `StatisticModifyEvent` with the total delta. Plugin listeners should batch their increments where possible.
+**Bulk Stat Operations:** Mining 64 blocks shouldn't fire 64 separate events. `bulkIncrementLong()` fires a single `StatisticModifyEvent` with the total delta. This is caller-driven — plugin listeners are responsible for accumulating counts and calling `bulkIncrementLong()` once rather than calling `incrementLong()` in a loop.
 
 ### Already Handled by McCore
 
@@ -406,7 +482,9 @@ The achievements plugin would also benefit from a `StatisticRepository` pattern 
 10. Base statistic command structure in McCore that downstream plugins extend via Cloud's command system. McCore provides:
     - `StatisticViewCommand` — base command for viewing a player's statistic value (e.g., `/mcrpg statistic view <player> <statistic>`)
     - `StatisticListCommand` — base command for listing all registered statistics
-    - `StatisticResetCommand` — base admin command for resetting a player's statistic (requires confirmation via `ConfirmationManager`)
+    - `StatisticSetCommand` — base admin command for setting a player's statistic to an explicit value (e.g., `/mcrpg statistic set <player> <statistic> <value>`)
+    - `StatisticModifyCommand` — base admin command for incrementing/decrementing a numeric statistic by a delta (e.g., `/mcrpg statistic modify <player> <statistic> <delta>`). Only applicable to INT, LONG, and DOUBLE types.
+    - `StatisticResetCommand` — base admin command for resetting a player's statistic to its default value (requires confirmation via `ConfirmationManager`)
 
     These are abstract/base commands that downstream plugins compose into their own command tree. For example, McRPG would mount these under `/mcrpg statistic ...`.
 
