@@ -323,54 +323,30 @@ com.diamonddagger590.mccore.statistic.cache.StatisticCache
 
 `StatisticCacheKey` is a record of `(UUID uuid, NamespacedKey key)` used as the Caffeine cache key.
 
-The cache is optional — if disabled in config, no cache is created and all offline queries go directly to the database. Configuration lives in McCore's config under a `statistics` section.
+The cache is optional — downstream plugins construct and configure the cache programmatically. If no cache is provided, all offline queries go directly to the database.
 
 ---
 
 ## PAPI Integration
 
-McCore provides a `StatisticPlaceholderExpansion` that registers placeholders for all registered statistics:
+McCore does **not** register its own `PlaceholderExpansion` — it has no standalone PAPI expansion (McCore's `CorePapiHook` only handles placeholder *resolution* in messages, not registration). Downstream plugins are responsible for registering PAPI placeholders for their statistics.
 
-```
-%mccore_stat_<namespace>_<key>%           → formatted value
-%mccore_stat_<namespace>_<key>_raw%       → raw value (no formatting)
-%mccore_stat_set_<namespace>_<key>_size%  → set size (for SET_STRING)
-```
-
-Examples:
-```
-%mccore_stat_mcrpg_blocks_mined%     → "1,234,567"
-%mccore_stat_mcrpg_blocks_mined_raw% → "1234567"
-%mccore_stat_mcrpg_unique_biomes_size% → "12"
-```
-
-The expansion uses `CorePlayer.getStatisticData()` for online players and falls back to `StatisticCache` / direct DB query for offline players.
+McCore provides the building blocks: `PlayerStatisticData` for online players, `StatisticCache` + `PlayerStatisticDAO` for offline lookups. Downstream plugins wire these into their own `PlaceholderExpansion` (e.g., McRPG's `McRPGPapiExpansion`).
 
 ---
 
 ## Configuration
 
-McCore's config gains a `statistics` section:
+McCore is shaded into downstream plugins and does not have its own config file. All statistics configuration lives in the downstream plugin's config.
 
-```yaml
-statistics:
-  # Whether to enable the statistics framework. If false, no stats are tracked or persisted.
-  enabled: true
+McCore's API provides programmatic configuration where needed:
 
-  # Save behavior
-  save:
-    # Only save modified stats (recommended). If false, saves all stats every cycle.
-    delta-only: true
-
-  # Offline query cache (used by PAPI, leaderboards, etc.)
-  cache:
-    # Whether to cache offline stat queries
-    enabled: true
-    # Maximum number of entries in the cache
-    max-size: 1000
-    # How long cached entries live before being re-fetched from the database (seconds)
-    ttl: 300
+```java
+// StatisticCache is constructed by the downstream plugin with its own config values
+StatisticCache cache = new StatisticCache(maxSize, ttlSeconds);
 ```
+
+Downstream plugins (e.g., McRPG) own the config section for statistics behavior. See the McRPG Statistics Integration HLD for the config structure.
 
 ---
 
@@ -389,34 +365,58 @@ The achievements plugin would also benefit from a `StatisticRepository` pattern 
 
 ## Known Gaps & Mitigations
 
-### Gap 1: SET_STRING Unbounded Growth
-A "unique players killed" set could grow indefinitely. **Mitigation:** `Statistic` interface includes an optional `getMaxSetSize()` method (default `-1` = unlimited). When the limit is reached, the oldest entries (insertion order via `LinkedHashSet`) are evicted. Plugins define the cap per-statistic at registration time.
+### Implemented in Phase 1
 
-### Gap 2: Bulk Stat Operations
-Mining 64 blocks shouldn't fire 64 separate events. **Mitigation:** `bulkIncrementLong()` fires a single `StatisticModifyEvent` with the total delta. Plugin listeners should batch their increments where possible.
+**SET_STRING Unbounded Growth:** A "unique players killed" set could grow indefinitely. `Statistic` interface includes an optional `getMaxSetSize()` method (default `-1` = unlimited). When the limit is reached, the oldest entries (insertion order via `LinkedHashSet`) are evicted. Plugins define the cap per-statistic at registration time.
 
-### Gap 3: Cross-Server Consistency
-In a multi-server (BungeeCord/Velocity) environment, two servers could load the same player's stats simultaneously. **Mitigation:** McCore already has `Mutexable` / `MutexDAO` for cross-server locking. `CorePlayer.useMutex()` controls whether mutex is used. Statistics piggyback on this existing mechanism — if mutex is enabled, stats are safe.
+**Bulk Stat Operations:** Mining 64 blocks shouldn't fire 64 separate events. `bulkIncrementLong()` fires a single `StatisticModifyEvent` with the total delta. Plugin listeners should batch their increments where possible.
 
-### Gap 4: Large-Scale Offline Queries
-Retroactive achievement evaluation might need to scan all players' stats. `getAllPlayerStatistics()` per-player is O(n) in total. **Mitigation:** Deferred to the achievements HLD. A materialized summary table or batch query API can be added later without changing the core schema.
+### Already Handled by McCore
+
+**Cross-Server Consistency:** In a multi-server (BungeeCord/Velocity) environment, two servers could load the same player's stats simultaneously. McCore already has `Mutexable` / `MutexDAO` for cross-server locking. `CorePlayer.useMutex()` controls whether mutex is used. Statistics piggyback on this existing mechanism — no additional work needed.
+
+### Deferred
+
+**Large-Scale Offline Queries:** Retroactive achievement evaluation might need to scan all players' stats. `getAllPlayerStatistics()` per-player is O(n) in total. Deferred to the achievements HLD. A materialized summary table or batch query API can be added later without changing the core schema.
 
 ---
 
 ## Implementation Phases
 
-### Phase 1: Core Framework (~8-10 new files in McCore)
+### Phase 1: Core Framework (~12-15 new files in McCore)
+
+**Data model:**
 1. `StatisticType` enum with serialization/deserialization logic
 2. `Statistic` interface + `SimpleStatistic` record implementation
 3. `StatisticEntry` record
 4. `StatisticRegistry` + `RegistryKey.STATISTIC` constant
 5. `PlayerStatisticData` with typed getters/setters, thread safety, dirty tracking
+
+**Events:**
 6. `StatisticModifyEvent`, `PostStatisticModifyEvent`, `ModificationType` enum
+
+**Persistence:**
 7. `PlayerStatisticDAO` + table creation in existing pipeline
 8. `PlayerStatisticData` field added to `CorePlayer`
-9. `StatisticCache` for offline queries
-10. PAPI `StatisticPlaceholderExpansion`
-11. Configuration section in McCore config
+
+**Caching:**
+9. `StatisticCache` for offline queries (Caffeine-backed)
+
+**Commands:**
+10. Base statistic command structure in McCore that downstream plugins extend via Cloud's command system. McCore provides:
+    - `StatisticViewCommand` — base command for viewing a player's statistic value (e.g., `/mcrpg statistic view <player> <statistic>`)
+    - `StatisticListCommand` — base command for listing all registered statistics
+    - `StatisticResetCommand` — base admin command for resetting a player's statistic (requires confirmation via `ConfirmationManager`)
+
+    These are abstract/base commands that downstream plugins compose into their own command tree. For example, McRPG would mount these under `/mcrpg statistic ...`.
+
+**Unit tests:**
+11. `StatisticTypeTest` — serialization/deserialization round-trip for all types
+12. `SimpleStatisticTest` — record construction and equality
+13. `StatisticRegistryTest` — registration, lookup, duplicate detection
+14. `PlayerStatisticDataTest` — typed getters/setters, increment operations, dirty tracking, thread safety, conditional mutators (`setMax`, `setTimestampIfAbsent`), event firing verification
+15. `PlayerStatisticDAOTest` — table creation, CRUD operations, typed column read/write, bulk save
+16. `StatisticCacheTest` — cache hits, misses, TTL expiry, invalidation
 
 ### Phase 2: McRPG Integration (~5-8 new files in McRPG)
 See the [McRPG Statistics Integration HLD](../../../McRPG/docs/hld/statistics/statistics-integration-hld.md).
