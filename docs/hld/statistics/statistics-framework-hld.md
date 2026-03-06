@@ -479,7 +479,9 @@ The achievements plugin would also benefit from a `StatisticRepository` pattern 
 9. `StatisticCache` for offline queries (Caffeine-backed)
 
 **Commands:**
+
 10. Base statistic command structure in McCore that downstream plugins extend via Cloud's command system. McCore provides:
+
     - `StatisticViewCommand` — base command for viewing a player's statistic value (e.g., `/mcrpg statistic view <player> <statistic>`)
     - `StatisticListCommand` — base command for listing all registered statistics
     - `StatisticSetCommand` — base admin command for setting a player's statistic to an explicit value (e.g., `/mcrpg statistic set <player> <statistic> <value>`)
@@ -489,6 +491,7 @@ The achievements plugin would also benefit from a `StatisticRepository` pattern 
     These are abstract/base commands that downstream plugins compose into their own command tree. For example, McRPG would mount these under `/mcrpg statistic ...`.
 
 **Unit tests:**
+
 11. `StatisticTypeTest` — serialization/deserialization round-trip for all types
 12. `SimpleStatisticTest` — record construction and equality
 13. `StatisticRegistryTest` — registration, lookup, duplicate detection
