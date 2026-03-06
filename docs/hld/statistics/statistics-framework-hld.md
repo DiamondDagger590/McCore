@@ -469,13 +469,16 @@ The achievements plugin would also benefit from a `StatisticRepository` pattern 
 5. `PlayerStatisticData` with typed getters/setters, thread safety, dirty tracking
 
 **Events:**
+
 6. `StatisticModifyEvent`, `PostStatisticModifyEvent`, `ModificationType` enum
 
 **Persistence:**
+
 7. `PlayerStatisticDAO` + table creation in existing pipeline
 8. `PlayerStatisticData` field added to `CorePlayer`
 
 **Caching:**
+
 9. `StatisticCache` for offline queries (Caffeine-backed)
 
 **Commands:**
