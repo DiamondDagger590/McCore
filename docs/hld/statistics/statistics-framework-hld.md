@@ -286,7 +286,7 @@ sequenceDiagram
     DAO-->>LT: Map<NamespacedKey, StatisticEntry>
     LT->>CP: getStatisticData().loadFromDatabase(entries)
     LT->>Cache: invalidate(uuid)
-    Note over Cache: Live data takes over;<br/>cache entries evicted
+    Note over Cache: Live data takes over,<br>cache entries evicted
 ```
 
 ```java
@@ -329,7 +329,7 @@ sequenceDiagram
             MP->>PSD: markClean()
         else Transaction fails
             DB-->>FST: false
-            Note over PSD: Dirty entries preserved;<br/>retried next save cycle
+            Note over PSD: Dirty entries preserved,<br>retried next save cycle
         end
     end
 ```
@@ -370,7 +370,7 @@ sequenceDiagram
         PSD->>PSD: Mark entry dirty
         PSD->>Post: new PostStatisticModifyEvent(player, key, oldVal, finalVal, INCREMENT)
         PSD->>Bukkit: callEvent(postEvent)
-        Note over Bukkit: Achievements plugin,<br/>other reactive systems listen here
+        Note over Bukkit: Achievements plugin,<br>other reactive systems listen here
     end
 ```
 
