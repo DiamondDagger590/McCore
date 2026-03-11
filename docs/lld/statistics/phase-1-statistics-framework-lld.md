@@ -1672,15 +1672,16 @@ The implementation should proceed in this order, with each step building on the 
 
 ---
 
-## Open Questions
+## Resolved Questions
 
-1. **`FailSafeTransaction.executeTransaction()` returns `void`**: The HLD's save flow diagram shows `markClean()` being called conditionally on transaction success. However, `FailSafeTransaction.executeTransaction()` currently returns `void` — it handles errors internally (rollback + log) but doesn't signal success/failure to the caller. Either:
-   - (a) We always call `markClean()` after `executeTransaction()` and accept that a failed transaction will re-save the same dirty entries next cycle (they'll be overwritten by REPLACE INTO, so no data corruption), or
-   - (b) We modify `FailSafeTransaction` or `Transaction` to return a boolean indicating success/failure — this is a broader McCore change that affects all existing callers.
+1. **~~`FailSafeTransaction.executeTransaction()` returns `void`~~** — **Resolved: use `BatchTransaction`, not `FailSafeTransaction`.** Player statistics are independent writes where partial success is acceptable (one stat failing shouldn't lose the others). `BatchTransaction` commits whatever succeeds and logs individual failures. Calling `markClean()` unconditionally after `executeTransaction()` is safe because:
+   - Successfully saved entries are already persisted — clearing their dirty flag is correct.
+   - Failed entries will be re-dirtied on their next mutation and retried on the next save cycle.
+   - Worst case (entry dirtied between save and `markClean()`): the entry is saved again next cycle with `REPLACE INTO`, which is idempotent.
 
-   **Recommendation:** Option (a) for now. `markClean()` is safe to call even after a failed transaction because the worst case is that already-saved entries are saved again next cycle (idempotent via REPLACE INTO). This avoids modifying the `Transaction` API. If option (b) is preferred, it should be a separate PR.
+   No changes to the `Transaction` API are needed.
 
-2. **Caffeine version**: The HLD states Caffeine is already a dependency in the McRPG ecosystem. If McRPG shades it, we need to ensure McCore's Caffeine doesn't conflict. Since McCore is shaded into downstream plugins, the Caffeine classes will be included in McCore's shadow JAR. We should add a relocation rule in `build.gradle.kts` to avoid classpath conflicts:
+2. **~~Caffeine version conflict~~** — **Resolved: add a relocation rule.** McCore's shadow JAR will relocate Caffeine to avoid classpath conflicts with downstream plugins that may shade their own copy:
    ```kotlin
    relocate("com.github.benmanes.caffeine", "com.diamonddagger590.mccore.caffeine")
    ```
