@@ -90,10 +90,19 @@ public enum StatisticType {
     STRING,
     TIMESTAMP,
     SET_STRING;
+
+    /**
+     * Returns {@code true} if this type is numeric ({@link #INT}, {@link #LONG}, or {@link #DOUBLE}).
+     *
+     * @return {@code true} if this type is numeric.
+     */
+    public boolean isNumeric() {
+        return this == INT || this == LONG || this == DOUBLE;
+    }
 }
 ```
 
-This is a simple marker enum. Serialization/deserialization logic lives in `PlayerStatisticDAO` (write to/read from the correct column) and `PlayerStatisticData` (type validation on getters). The enum itself carries no behavior — it is a discriminator, not a strategy.
+The enum is primarily a discriminator — serialization/deserialization logic lives in `PlayerStatisticDAO` (write to/read from the correct column) and `PlayerStatisticData` (type validation on getters). The one behavioral method is `isNumeric()`, a convenience helper used by callers that need to branch on "any numeric type" without enumerating all three constants (e.g., command validation, display formatting).
 
 **Rationale:** Putting serialize/deserialize on the enum would couple it to the database schema. Keeping serialization in the DAO follows the existing `PlayerSettingDAO` pattern where the DAO owns column-level details.
 
@@ -258,13 +267,16 @@ public record SimpleStatistic(
 
 **File:** `src/main/java/com/diamonddagger590/mccore/statistic/StatisticEntry.java`
 
-A data carrier for deserialized statistic data from the database. Used as the transfer object between `PlayerStatisticDAO` and `PlayerStatisticData`.
+A data carrier for deserialized statistic data from the database. Used as the transfer object between `PlayerStatisticDAO` and `PlayerStatisticData`. Provides type-safe getters that throw `ClassCastException` if the caller uses the wrong accessor for the entry's type.
 
 ```java
 package com.diamonddagger590.mccore.statistic;
 
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
+
+import java.time.Instant;
+import java.util.Set;
 
 /**
  * A data carrier for a single statistic value as stored in or loaded from the database.
@@ -278,8 +290,74 @@ public record StatisticEntry(
         @NotNull StatisticType type,
         @NotNull Object value
 ) {
+
+    /**
+     * Returns the value as an {@code int}.
+     *
+     * @return The value cast to {@code int}.
+     * @throws ClassCastException if the value is not an {@link Integer}.
+     */
+    public int getAsInt() {
+        return (Integer) value;
+    }
+
+    /**
+     * Returns the value as a {@code long}.
+     *
+     * @return The value cast to {@code long}.
+     * @throws ClassCastException if the value is not a {@link Long}.
+     */
+    public long getAsLong() {
+        return (Long) value;
+    }
+
+    /**
+     * Returns the value as a {@code double}.
+     *
+     * @return The value cast to {@code double}.
+     * @throws ClassCastException if the value is not a {@link Double}.
+     */
+    public double getAsDouble() {
+        return (Double) value;
+    }
+
+    /**
+     * Returns the value as a {@link String}.
+     *
+     * @return The value cast to {@link String}.
+     * @throws ClassCastException if the value is not a {@link String}.
+     */
+    @NotNull
+    public String getAsString() {
+        return (String) value;
+    }
+
+    /**
+     * Returns the value as an {@link Instant}.
+     *
+     * @return The value cast to {@link Instant}.
+     * @throws ClassCastException if the value is not an {@link Instant}.
+     */
+    @NotNull
+    public Instant getAsTimestamp() {
+        return (Instant) value;
+    }
+
+    /**
+     * Returns the value as a {@code Set<String>}.
+     *
+     * @return The value cast to {@code Set<String>}.
+     * @throws ClassCastException if the value is not a {@link Set}.
+     */
+    @SuppressWarnings("unchecked")
+    @NotNull
+    public Set<String> getAsSetString() {
+        return (Set<String>) value;
+    }
 }
 ```
+
+**Type-safe getters:** Each getter performs a direct cast and throws `ClassCastException` if the caller uses the wrong accessor for the entry's `StatisticType`. This is intentional — callers know the type at registration time and should use the matching getter. The exception makes misuse obvious at development time rather than silently returning a wrong value.
 
 ---
 

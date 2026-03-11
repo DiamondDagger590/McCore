@@ -78,9 +78,9 @@ src/main/java/com/diamonddagger590/mccore/
 │   │   ├── CreateTableFunction.java   # Functional: create tables on DB init
 │   │   └── UpdateTableFunction.java   # Functional: migrate/alter tables on DB init
 │   ├── transaction/
-│   │   ├── Transaction.java           # Single-statement transaction helper
-│   │   ├── BatchTransaction.java      # Multi-statement batched transaction
-│   │   └── FailSafeTransaction.java   # Transaction that handles its own error recovery
+│   │   ├── Transaction.java           # Abstract base for ordered statement execution
+│   │   ├── BatchTransaction.java      # Best-effort: commits successes, logs individual failures
+│   │   └── FailSafeTransaction.java   # All-or-nothing: rolls back entire transaction on any failure
 │   └── table/impl/
 │       ├── MutexDAO.java              # Mutex locking table
 │       ├── PlayerSettingDAO.java      # Player settings persistence
@@ -177,7 +177,7 @@ src/main/java/com/diamonddagger590/mccore/
 | **DatabaseDriver** | Interface providing JDBC driver class, connection URL, and HikariCP credential population for a specific SQL dialect. |
 | **CreateTableFunction** | Functional interface called once at DB init to create a table if it doesn't exist. |
 | **UpdateTableFunction** | Functional interface called after table creation to apply schema migrations. |
-| **Transaction** | Helper for executing one or more SQL statements in a managed connection/rollback context. |
+| **Transaction** | Abstract base for executing an ordered list of `PreparedStatement`s against a single `Connection`. Subclasses define failure semantics: `BatchTransaction` commits whatever succeeds and logs individual failures; `FailSafeTransaction` rolls back everything if any single statement fails. |
 | **DAO** | Static JDBC methods for reading/writing a specific entity. Always takes `Connection` as the first argument. |
 | **ReloadableContent** | A config-backed value that can be refreshed at runtime without a server restart. |
 | **PlayerSetting** | A namespaced, persistent player preference. Stored in the database and loaded with the player. |

@@ -17,9 +17,9 @@ alwaysApply: false
 | `DriverRegistry` | Registry for `DatabaseDriver` implementations; looked up by `DatabaseDriverType` |
 | `CreateTableFunction` | Functional interface — called once at init to create tables that don't exist |
 | `UpdateTableFunction` | Functional interface — called after table creation to apply schema migrations |
-| `Transaction` | Helper for a single SQL statement in a managed connection |
-| `BatchTransaction` | Helper for multiple SQL statements in one connection/transaction |
-| `FailSafeTransaction` | Transaction that handles its own error recovery without propagating exceptions |
+| `Transaction` | Abstract base for executing an ordered list of `PreparedStatement`s against a single `Connection` |
+| `BatchTransaction` | Best-effort transaction: executes all statements, commits successes, logs individual failures without rolling back |
+| `FailSafeTransaction` | All-or-nothing transaction: rolls back the entire transaction if any single statement fails |
 
 ## Checklist: Adding Database Support to a Plugin
 
@@ -217,28 +217,39 @@ public final class MyDAO {
 
 ## Transaction Helpers
 
-For multi-statement operations, use `BatchTransaction` to ensure all statements succeed or roll back together:
+Both transaction types extend `Transaction`, which holds a `Connection` and an ordered `List<PreparedStatement>`. Add statements via `add()` or `addAll()`, then call `executeTransaction()`.
+
+### Choosing the right transaction type
+
+| Type | Failure behavior | Use when |
+|------|-----------------|----------|
+| `BatchTransaction` | Logs individual statement failures, **commits the rest** | Independent writes where partial success is acceptable (e.g., saving multiple player statistics — one failure shouldn't lose the others) |
+| `FailSafeTransaction` | **Rolls back everything** on any single failure | Atomicity required — all statements must succeed or none should (e.g., transferring currency between players, multi-table inserts that must stay consistent) |
+
+### BatchTransaction — best-effort, partial commit
 
 ```java
-new BatchTransaction(db.getConnection()) {
-    @Override
-    protected void executeTransaction(@NotNull Connection connection) throws SQLException {
-        MyDAO.saveData(connection, uuid, data);
-        OtherDAO.saveRelated(connection, uuid, related);
-    }
-}.execute();
+try (Connection conn = db.getConnection()) {
+    BatchTransaction batch = new BatchTransaction(conn);
+    batch.addAll(PlayerStatisticDAO.savePlayerStatistics(conn, uuid, modifiedEntries));
+    batch.executeTransaction();
+}
 ```
 
-`FailSafeTransaction` swallows exceptions and logs them rather than propagating — use for best-effort fire-and-forget writes:
+If statement 3 of 5 fails, statements 1-2 and 4-5 are still committed. The failure is logged with the failing SQL for debugging.
+
+### FailSafeTransaction — all-or-nothing
 
 ```java
-new FailSafeTransaction(db.getConnection()) {
-    @Override
-    protected void executeTransaction(@NotNull Connection connection) throws SQLException {
-        AuditDAO.logEvent(connection, event);
-    }
-}.execute();
+try (Connection conn = db.getConnection()) {
+    FailSafeTransaction transaction = new FailSafeTransaction(conn);
+    transaction.add(CurrencyDAO.debit(conn, senderUUID, amount));
+    transaction.add(CurrencyDAO.credit(conn, receiverUUID, amount));
+    transaction.executeTransaction();
+}
 ```
+
+If either statement fails, the entire transaction is rolled back — no partial state.
 
 ## HikariCP Notes
 
