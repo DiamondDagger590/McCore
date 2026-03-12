@@ -9,6 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Logger;
 
 /**
  * An optional Caffeine-backed cache for offline player statistic queries.
@@ -19,14 +21,18 @@ import java.util.concurrent.TimeUnit;
 public class StatisticCache {
 
     private final Cache<StatisticCacheKey, StatisticEntry> cache;
+    private final AtomicBoolean missWarningLogged = new AtomicBoolean(false);
+    private final Logger logger;
 
     /**
      * Creates a new {@link StatisticCache}.
      *
      * @param maxSize    Maximum number of entries.
      * @param ttlSeconds Time-to-live in seconds for each entry.
+     * @param logger     The {@link Logger} to use for cache miss warnings.
      */
-    public StatisticCache(long maxSize, long ttlSeconds) {
+    public StatisticCache(long maxSize, long ttlSeconds, @NotNull Logger logger) {
+        this.logger = logger;
         this.cache = Caffeine.newBuilder()
                 .maximumSize(maxSize)
                 .expireAfterWrite(ttlSeconds, TimeUnit.SECONDS)
@@ -42,7 +48,13 @@ public class StatisticCache {
      */
     @NotNull
     public Optional<StatisticEntry> get(@NotNull UUID uuid, @NotNull NamespacedKey key) {
-        return Optional.ofNullable(cache.getIfPresent(new StatisticCacheKey(uuid, key)));
+        var result = Optional.ofNullable(cache.getIfPresent(new StatisticCacheKey(uuid, key)));
+        if (result.isEmpty() && missWarningLogged.compareAndSet(false, true)) {
+            logger.warning("StatisticCache miss for offline player " + uuid
+                    + " (key: " + key + "). This query will fall through to the database. "
+                    + "This warning is logged once per cache instance.");
+        }
+        return result;
     }
 
     /**

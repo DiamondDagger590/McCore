@@ -1,5 +1,12 @@
 package com.diamonddagger590.mccore.statistic;
 
+/**
+ * Defines the data type of a {@link Statistic} value. Each type maps to a specific
+ * Java type and a corresponding typed column in the database.
+ *
+ * @see Statistic#getStatisticType()
+ * @see StatisticEntry
+ */
 public enum StatisticType {
     INT,
     LONG,

@@ -8,6 +8,17 @@ import java.util.Set;
 
 /**
  * A data carrier for a single statistic value as stored in or loaded from the database.
+ * <p>
+ * The {@link #value()} field is typed as {@link Object} because it can hold any of the
+ * types supported by {@link StatisticType}. Callers should check {@link #type()} before
+ * using the typed accessor methods ({@link #getAsInt()}, {@link #getAsLong()}, etc.) to
+ * avoid {@link ClassCastException}s:
+ * <pre>{@code
+ * StatisticEntry entry = ...;
+ * if (entry.type() == StatisticType.INT) {
+ *     int value = entry.getAsInt();
+ * }
+ * }</pre>
  *
  * @param key   The {@link NamespacedKey} of the statistic.
  * @param type  The {@link StatisticType} of the statistic.

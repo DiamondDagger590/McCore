@@ -1,7 +1,6 @@
 package com.diamonddagger590.mccore.statistic;
 
 import com.diamonddagger590.mccore.registry.Registry;
-import com.google.common.collect.ImmutableSet;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,6 +21,11 @@ public final class StatisticRegistry implements Registry<Statistic> {
         this.statistics = new HashMap<>();
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @throws IllegalArgumentException if a statistic with the same {@link NamespacedKey} is already registered.
+     */
     @Override
     public void register(@NotNull Statistic statistic) {
         if (statistics.containsKey(statistic.getStatisticKey())) {
@@ -51,20 +55,20 @@ public final class StatisticRegistry implements Registry<Statistic> {
     /**
      * Gets all registered {@link Statistic} definitions.
      *
-     * @return An {@link ImmutableSet} of all registered statistics.
+     * @return An unmodifiable {@link Set} of all registered statistics.
      */
     @NotNull
     public Set<Statistic> getRegisteredStatistics() {
-        return ImmutableSet.copyOf(statistics.values());
+        return Set.copyOf(statistics.values());
     }
 
     /**
      * Gets all registered {@link NamespacedKey}s.
      *
-     * @return An {@link ImmutableSet} of all registered statistic keys.
+     * @return An unmodifiable {@link Set} of all registered statistic keys.
      */
     @NotNull
     public Set<NamespacedKey> getRegisteredStatisticKeys() {
-        return ImmutableSet.copyOf(statistics.keySet());
+        return Set.copyOf(statistics.keySet());
     }
 }

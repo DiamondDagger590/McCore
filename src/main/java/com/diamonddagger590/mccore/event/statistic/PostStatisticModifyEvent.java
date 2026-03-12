@@ -40,26 +40,51 @@ public class PostStatisticModifyEvent extends CorePlayerEvent {
         this.modificationType = modificationType;
     }
 
+    /**
+     * Gets the {@link NamespacedKey} identifying the modified statistic.
+     *
+     * @return The statistic key.
+     */
     @NotNull
     public NamespacedKey getStatisticKey() {
         return statisticKey;
     }
 
+    /**
+     * Gets the {@link Statistic} definition that was modified.
+     *
+     * @return The statistic definition.
+     */
     @NotNull
     public Statistic getStatistic() {
         return statistic;
     }
 
+    /**
+     * Gets the value of the statistic before the modification was applied.
+     *
+     * @return The previous value.
+     */
     @NotNull
     public Object getOldValue() {
         return oldValue;
     }
 
+    /**
+     * Gets the value of the statistic after the modification was applied.
+     *
+     * @return The new value.
+     */
     @NotNull
     public Object getNewValue() {
         return newValue;
     }
 
+    /**
+     * Gets the type of modification that was performed.
+     *
+     * @return The {@link ModificationType}.
+     */
     @NotNull
     public ModificationType getModificationType() {
         return modificationType;

@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Holds all statistic values for a single player. Provides typed accessors,
  * fires events on mutation, and tracks dirty state for efficient persistence.
  */
-public class PlayerStatisticData {
+public final class PlayerStatisticData {
 
     /**
      * Strategy for dispatching statistic events. Allows tests to inject a no-op
@@ -39,6 +39,12 @@ public class PlayerStatisticData {
      */
     @FunctionalInterface
     interface StatisticEventDispatcher {
+
+        /**
+         * Dispatches the given event to the event system.
+         *
+         * @param event The event to dispatch.
+         */
         void dispatch(@NotNull Event event);
     }
 
@@ -48,6 +54,13 @@ public class PlayerStatisticData {
      */
     @FunctionalInterface
     interface CorePlayerResolver {
+
+        /**
+         * Resolves the {@link CorePlayer} for the given UUID.
+         *
+         * @param uuid The player's UUID.
+         * @return The resolved {@link CorePlayer}.
+         */
         @NotNull
         CorePlayer resolve(@NotNull UUID uuid);
     }
@@ -69,7 +82,7 @@ public class PlayerStatisticData {
                 event -> Bukkit.getPluginManager().callEvent(event),
                 id -> {
                     @SuppressWarnings("unchecked")
-                    Optional<CorePlayer> opt = (Optional<CorePlayer>) (Optional<?>) CorePlugin.getInstance()
+                    var opt = (Optional<CorePlayer>) (Optional<?>) CorePlugin.getInstance()
                             .registryAccess()
                             .registry(RegistryKey.MANAGER)
                             .manager(CoreManagerKey.CORE_PLAYER_MANAGER)
@@ -103,8 +116,6 @@ public class PlayerStatisticData {
     public UUID getUUID() {
         return uuid;
     }
-
-    // ── Typed Getters ──────────────────────────────────────────────────
 
     /**
      * Gets a statistic value as an {@code int}.
@@ -226,8 +237,6 @@ public class PlayerStatisticData {
         }
         return getRegisteredStatistic(key).map(Statistic::getDefaultValue);
     }
-
-    // ── Mutators ───────────────────────────────────────────────────────
 
     /**
      * Sets a statistic value directly.
@@ -560,15 +569,13 @@ public class PlayerStatisticData {
         }
     }
 
-    // ── Lifecycle ──────────────────────────────────────────────────────
-
     /**
      * Populates this data from database-loaded entries. Called during player load.
      * Overwrites any existing values and clears the dirty set.
      *
      * @param entries The entries to load.
      */
-    public void loadFromDatabase(@NotNull Map<NamespacedKey, StatisticEntry> entries) {
+    public void populateFromEntries(@NotNull Map<NamespacedKey, StatisticEntry> entries) {
         values.clear();
         dirtyKeys.clear();
         for (var entry : entries.entrySet()) {
@@ -613,8 +620,12 @@ public class PlayerStatisticData {
         dirtyKeys.clear();
     }
 
-    // ── Private Helpers ────────────────────────────────────────────────
-
+    /**
+     * Looks up a {@link Statistic} definition from the registry.
+     *
+     * @param key The statistic key.
+     * @return An {@link Optional} containing the statistic, or empty if not registered.
+     */
     @NotNull
     private Optional<Statistic> getRegisteredStatistic(@NotNull NamespacedKey key) {
         return RegistryAccess.registryAccess()
@@ -622,18 +633,40 @@ public class PlayerStatisticData {
                 .getStatistic(key);
     }
 
+    /**
+     * Looks up a {@link Statistic} definition from the registry, throwing if not found.
+     *
+     * @param key The statistic key.
+     * @return The registered statistic.
+     * @throws StatisticNotRegisteredException if no statistic is registered for the key.
+     */
     @NotNull
     private Statistic getRegisteredStatisticOrThrow(@NotNull NamespacedKey key) {
         return getRegisteredStatistic(key)
                 .orElseThrow(() -> new StatisticNotRegisteredException(key));
     }
 
+    /**
+     * Gets the current value for a statistic, falling back to the default if none is stored.
+     *
+     * @param key       The statistic key.
+     * @param statistic The statistic definition (for its default value).
+     * @return The current value, or the statistic's default.
+     */
     @NotNull
     private Object resolveCurrentValue(@NotNull NamespacedKey key, @NotNull Statistic statistic) {
         Object value = values.get(key);
         return value != null ? value : statistic.getDefaultValue();
     }
 
+    /**
+     * Gets the current {@link Set} value for a {@link StatisticType#SET_STRING} statistic,
+     * creating a new set from the default value if none is stored.
+     *
+     * @param key       The statistic key.
+     * @param statistic The statistic definition (for its default value).
+     * @return The current set, possibly newly created from the default.
+     */
     @SuppressWarnings("unchecked")
     @NotNull
     private LinkedHashSet<String> getOrCreateSet(@NotNull NamespacedKey key, @NotNull Statistic statistic) {

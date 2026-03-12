@@ -87,7 +87,7 @@ class PlayerStatisticDataTest {
 
     @Test
     void getIntValueReturnsStoredValueAfterLoad() {
-        data.loadFromDatabase(Map.of(INT_KEY, new StatisticEntry(INT_KEY, StatisticType.INT, 42)));
+        data.populateFromEntries(Map.of(INT_KEY, new StatisticEntry(INT_KEY, StatisticType.INT, 42)));
         assertEquals(42, data.getIntValue(INT_KEY).orElse(-1));
     }
 
@@ -315,7 +315,7 @@ class PlayerStatisticDataTest {
 
     @Test
     void isDirtyReturnsFalseAfterLoadFromDatabase() {
-        data.loadFromDatabase(Map.of(INT_KEY, new StatisticEntry(INT_KEY, StatisticType.INT, 42)));
+        data.populateFromEntries(Map.of(INT_KEY, new StatisticEntry(INT_KEY, StatisticType.INT, 42)));
         assertFalse(data.isDirty());
     }
 
@@ -327,7 +327,7 @@ class PlayerStatisticDataTest {
 
     @Test
     void getModifiedEntriesReturnsOnlyMutatedKeys() {
-        data.loadFromDatabase(Map.of(
+        data.populateFromEntries(Map.of(
                 INT_KEY, new StatisticEntry(INT_KEY, StatisticType.INT, 10),
                 LONG_KEY, new StatisticEntry(LONG_KEY, StatisticType.LONG, 20L)
         ));
@@ -346,11 +346,11 @@ class PlayerStatisticDataTest {
         assertFalse(data.isDirty());
     }
 
-    // ── loadFromDatabase ───────────────────────────────────────────────
+    // ── populateFromEntries ───────────────────────────────────────────────
 
     @Test
-    void loadFromDatabasePopulatesValues() {
-        data.loadFromDatabase(Map.of(
+    void populateFromEntriesPopulatesValues() {
+        data.populateFromEntries(Map.of(
                 INT_KEY, new StatisticEntry(INT_KEY, StatisticType.INT, 42),
                 LONG_KEY, new StatisticEntry(LONG_KEY, StatisticType.LONG, 100L)
         ));
@@ -359,9 +359,9 @@ class PlayerStatisticDataTest {
     }
 
     @Test
-    void loadFromDatabaseClearsPreviousValues() {
+    void populateFromEntriesClearsPreviousValues() {
         data.setValue(STRING_KEY, "old");
-        data.loadFromDatabase(Map.of(INT_KEY, new StatisticEntry(INT_KEY, StatisticType.INT, 1)));
+        data.populateFromEntries(Map.of(INT_KEY, new StatisticEntry(INT_KEY, StatisticType.INT, 1)));
         assertEquals("", data.getStringValue(STRING_KEY).orElse(""));
     }
 

@@ -23,7 +23,7 @@ class StatisticCacheTest {
 
     @BeforeEach
     void setUp() {
-        cache = new StatisticCache(100, 300);
+        cache = new StatisticCache(100, 300, java.util.logging.Logger.getLogger("test"));
     }
 
     @Test
@@ -80,7 +80,7 @@ class StatisticCacheTest {
 
     @Test
     void ttlExpiresEntries() throws InterruptedException {
-        StatisticCache shortTtlCache = new StatisticCache(100, 1);
+        StatisticCache shortTtlCache = new StatisticCache(100, 1, java.util.logging.Logger.getLogger("test"));
         UUID uuid = UUID.randomUUID();
         NamespacedKey key = key("test", "ttl");
         shortTtlCache.put(uuid, key, new StatisticEntry(key, StatisticType.INT, 1));

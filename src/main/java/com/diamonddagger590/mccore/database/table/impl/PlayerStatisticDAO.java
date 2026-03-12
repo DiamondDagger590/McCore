@@ -83,6 +83,7 @@ public class PlayerStatisticDAO {
         }
         if (lastStoredVersion == 0) {
             TableVersionHistoryDAO.setTableVersion(connection, TABLE_NAME, 1);
+            lastStoredVersion = 1;
         }
     }
 
@@ -256,8 +257,6 @@ public class PlayerStatisticDAO {
             throw new RuntimeException(e);
         }
     }
-
-    // ── Private Helpers ────────────────────────────────────────────────
 
     @NotNull
     private static Object readValueFromResultSet(
