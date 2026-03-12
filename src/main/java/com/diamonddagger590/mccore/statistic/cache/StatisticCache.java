@@ -1,5 +1,6 @@
 package com.diamonddagger590.mccore.statistic.cache;
 
+import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.statistic.StatisticEntry;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -10,7 +11,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Logger;
 
 /**
  * An optional Caffeine-backed cache for offline player statistic queries.
@@ -22,17 +22,14 @@ public class StatisticCache {
 
     private final Cache<StatisticCacheKey, StatisticEntry> cache;
     private final AtomicBoolean missWarningLogged = new AtomicBoolean(false);
-    private final Logger logger;
 
     /**
      * Creates a new {@link StatisticCache}.
      *
      * @param maxSize    Maximum number of entries.
      * @param ttlSeconds Time-to-live in seconds for each entry.
-     * @param logger     The {@link Logger} to use for cache miss warnings.
      */
-    public StatisticCache(long maxSize, long ttlSeconds, @NotNull Logger logger) {
-        this.logger = logger;
+    public StatisticCache(long maxSize, long ttlSeconds) {
         this.cache = Caffeine.newBuilder()
                 .maximumSize(maxSize)
                 .expireAfterWrite(ttlSeconds, TimeUnit.SECONDS)
@@ -50,9 +47,14 @@ public class StatisticCache {
     public Optional<StatisticEntry> get(@NotNull UUID uuid, @NotNull NamespacedKey key) {
         var result = Optional.ofNullable(cache.getIfPresent(new StatisticCacheKey(uuid, key)));
         if (result.isEmpty() && missWarningLogged.compareAndSet(false, true)) {
-            logger.warning("StatisticCache miss for offline player " + uuid
-                    + " (key: " + key + "). This query will fall through to the database. "
-                    + "This warning is logged once per cache instance.");
+            try {
+                CorePlugin.getInstance().getLogger().warning("StatisticCache miss for offline player " + uuid
+                        + " (key: " + key + "). This query will fall through to the database. "
+                        + "This warning is logged once per cache instance.");
+            }
+            catch (NullPointerException ignored) {
+                // CorePlugin not initialized (e.g., unit tests) — silently skip warning
+            }
         }
         return result;
     }
