@@ -1,6 +1,5 @@
 package com.diamonddagger590.mccore.statistic.cache;
 
-import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.statistic.StatisticEntry;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -10,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * An optional Caffeine-backed cache for offline player statistic queries.
@@ -21,7 +19,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class StatisticCache {
 
     private final Cache<StatisticCacheKey, StatisticEntry> cache;
-    private final AtomicBoolean missWarningLogged = new AtomicBoolean(false);
 
     /**
      * Creates a new {@link StatisticCache}.
@@ -45,18 +42,7 @@ public class StatisticCache {
      */
     @NotNull
     public Optional<StatisticEntry> get(@NotNull UUID uuid, @NotNull NamespacedKey key) {
-        var result = Optional.ofNullable(cache.getIfPresent(new StatisticCacheKey(uuid, key)));
-        if (result.isEmpty() && missWarningLogged.compareAndSet(false, true)) {
-            try {
-                CorePlugin.getInstance().getLogger().warning("StatisticCache miss for offline player " + uuid
-                        + " (key: " + key + "). This query will fall through to the database. "
-                        + "This warning is logged once per cache instance.");
-            }
-            catch (NullPointerException ignored) {
-                // CorePlugin not initialized (e.g., unit tests) — silently skip warning
-            }
-        }
-        return result;
+        return Optional.ofNullable(cache.getIfPresent(new StatisticCacheKey(uuid, key)));
     }
 
     /**

@@ -39,6 +39,7 @@ public class StatisticModifyEvent extends CorePlayerEvent implements Cancellable
         this.statisticKey = statisticKey;
         this.statistic = statistic;
         this.oldValue = oldValue;
+        validateValueType(newValue, statistic.getStatisticType());
         this.newValue = newValue;
         this.modificationType = modificationType;
         this.cancelled = false;
@@ -139,7 +140,7 @@ public class StatisticModifyEvent extends CorePlayerEvent implements Cancellable
      * @param type  The expected statistic type.
      * @throws IllegalArgumentException if the value type does not match.
      */
-    private static void validateValueType(@NotNull Object value, @NotNull StatisticType type) {
+    private void validateValueType(@NotNull Object value, @NotNull StatisticType type) {
         boolean valid = switch (type) {
             case INT -> value instanceof Integer;
             case LONG -> value instanceof Long;
