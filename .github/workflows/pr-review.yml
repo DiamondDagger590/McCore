@@ -15,6 +15,7 @@ jobs:
     outputs:
       needs_api: ${{ steps.detect.outputs.api }}
       needs_test: ${{ steps.detect.outputs.test }}
+      needs_security: ${{ steps.detect.outputs.security }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
@@ -31,6 +32,7 @@ jobs:
 
           api=false
           test=false
+          security=false
 
           while IFS= read -r f; do
             [[ "$f" =~ src/.*/event/.*\.java ]]    && api=true
@@ -39,10 +41,12 @@ jobs:
             [[ "$f" =~ src/.*/database/.*\.java ]] && api=true
             [[ "$f" =~ src/test/.*\.java ]]        && test=true
             [[ "$f" =~ src/.*/.*\.java ]] && [[ ! "$f" =~ src/test/ ]] && api=true
+            [[ "$f" =~ src/.*/.*\.java ]]          && security=true
           done <<< "$CHANGED"
 
-          echo "api=$api"   >> "$GITHUB_OUTPUT"
-          echo "test=$test" >> "$GITHUB_OUTPUT"
+          echo "api=$api"           >> "$GITHUB_OUTPUT"
+          echo "test=$test"         >> "$GITHUB_OUTPUT"
+          echo "security=$security" >> "$GITHUB_OUTPUT"
 
   # ------------------------------------------------------------------
   # Step 2: Generate diff and upload it with metadata as an artifact
@@ -52,8 +56,9 @@ jobs:
     needs: detect-changes
     runs-on: ubuntu-latest
     if: |
-      needs.detect-changes.outputs.needs_api  == 'true' ||
-      needs.detect-changes.outputs.needs_test == 'true'
+      needs.detect-changes.outputs.needs_api      == 'true' ||
+      needs.detect-changes.outputs.needs_test     == 'true' ||
+      needs.detect-changes.outputs.needs_security == 'true'
     permissions:
       contents: read
     steps:
@@ -72,7 +77,8 @@ jobs:
           {
             "pr_number": "${{ github.event.pull_request.number }}",
             "needs_api": "${{ needs.detect-changes.outputs.needs_api }}",
-            "needs_test": "${{ needs.detect-changes.outputs.needs_test }}"
+            "needs_test": "${{ needs.detect-changes.outputs.needs_test }}",
+            "needs_security": "${{ needs.detect-changes.outputs.needs_security }}"
           }
           EOF_META
 
