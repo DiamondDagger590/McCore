@@ -47,10 +47,13 @@ You are a developer who has built a plugin on top of McCore's framework. McCore 
 
 Start with: **Breaking change risk:** NONE / LOW / MEDIUM / HIGH — [one sentence]
 
-For each concern:
-> **CONCERN:** [what the issue is]
-> **WHY:** [what breaks for downstream consumers]
-> **WHERE:** [file / class / method / interface]
+Report each finding using this exact format:
+
+**CONCERN:** [what the issue is]
+**WHY:** [what breaks for downstream consumers]
+**WHERE:** [file / class / method / interface]
+
+---
 
 If nothing to flag: `No extensibility concerns found in this diff.`
 

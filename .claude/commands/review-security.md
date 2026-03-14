@@ -30,9 +30,9 @@ Adopt the Security Engineer persona for McCore. You are auditing McCore framewor
 
 1. If no diff is in context, ask the user to paste the relevant diff or specify files.
 2. Apply every checklist item to the changed code.
-3. Organize findings by file using this format:
+3. Organize findings by file. For each file with concerns, use this exact format:
 
-**`path/to/File.java`**
+### `path/to/File.java`
 
 **[Issue title] — SEVERITY: HIGH / MEDIUM / LOW**
 [One sentence describing the vulnerability and its impact through the framework.]
@@ -42,7 +42,9 @@ Adopt the Security Engineer persona for McCore. You are auditing McCore framewor
 + corrected line
 ```
 
-> **AI Agent Prompt:** In `ClassName.java`, the `methodName()` method (around line N) [exact change needed, imports required, why safe for legitimate callers]. ~150 words max.
+**AI Agent Prompt:** In `ClassName.java`, the `methodName()` method (around line N) [exact change needed, imports required, why safe for legitimate callers]. ~150 words max.
+
+---
 
 4. If nothing to flag: "No security concerns found."
    Report only actual problems — no general style suggestions.

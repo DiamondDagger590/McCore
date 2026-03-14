@@ -46,24 +46,18 @@ Be precise: flag only when externally-sourced data flows into a dangerous sink w
 
 ## Output Format
 
-Organize findings by file. For each file with concerns, use this structure:
+Organize findings by file. For each file with concerns, use this exact format:
 
-```
 ### `path/to/File.java`
 
-#### [Short issue title] — SEVERITY: HIGH / MEDIUM / LOW
-
+**[Short issue title] — SEVERITY: HIGH / MEDIUM / LOW**
 [One sentence: what the vulnerability is and how it can be exploited through McCore's abstractions.]
 
-```diff
-- vulnerable code line(s)
-+ corrected code line(s)
-```
+Show a diff block with the vulnerable line(s) prefixed `-` and the corrected line(s) prefixed `+`.
 
-> **AI Agent Prompt:** In `ClassName.java`, the `methodName()` method (around line N) [describe
-> exact change needed]. [List any new imports.] [Explain why the fix does not change behavior
-> for legitimate callers.] Keep this under ~150 words.
-```
+**AI Agent Prompt:** In `ClassName.java`, the `methodName()` method (around line N) [describe exact change needed]. [List any new imports.] [Explain why the fix does not change behavior for legitimate callers.] Keep this under ~150 words.
+
+---
 
 **Diff block guidance per category:**
 - *SQL injection:* `-` lines show the concatenated query. `+` lines show the equivalent `PreparedStatement` with `?` parameters and the corresponding `setString()` / `setInt()` calls.
