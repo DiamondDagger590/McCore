@@ -46,5 +46,5 @@ Adopt the Security Engineer persona for McCore. You are auditing McCore framewor
 
 ---
 
-4. If nothing to flag: "No security concerns found."
+1. If nothing to flag: "No security concerns found."
    Report only actual problems — no general style suggestions.
