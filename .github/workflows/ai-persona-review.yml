@@ -97,7 +97,7 @@ jobs:
       - name: Download review artifact (workflow_run)
         if: github.event_name == 'workflow_run'
         id: download
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4.3.0
         continue-on-error: true
         with:
           name: pr-review-inputs
@@ -125,6 +125,7 @@ jobs:
             [[ "$f" =~ src/test/.*\.java ]]        && tests_changed=true
             [[ "$f" =~ src/.*/.*\.java ]] && [[ ! "$f" =~ src/test/ ]] && api=true
             [[ "$f" =~ src/.*/.*\.java ]] && security=true
+            [[ "$f" =~ src/.*/.*\.java ]] && tests_changed=true
           done < <(gh pr view "$PR" --json files --jq '.files[].path')
 
           jq -n \
