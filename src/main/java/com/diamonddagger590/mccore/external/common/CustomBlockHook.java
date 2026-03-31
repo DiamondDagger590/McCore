@@ -94,4 +94,13 @@ public interface CustomBlockHook {
      */
     @NotNull
     Optional<Set<String>> blockModels(@NotNull Block block);
+
+    /**
+     * Gets the name to use to represent the {@link CustomBlockWrapper}
+     *
+     * @param customBlockWrapper The {@link CustomBlockWrapper} to get the name of.
+     * @return The name to use to represent the {@link CustomBlockWrapper}.
+     */
+    @NotNull
+    String blockName(@NotNull CustomBlockWrapper customBlockWrapper);
 }

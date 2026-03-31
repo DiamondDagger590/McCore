@@ -4,6 +4,7 @@ import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.external.common.CustomBlockHook;
 import com.diamonddagger590.mccore.external.common.CustomItemHook;
 import com.diamonddagger590.mccore.registry.plugin.PluginHook;
+import com.diamonddagger590.mccore.util.item.CustomBlockWrapper;
 import com.nexomc.nexo.api.NexoBlocks;
 import com.nexomc.nexo.api.NexoItems;
 import com.nexomc.nexo.items.ItemBuilder;
@@ -11,6 +12,8 @@ import com.nexomc.nexo.mechanics.breakable.Breakable;
 import com.nexomc.nexo.mechanics.custom_block.CustomBlockMechanic;
 import com.nexomc.nexo.utils.blocksounds.BlockSounds;
 import com.nexomc.nexo.utils.drops.Loot;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -24,9 +27,11 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * The hook needed to support <a href="https://polymart.org/resource/nexo.6901">Nexo</a> for this plugin.
@@ -181,5 +186,74 @@ public class CoreNexoHook extends PluginHook<CorePlugin> implements CustomItemHo
                 0.25, 0.25, 0.25,
                 0.05,
                 data);
+    }
+
+    /**
+     * Gets a player-friendly name for the block represented by the provided {@link CustomBlockWrapper}.
+     * <p>
+     * For Nexo custom blocks, the item name is resolved via {@link ItemBuilder#getItemName()}
+     * when set, falling back to {@link ItemBuilder#getCustomName()}. If neither yields a name,
+     * the block ID is formatted into
+     * title case (e.g. {@code "my_namespace:cool_block"} → {@code "Cool Block"}).
+     * For vanilla materials, the material name is similarly title-cased.
+     *
+     * @param customBlockWrapper The {@link CustomBlockWrapper} to get the name of.
+     * @return The player-friendly name for the block.
+     */
+    @Override
+    @NotNull
+    public String blockName(@NotNull CustomBlockWrapper customBlockWrapper) {
+        if (customBlockWrapper.customBlock().isPresent()) {
+            String blockId = customBlockWrapper.customBlock().get();
+            if (isCustomBlock(blockId)) {
+                ItemBuilder nexoItem = NexoItems.itemFromId(blockId);
+                if (nexoItem != null) {
+                    // Prefer itemName (ITEM_NAME / static non-italic name), fall back to customName (CUSTOM_NAME)
+                    Component nameComponent = Boolean.TRUE.equals(nexoItem.hasItemName())
+                        ? nexoItem.getItemName()
+                        : nexoItem.getCustomName();
+                    if (nameComponent != null) {
+                        String name = PlainTextComponentSerializer.plainText().serialize(nameComponent);
+                        if (!name.isEmpty()) {
+                            return name;
+                        }
+                    }
+                }
+            }
+            return formatBlockId(blockId);
+        }
+        return formatMaterial(customBlockWrapper.material().orElseThrow());
+    }
+
+    /**
+     * Formats a namespaced block ID into a title-cased display string.
+     * The namespace is stripped and underscores are replaced with spaces.
+     * For example, {@code "my_namespace:cool_block"} becomes {@code "Cool Block"}.
+     *
+     * @param blockId The namespaced block ID to format.
+     * @return A title-cased display string.
+     */
+    @NotNull
+    private static String formatBlockId(@NotNull String blockId) {
+        String key = blockId.contains(":") ? blockId.substring(blockId.indexOf(':') + 1) : blockId;
+        return Arrays.stream(key.split("_"))
+            .filter(word -> !word.isEmpty())
+            .map(word -> Character.toUpperCase(word.charAt(0)) + word.substring(1).toLowerCase())
+            .collect(Collectors.joining(" "));
+    }
+
+    /**
+     * Formats a {@link Material} name into a title-cased display string.
+     * For example, {@link Material#OAK_LOG} becomes {@code "Oak Log"}.
+     *
+     * @param material The {@link Material} to format.
+     * @return A title-cased display string.
+     */
+    @NotNull
+    private static String formatMaterial(@NotNull Material material) {
+        return Arrays.stream(material.name().split("_"))
+            .filter(word -> !word.isEmpty())
+            .map(word -> Character.toUpperCase(word.charAt(0)) + word.substring(1).toLowerCase())
+            .collect(Collectors.joining(" "));
     }
 }

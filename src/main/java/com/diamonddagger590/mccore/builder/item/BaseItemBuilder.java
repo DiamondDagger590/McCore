@@ -126,9 +126,11 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
             this.displayNameComponent = itemStack.getData(DataComponentTypes.ITEM_NAME);
         }
         if (this.itemStack.hasItemMeta() && this.itemStack.getItemMeta().hasLore()) {
-            this.loreAsComponent = itemStack.lore();
+            final List<Component> fromMeta = itemStack.lore();
+            this.loreAsComponent = fromMeta != null ? new ArrayList<>(fromMeta) : new ArrayList<>();
         } else if (this.itemStack.hasData(DataComponentTypes.LORE)) {
-            this.loreAsComponent = this.itemStack.getData(DataComponentTypes.LORE).lines();
+            final ItemLore itemLore = this.itemStack.getData(DataComponentTypes.LORE);
+            this.loreAsComponent = itemLore != null ? new ArrayList<>(itemLore.lines()) : new ArrayList<>();
         }
     }
 
@@ -532,7 +534,8 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
         if (!loreAsComponent.isEmpty()) {
             throw new IllegalStateException("Can not set lore when there was already one created");
         }
-        this.lore = displayLore;
+        // Config APIs (e.g. BoostedYAML getStringList) may return an unmodifiable list; builder must mutate.
+        this.lore = new ArrayList<>(displayLore);
         return (B) this;
     }
 

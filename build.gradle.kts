@@ -77,7 +77,7 @@ dependencies {
     compileOnly("com.arcaniax:HeadDatabase-API:$headDatabaseVersion")
 
     // Custom items
-    val itemsAdderVersion = "4.0.2-beta-release-11"
+    val itemsAdderVersion = "4.0.10"
     compileOnly("dev.lone:api-itemsadder:$itemsAdderVersion")
     val nexoVersion = "1.16.0"
     compileOnly("com.nexomc:nexo:$nexoVersion") {
