@@ -4,10 +4,13 @@ import com.diamonddagger590.mccore.registry.Registry;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+
+import static com.diamonddagger590.mccore.statistic.StatisticType.*;
 
 /**
  * A registry for all {@link Statistic} definitions. Statistics are registered once during
@@ -33,7 +36,36 @@ public final class StatisticRegistry implements Registry<Statistic> {
                     "Statistic already registered: " + statistic.getStatisticKey()
             );
         }
+        validateDefaultValue(statistic);
         statistics.put(statistic.getStatisticKey(), statistic);
+    }
+
+    /**
+     * Validates that a {@link Statistic}'s default value is type-compatible with its
+     * {@link StatisticType}. This catches mismatches at registration time rather than
+     * at runtime when the value is first used.
+     *
+     * @param statistic The statistic to validate.
+     * @throws IllegalArgumentException if the default value is not compatible with the statistic type.
+     */
+    private void validateDefaultValue(@NotNull Statistic statistic) {
+        Object defaultValue = statistic.getDefaultValue();
+        StatisticType type = statistic.getStatisticType();
+        boolean valid = switch (type) {
+            case INT -> defaultValue instanceof Integer;
+            case LONG -> defaultValue instanceof Long;
+            case DOUBLE -> defaultValue instanceof Double;
+            case STRING -> defaultValue instanceof String;
+            case TIMESTAMP -> defaultValue instanceof Instant;
+            case SET_STRING -> defaultValue instanceof Set<?> s
+                    && (s.isEmpty() || s.stream().allMatch(e -> e instanceof String));
+        };
+        if (!valid) {
+            throw new IllegalArgumentException(
+                    "Statistic '" + statistic.getStatisticKey() + "' has default value of type "
+                    + defaultValue.getClass().getSimpleName() + " which is incompatible with StatisticType." + type
+            );
+        }
     }
 
     @Override

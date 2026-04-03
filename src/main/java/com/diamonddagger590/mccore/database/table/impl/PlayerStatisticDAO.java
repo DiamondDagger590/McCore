@@ -115,7 +115,16 @@ public class PlayerStatisticDAO {
                         );
                         continue;
                     }
-                    StatisticType type = StatisticType.valueOf(rs.getString("stat_type"));
+                    String rawType = rs.getString("stat_type");
+                    StatisticType type;
+                    try {
+                        type = StatisticType.valueOf(rawType);
+                    } catch (IllegalArgumentException e) {
+                        CorePlugin.getInstance().getLogger().warning(
+                                "Skipping statistic with unknown type '" + rawType + "' for key: " + keyString
+                        );
+                        continue;
+                    }
                     Object value = readValueFromResultSet(rs, type);
                     entries.put(key, new StatisticEntry(key, type, value));
                 }
@@ -149,7 +158,16 @@ public class PlayerStatisticDAO {
             statement.setString(2, key.toString());
             try (ResultSet rs = statement.executeQuery()) {
                 if (rs.next()) {
-                    StatisticType type = StatisticType.valueOf(rs.getString("stat_type"));
+                    String rawType = rs.getString("stat_type");
+                    StatisticType type;
+                    try {
+                        type = StatisticType.valueOf(rawType);
+                    } catch (IllegalArgumentException e) {
+                        CorePlugin.getInstance().getLogger().warning(
+                                "Skipping statistic with unknown type '" + rawType + "' for key: " + key
+                        );
+                        return Optional.empty();
+                    }
                     Object value = readValueFromResultSet(rs, type);
                     return Optional.of(new StatisticEntry(key, type, value));
                 }
@@ -267,9 +285,15 @@ public class PlayerStatisticDAO {
             case INT -> rs.getInt("int_value");
             case LONG -> rs.getLong("long_value");
             case DOUBLE -> rs.getDouble("double_value");
-            case STRING -> rs.getString("string_value");
+            case STRING -> {
+                String value = rs.getString("string_value");
+                yield value != null ? value : "";
+            }
             case TIMESTAMP -> Instant.ofEpochMilli(rs.getLong("timestamp_value"));
-            case SET_STRING -> deserializeStringSet(rs.getString("string_value"));
+            case SET_STRING -> {
+                String value = rs.getString("string_value");
+                yield value != null ? deserializeStringSet(value) : new LinkedHashSet<String>();
+            }
         };
     }
 
@@ -279,11 +303,50 @@ public class PlayerStatisticDAO {
         if (json.equals("[]") || json.isEmpty()) {
             return result;
         }
+        // Remove outer brackets
         String inner = json.substring(1, json.length() - 1);
-        for (String element : inner.split(",")) {
-            String trimmed = element.trim();
-            if (trimmed.startsWith("\"") && trimmed.endsWith("\"")) {
-                result.add(trimmed.substring(1, trimmed.length() - 1));
+        // Parse quoted elements properly, handling commas within quoted strings
+        int i = 0;
+        while (i < inner.length()) {
+            // Skip whitespace
+            while (i < inner.length() && inner.charAt(i) == ' ') {
+                i++;
+            }
+            if (i >= inner.length()) {
+                break;
+            }
+            if (inner.charAt(i) == '"') {
+                // Find the closing quote, respecting escaped quotes
+                StringBuilder element = new StringBuilder();
+                i++; // skip opening quote
+                while (i < inner.length()) {
+                    char c = inner.charAt(i);
+                    if (c == '\\' && i + 1 < inner.length() && inner.charAt(i + 1) == '"') {
+                        element.append('"');
+                        i += 2;
+                    } else if (c == '"') {
+                        i++; // skip closing quote
+                        break;
+                    } else {
+                        element.append(c);
+                        i++;
+                    }
+                }
+                result.add(element.toString());
+                // Skip comma separator
+                while (i < inner.length() && (inner.charAt(i) == ',' || inner.charAt(i) == ' ')) {
+                    i++;
+                }
+            } else {
+                // Unquoted element (shouldn't happen with our serializer, but handle gracefully)
+                int commaIdx = inner.indexOf(',', i);
+                if (commaIdx == -1) {
+                    result.add(inner.substring(i).trim());
+                    break;
+                } else {
+                    result.add(inner.substring(i, commaIdx).trim());
+                    i = commaIdx + 1;
+                }
             }
         }
         return result;

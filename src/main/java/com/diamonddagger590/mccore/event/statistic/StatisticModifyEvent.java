@@ -147,7 +147,8 @@ public class StatisticModifyEvent extends CorePlayerEvent implements Cancellable
             case DOUBLE -> value instanceof Double;
             case STRING -> value instanceof String;
             case TIMESTAMP -> value instanceof Instant;
-            case SET_STRING -> value instanceof Set<?>;
+            case SET_STRING -> value instanceof Set<?> s
+                    && (s.isEmpty() || s.stream().allMatch(e -> e instanceof String));
         };
         if (!valid) {
             throw new IllegalArgumentException(

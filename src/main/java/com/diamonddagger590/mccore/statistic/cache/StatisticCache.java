@@ -63,7 +63,10 @@ public class StatisticCache {
      * @param uuid The player's UUID.
      */
     public void invalidate(@NotNull UUID uuid) {
-        cache.asMap().keySet().removeIf(cacheKey -> cacheKey.uuid().equals(uuid));
+        var keysToRemove = cache.asMap().keySet().stream()
+                .filter(cacheKey -> cacheKey.uuid().equals(uuid))
+                .toList();
+        cache.invalidateAll(keysToRemove);
     }
 
     /**
