@@ -85,6 +85,11 @@ public record StatisticEntry(
     /**
      * Returns the value as a {@code Set<String>}.
      *
+     * @apiNote Values in this set may originate from player-controlled database content
+     * (e.g., player names, biome identifiers). Never pass elements directly to
+     * {@code MiniMessage.deserialize()} or use them in command-building string concatenation.
+     * If display formatting is needed, escape the value first using
+     * {@code PlainTextComponentSerializer} or a sanitization utility.
      * @return The value cast to {@code Set<String>}.
      * @throws ClassCastException if the value is not a {@link Set}.
      */
