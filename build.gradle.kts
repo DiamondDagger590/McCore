@@ -119,8 +119,6 @@ dependencies {
         exclude(group = "*", module = "*")
     }
 
-    val caffeineVersion = "3.1.8"
-    api("com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
 }
 
 tasks {
