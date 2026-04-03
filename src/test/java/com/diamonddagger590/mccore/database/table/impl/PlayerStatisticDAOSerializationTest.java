@@ -7,6 +7,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -88,6 +89,23 @@ class PlayerStatisticDAOSerializationTest {
         String json = PlayerStatisticDAO.serializeStringSet(original);
         Set<String> result = PlayerStatisticDAO.deserializeStringSet(json);
         assertEquals(original, result);
+    }
+
+    @DisplayName("Control characters are stripped during serialization")
+    @Test
+    void controlCharacters_strippedOnSerialize() {
+        Set<String> original = new LinkedHashSet<>();
+        original.add("hello\nworld");
+        original.add("null\0byte");
+        original.add("tab\there");
+        String json = PlayerStatisticDAO.serializeStringSet(original);
+        assertFalse(json.contains("\n"));
+        assertFalse(json.contains("\0"));
+        assertFalse(json.contains("\t"));
+        Set<String> result = PlayerStatisticDAO.deserializeStringSet(json);
+        assertTrue(result.contains("helloworld"));
+        assertTrue(result.contains("nullbyte"));
+        assertTrue(result.contains("tabhere"));
     }
 
     @DisplayName("Deserializing empty string returns empty set")

@@ -366,7 +366,8 @@ public class PlayerStatisticDAO {
         StringBuilder sb = new StringBuilder("[");
         var iterator = set.iterator();
         while (iterator.hasNext()) {
-            sb.append("\"").append(iterator.next().replace("\\", "\\\\").replace("\"", "\\\"")).append("\"");
+            String element = iterator.next().replaceAll("[\\p{Cntrl}]", "");
+            sb.append("\"").append(element.replace("\\", "\\\\").replace("\"", "\\\"")).append("\"");
             if (iterator.hasNext()) {
                 sb.append(",");
             }
