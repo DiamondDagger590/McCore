@@ -13,6 +13,7 @@ import com.diamonddagger590.mccore.registry.manager.CoreManagerKey;
 import com.diamonddagger590.mccore.registry.manager.ManagerRegistry;
 import com.diamonddagger590.mccore.registry.plugin.PluginHookRegistry;
 import com.diamonddagger590.mccore.setting.PlayerSettingRegistry;
+import com.diamonddagger590.mccore.statistic.StatisticRegistry;
 import com.diamonddagger590.mccore.util.TimeProvider;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,6 +56,7 @@ public abstract class CoreBootstrap<P extends CorePlugin> {
         registryAccess.register(new ManagerRegistry());
         registryAccess.register(new PluginHookRegistry());
         registryAccess.register(new PlayerSettingRegistry());
+        registryAccess.register(new StatisticRegistry());
         registryAccess.registry(RegistryKey.MANAGER).register(new ReloadableContentManager(plugin));
         registryAccess.registry(RegistryKey.MANAGER).register(new ChatResponseManager(plugin));
 

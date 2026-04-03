@@ -4,6 +4,7 @@ import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.database.function.CreateTableFunction;
 import com.diamonddagger590.mccore.database.table.impl.MutexDAO;
 import com.diamonddagger590.mccore.database.table.impl.PlayerSettingDAO;
+import com.diamonddagger590.mccore.database.table.impl.PlayerStatisticDAO;
 import com.diamonddagger590.mccore.database.table.impl.TableVersionHistoryDAO;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,6 +32,8 @@ public class CreateCoreTablesFunction {
                         + (MutexDAO.attemptCreateTable(connection, database) ? "created a new table." : "already existed so skipping creation."));
                 logger.log(Level.INFO, "Database Creation - Player Setting DAO "
                         + (PlayerSettingDAO.attemptCreateTable(connection, database) ? "created a new table." : "already existed so skipping creation."));
+                logger.log(Level.INFO, "Database Creation - Player Statistic DAO "
+                        + (PlayerStatisticDAO.attemptCreateTable(connection, database) ? "created a new table." : "already existed so skipping creation."));
                 returnFuture.complete(null);
             }
             catch (SQLException e) {

@@ -33,7 +33,7 @@ Optional<AfkPluginHook> afkHook = plugin.registryAccess()
     .pluginHook(CorePluginHookKey.AFK_PLUGIN_HOOK);
 ```
 
-Built-in `RegistryKey` constants: `MANAGER`, `PLUGIN_HOOK`, `PLAYER_SETTING`, `DRIVER`
+Built-in `RegistryKey` constants: `MANAGER`, `PLUGIN_HOOK`, `PLAYER_SETTING`, `STATISTIC`, `DRIVER`
 
 Built-in `CoreManagerKey` constants: `CORE_GUI_MANAGER`, `CORE_PLAYER_MANAGER`, `CORE_DATABASE_MANAGER`
 

@@ -4,6 +4,7 @@ import com.diamonddagger590.mccore.registry.RegistryAccess;
 import com.diamonddagger590.mccore.registry.manager.ManagerRegistry;
 import com.diamonddagger590.mccore.registry.plugin.PluginHookRegistry;
 import com.diamonddagger590.mccore.setting.PlayerSettingRegistry;
+import com.diamonddagger590.mccore.statistic.StatisticRegistry;
 
 /**
  * Provides an extension to automatically reset the {@link com.diamonddagger590.mccore.registry.RegistryAccess}
@@ -15,16 +16,10 @@ public class RegistryResetExtension {
 
     public static void setupRegistry() {
         InternalResetTestTools.resetRegistryAccess(REGISTRY_CLASS_PATH);
-        try {
-            RegistryAccess.registryAccess().register(new PluginHookRegistry());
-            RegistryAccess.registryAccess().register(new PlayerSettingRegistry());
-            RegistryAccess.registryAccess().register(new ManagerRegistry());
-        }
-        catch (Exception e) {
-            /*
-            Silent swallow
-             */
-        }
+        RegistryAccess.registryAccess().register(new PluginHookRegistry());
+        RegistryAccess.registryAccess().register(new PlayerSettingRegistry());
+        RegistryAccess.registryAccess().register(new ManagerRegistry());
+        RegistryAccess.registryAccess().register(new StatisticRegistry());
     }
 
     /**

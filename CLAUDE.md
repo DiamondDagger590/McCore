@@ -16,6 +16,7 @@ McCore is a Java 21 Paper plugin framework library that provides shared infrastr
 **Stack:** Java 21, Paper API 1.21.11, Gradle Kotlin DSL (`build.gradle.kts`)
 
 Cloud command libraries are shadowed and relocated to `com.diamonddagger590.mccore.cloud` in the output jar.
+Caffeine is shadowed and relocated to `com.diamonddagger590.mccore.caffeine` in the output jar.
 
 ---
 
@@ -78,12 +79,13 @@ src/main/java/com/diamonddagger590/mccore/
 │   │   ├── CreateTableFunction.java   # Functional: create tables on DB init
 │   │   └── UpdateTableFunction.java   # Functional: migrate/alter tables on DB init
 │   ├── transaction/
-│   │   ├── Transaction.java           # Single-statement transaction helper
-│   │   ├── BatchTransaction.java      # Multi-statement batched transaction
-│   │   └── FailSafeTransaction.java   # Transaction that handles its own error recovery
+│   │   ├── Transaction.java           # Abstract base for ordered statement execution
+│   │   ├── BatchTransaction.java      # Best-effort: commits successes, logs individual failures
+│   │   └── FailSafeTransaction.java   # All-or-nothing: rolls back entire transaction on any failure
 │   └── table/impl/
 │       ├── MutexDAO.java              # Mutex locking table
 │       ├── PlayerSettingDAO.java      # Player settings persistence
+│       ├── PlayerStatisticDAO.java    # Player statistics persistence (typed columns)
 │       └── TableVersionHistoryDAO.java # Schema version tracking
 ├── gui/
 │   ├── Gui.java                       # Interface: inventory GUI wrapper
@@ -118,6 +120,16 @@ src/main/java/com/diamonddagger590/mccore/
 │   ├── ChatResponse.java              # Pending chat response tied to a player
 │   ├── ChatResponseManager.java       # Manager: tracks pending ChatResponse instances
 │   └── ChatResponseExpireTask.java    # Task: expires stale ChatResponse on timeout
+├── statistic/
+│   ├── Statistic.java                 # Interface: a named, typed statistic definition
+│   ├── StatisticType.java             # Enum: INT, LONG, DOUBLE, STRING, TIMESTAMP, SET_STRING
+│   ├── SimpleStatistic.java           # Record: convenience Statistic implementation
+│   ├── StatisticEntry.java            # Record: serialized stat value (DAO transfer object)
+│   ├── StatisticRegistry.java         # Registry of all Statistic definitions
+│   ├── PlayerStatisticData.java       # Per-player stat values, dirty tracking, event firing
+│   └── cache/
+│       ├── StatisticCache.java        # Caffeine-backed offline stat cache
+│       └── StatisticCacheKey.java     # Composite cache key (UUID + NamespacedKey)
 ├── setting/
 │   ├── PlayerSetting.java             # Interface for a persistent player preference
 │   └── PlayerSettingRegistry.java     # Registry of all registered PlayerSetting types
@@ -138,7 +150,8 @@ src/main/java/com/diamonddagger590/mccore/
 │   ├── database/                      # PreTablesCreateEvent, TablesCreatedEvent, etc.
 │   ├── gui/                           # GuiRefreshEvent
 │   ├── player/                        # PlayerLoadEvent, PlayerUnloadEvent
-│   └── setting/                       # PlayerSettingChangeEvent
+│   ├── setting/                       # PlayerSettingChangeEvent
+│   └── statistic/                     # StatisticModifyEvent, PostStatisticModifyEvent, ModificationType
 ├── exception/                         # Typed exceptions for all subsystems
 ├── pair/
 │   ├── Pair.java                      # Generic pair interface
@@ -177,10 +190,15 @@ src/main/java/com/diamonddagger590/mccore/
 | **DatabaseDriver** | Interface providing JDBC driver class, connection URL, and HikariCP credential population for a specific SQL dialect. |
 | **CreateTableFunction** | Functional interface called once at DB init to create a table if it doesn't exist. |
 | **UpdateTableFunction** | Functional interface called after table creation to apply schema migrations. |
-| **Transaction** | Helper for executing one or more SQL statements in a managed connection/rollback context. |
+| **Transaction** | Abstract base for executing an ordered list of `PreparedStatement`s against a single `Connection`. Subclasses define failure semantics: `BatchTransaction` commits whatever succeeds and logs individual failures; `FailSafeTransaction` rolls back everything if any single statement fails. |
 | **DAO** | Static JDBC methods for reading/writing a specific entity. Always takes `Connection` as the first argument. |
 | **ReloadableContent** | A config-backed value that can be refreshed at runtime without a server restart. |
 | **PlayerSetting** | A namespaced, persistent player preference. Stored in the database and loaded with the player. |
+| **Statistic** | Interface for a named, typed statistic definition (`NamespacedKey` + `StatisticType` + default value). Registered in `StatisticRegistry`. |
+| **StatisticType** | Enum: `INT`, `LONG`, `DOUBLE`, `STRING`, `TIMESTAMP`, `SET_STRING`. Determines which typed column is used in the database. |
+| **StatisticRegistry** | Registry of all `Statistic` definitions, keyed by `NamespacedKey`. Accessed via `RegistryKey.STATISTIC`. |
+| **PlayerStatisticData** | Per-player container for live statistic values. Supports typed getters, event-firing mutators, dirty tracking, and delta saves. Stored on `CorePlayer`. |
+| **StatisticCache** | Optional Caffeine-backed cache for offline player statistic lookups. Downstream plugins construct and configure it. |
 | **Parser** | Math equation evaluator that supports variables, functions, and operators. Used for config-driven scaling formulas. |
 | **ItemPluginType** | Enum indicating which custom item plugin is active (NONE, ITEMS_ADDER, NEXO, MYTHIC_MOBS, MODEL_ENGINE). |
 | **TimeProvider** | Wraps `java.time.Clock` so that time-dependent code is testable by injecting a fixed clock. |
@@ -192,7 +210,7 @@ src/main/java/com/diamonddagger590/mccore/
 ### Bootstrap Lifecycle
 
 1. Downstream plugin's `onEnable()` creates a `CoreBootstrap` subclass and calls `start(resolveProfile())`
-2. `CoreBootstrap.start()` registers core registries: `ManagerRegistry`, `PluginHookRegistry`, `PlayerSettingRegistry`
+2. `CoreBootstrap.start()` registers core registries: `ManagerRegistry`, `PluginHookRegistry`, `PlayerSettingRegistry`, `StatisticRegistry`
 3. Core managers registered: `ReloadableContentManager`, `ChatResponseManager`
 4. `HooksRegistrar` and `ListenerRegistrar` run for all profiles
 5. In `PROD` only: `DriverRegistry` registered, `CommandRegistrar` runs

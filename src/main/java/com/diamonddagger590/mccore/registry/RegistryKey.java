@@ -4,6 +4,7 @@ import com.diamonddagger590.mccore.database.driver.DriverRegistry;
 import com.diamonddagger590.mccore.registry.manager.ManagerRegistry;
 import com.diamonddagger590.mccore.registry.plugin.PluginHookRegistry;
 import com.diamonddagger590.mccore.setting.PlayerSettingRegistry;
+import com.diamonddagger590.mccore.statistic.StatisticRegistry;
 import org.jetbrains.annotations.NotNull;
 
 import static com.diamonddagger590.mccore.registry.RegistryKeyImpl.create;
@@ -19,6 +20,11 @@ public interface RegistryKey<T extends Registry<?>> {
     RegistryKey<PluginHookRegistry> PLUGIN_HOOK = create(PluginHookRegistry.class);
     RegistryKey<PlayerSettingRegistry> PLAYER_SETTING = create(PlayerSettingRegistry.class);
     RegistryKey<DriverRegistry> DRIVER = create(DriverRegistry.class);
+    /**
+     * Key for the {@link StatisticRegistry}, which stores all registered {@link com.diamonddagger590.mccore.statistic.Statistic}
+     * definitions. Available after {@link com.diamonddagger590.mccore.bootstrap.CoreBootstrap#start} completes.
+     */
+    RegistryKey<StatisticRegistry> STATISTIC = create(StatisticRegistry.class);
 
     /**
      * Gets the {@link Class} stored by this key.

@@ -108,6 +108,9 @@ dependencies {
     val hikariVersion = "6.1.0"
     api("com.zaxxer:HikariCP:$hikariVersion")
 
+    val caffeineVersion = "3.1.8"
+    api("com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
+
     val cmiVersion = "9.7.14.3"
     compileOnly("com.github.Zrips:CMI-API:$cmiVersion")
 
@@ -116,8 +119,6 @@ dependencies {
         exclude(group = "*", module = "*")
     }
 
-    val caffeineVersion = "3.1.8"
-    api("com.github.ben-manes.caffeine:caffeine:$caffeineVersion")
 }
 
 tasks {

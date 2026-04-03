@@ -7,6 +7,7 @@ import com.diamonddagger590.mccore.mutex.Mutexable;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
 import com.diamonddagger590.mccore.registry.RegistryKey;
 import com.diamonddagger590.mccore.setting.PlayerSetting;
+import com.diamonddagger590.mccore.statistic.PlayerStatisticData;
 import com.google.common.collect.ImmutableSet;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
@@ -31,11 +32,13 @@ public abstract class CorePlayer extends Mutexable {
     private final UUID uuid;
     private final CorePlugin plugin;
     private final Map<NamespacedKey, PlayerSetting> playerSettings;
+    private final PlayerStatisticData statisticData;
 
     public CorePlayer(@NotNull UUID uuid, @NotNull CorePlugin corePlugin) {
         this.uuid = uuid;
         this.plugin = corePlugin;
         this.playerSettings = new HashMap<>();
+        this.statisticData = new PlayerStatisticData(uuid);
     }
 
     /**
@@ -118,6 +121,16 @@ public abstract class CorePlayer extends Mutexable {
     @NotNull
     public Set<? extends PlayerSetting> getPlayerSettings() {
         return ImmutableSet.copyOf(playerSettings.values());
+    }
+
+    /**
+     * Gets the {@link PlayerStatisticData} for this player.
+     *
+     * @return The {@link PlayerStatisticData} for this player.
+     */
+    @NotNull
+    public PlayerStatisticData getStatisticData() {
+        return statisticData;
     }
 
     @Override
