@@ -16,17 +16,10 @@ public class RegistryResetExtension {
 
     public static void setupRegistry() {
         InternalResetTestTools.resetRegistryAccess(REGISTRY_CLASS_PATH);
-        try {
-            RegistryAccess.registryAccess().register(new PluginHookRegistry());
-            RegistryAccess.registryAccess().register(new PlayerSettingRegistry());
-            RegistryAccess.registryAccess().register(new ManagerRegistry());
-            RegistryAccess.registryAccess().register(new StatisticRegistry());
-        }
-        catch (Exception e) {
-            /*
-            Silent swallow
-             */
-        }
+        RegistryAccess.registryAccess().register(new PluginHookRegistry());
+        RegistryAccess.registryAccess().register(new PlayerSettingRegistry());
+        RegistryAccess.registryAccess().register(new ManagerRegistry());
+        RegistryAccess.registryAccess().register(new StatisticRegistry());
     }
 
     /**

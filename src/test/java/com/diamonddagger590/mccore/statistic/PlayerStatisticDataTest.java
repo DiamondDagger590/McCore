@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +47,7 @@ class PlayerStatisticDataTest {
     private static final NamespacedKey TIMESTAMP_KEY = key("test", "timestamp_stat");
     private static final NamespacedKey SET_KEY = key("test", "set_stat");
 
-    private final List<Event> firedEvents = new ArrayList<>();
+    private final List<Event> firedEvents = Collections.synchronizedList(new ArrayList<>());
     private CorePlayer mockPlayer;
     private PlayerStatisticData data;
 

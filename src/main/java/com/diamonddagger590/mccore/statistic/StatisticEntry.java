@@ -4,6 +4,8 @@ import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -85,17 +87,18 @@ public record StatisticEntry(
     /**
      * Returns the value as a {@code Set<String>}.
      *
-     * @apiNote Values in this set may originate from player-controlled database content
+     * <p><b>Note:</b> Values in this set may originate from player-controlled database content
      * (e.g., player names, biome identifiers). Never pass elements directly to
      * {@code MiniMessage.deserialize()} or use them in command-building string concatenation.
      * If display formatting is needed, escape the value first using
      * {@code PlainTextComponentSerializer} or a sanitization utility.
-     * @return The value cast to {@code Set<String>}.
+     *
+     * @return An unmodifiable copy of the value cast to {@code Set<String>}.
      * @throws ClassCastException if the value is not a {@link Set}.
      */
     @SuppressWarnings("unchecked")
     @NotNull
     public Set<String> getAsSetString() {
-        return (Set<String>) value;
+        return Collections.unmodifiableSet(new LinkedHashSet<>((Set<String>) value));
     }
 }

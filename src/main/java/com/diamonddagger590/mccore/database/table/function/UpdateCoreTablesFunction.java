@@ -33,6 +33,7 @@ public class UpdateCoreTablesFunction {
             }
             catch (SQLException e) {
                 e.printStackTrace();
+                returnFuture.completeExceptionally(e);
             }
         });
 

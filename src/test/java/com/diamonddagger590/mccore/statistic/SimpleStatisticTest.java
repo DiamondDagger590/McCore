@@ -38,6 +38,7 @@ class SimpleStatisticTest {
         SimpleStatistic stat1 = new SimpleStatistic(key, StatisticType.DOUBLE, 0.0, "XP", "Experience");
         SimpleStatistic stat2 = new SimpleStatistic(key, StatisticType.DOUBLE, 0.0, "XP", "Experience");
         assertEquals(stat1, stat2);
+        assertEquals(stat1.hashCode(), stat2.hashCode(), "Equal objects must have equal hash codes");
     }
 
     @Test
