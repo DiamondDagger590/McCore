@@ -343,8 +343,20 @@ class PlayerStatisticDataTest {
     void markCleanClearsDirtyState() {
         data.setValue(INT_KEY, 99);
         assertTrue(data.isDirty());
-        data.markClean();
+        data.markClean(data.getModifiedEntries().keySet());
         assertFalse(data.isDirty());
+    }
+
+    @Test
+    void markCleanOnlyRemovesSavedKeys() {
+        data.setValue(INT_KEY, 99);
+        data.setValue(LONG_KEY, 200L);
+        assertTrue(data.isDirty());
+        // Simulate: save only INT_KEY, LONG_KEY was dirtied after the snapshot
+        data.markClean(Set.of(INT_KEY));
+        assertTrue(data.isDirty());
+        assertEquals(1, data.getModifiedEntries().size());
+        assertTrue(data.getModifiedEntries().containsKey(LONG_KEY));
     }
 
     // ── populateFromEntries ───────────────────────────────────────────────

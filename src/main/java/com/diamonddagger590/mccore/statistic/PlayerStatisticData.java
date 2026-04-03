@@ -468,22 +468,25 @@ public final class PlayerStatisticData {
      */
     public void setTimestampIfAbsent(@NotNull NamespacedKey key, @NotNull Instant instant) {
         Statistic statistic = getRegisteredStatisticOrThrow(key);
-        if (values.containsKey(key)) {
-            return;
+        Object syncKey = statistic.getStatisticKey();
+        synchronized (syncKey) {
+            if (values.containsKey(key)) {
+                return;
+            }
+            StatisticModifyEvent preEvent = new StatisticModifyEvent(
+                    playerResolver.resolve(uuid), key, statistic, statistic.getDefaultValue(), instant, ModificationType.SET_IF_ABSENT
+            );
+            dispatcher.dispatch(preEvent);
+            if (preEvent.isCancelled()) {
+                return;
+            }
+            Instant finalValue = (Instant) preEvent.getNewValue();
+            values.put(key, finalValue);
+            dirtyKeys.add(key);
+            dispatcher.dispatch(new PostStatisticModifyEvent(
+                    playerResolver.resolve(uuid), key, statistic, statistic.getDefaultValue(), finalValue, ModificationType.SET_IF_ABSENT
+            ));
         }
-        StatisticModifyEvent preEvent = new StatisticModifyEvent(
-                playerResolver.resolve(uuid), key, statistic, statistic.getDefaultValue(), instant, ModificationType.SET_IF_ABSENT
-        );
-        dispatcher.dispatch(preEvent);
-        if (preEvent.isCancelled()) {
-            return;
-        }
-        Instant finalValue = (Instant) preEvent.getNewValue();
-        values.put(key, finalValue);
-        dirtyKeys.add(key);
-        dispatcher.dispatch(new PostStatisticModifyEvent(
-                playerResolver.resolve(uuid), key, statistic, statistic.getDefaultValue(), finalValue, ModificationType.SET_IF_ABSENT
-        ));
     }
 
     /**
@@ -614,10 +617,16 @@ public final class PlayerStatisticData {
     }
 
     /**
-     * Clears the dirty set. Called after a successful save transaction.
+     * Removes the given keys from the dirty set after a successful save transaction.
+     * <p>
+     * Callers must pass exactly the key set returned by {@link #getModifiedEntries()} for the
+     * same save cycle. This ensures that keys dirtied by the main thread <em>after</em> the
+     * snapshot was taken are not accidentally cleared and silently lost.
+     *
+     * @param savedKeys The keys that were included in the save transaction.
      */
-    public void markClean() {
-        dirtyKeys.clear();
+    public void markClean(@NotNull Set<NamespacedKey> savedKeys) {
+        dirtyKeys.removeAll(savedKeys);
     }
 
     /**
