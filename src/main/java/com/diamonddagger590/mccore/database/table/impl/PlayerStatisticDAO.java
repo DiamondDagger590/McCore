@@ -299,7 +299,7 @@ public class PlayerStatisticDAO {
     }
 
     @NotNull
-    private static Set<String> deserializeStringSet(@NotNull String json) {
+    static Set<String> deserializeStringSet(@NotNull String json) {
         Set<String> result = new LinkedHashSet<>();
         if (json.equals("[]") || json.isEmpty()) {
             return result;
@@ -362,7 +362,7 @@ public class PlayerStatisticDAO {
     }
 
     @NotNull
-    private static String serializeStringSet(@NotNull Set<String> set) {
+    static String serializeStringSet(@NotNull Set<String> set) {
         StringBuilder sb = new StringBuilder("[");
         var iterator = set.iterator();
         while (iterator.hasNext()) {

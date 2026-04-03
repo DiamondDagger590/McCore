@@ -8,6 +8,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -75,6 +78,28 @@ class StatisticRegistryTest {
         registry().register(stat1);
         registry().register(stat2);
         assertEquals(2, registry().getRegisteredStatistics().size());
+    }
+
+    @Test
+    void registerThrowsForMismatchedDefaultType() {
+        // INT stat with a String default should fail validation
+        assertThrows(IllegalArgumentException.class, () ->
+                registry().register(new SimpleStatistic(key("test", "bad"), StatisticType.INT, "wrong", "Bad", "Mismatched default")));
+    }
+
+    @Test
+    void registerThrowsForLongDefaultOnIntStat() {
+        // INT stat with a Long default should fail
+        assertThrows(IllegalArgumentException.class, () ->
+                registry().register(new SimpleStatistic(key("test", "bad"), StatisticType.INT, 5L, "Bad", "Long for INT")));
+    }
+
+    @Test
+    void registerSucceedsForSetStringWithValidDefault() {
+        Set<String> defaultSet = new LinkedHashSet<>();
+        Statistic stat = new SimpleStatistic(key("test", "set"), StatisticType.SET_STRING, defaultSet, "Set", "A set stat");
+        registry().register(stat);
+        assertTrue(registry().registered(stat));
     }
 
     @Test
