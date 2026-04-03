@@ -83,7 +83,6 @@ public class PlayerStatisticDAO {
         }
         if (lastStoredVersion == 0) {
             TableVersionHistoryDAO.setTableVersion(connection, TABLE_NAME, 1);
-            lastStoredVersion = 1;
         }
     }
 
@@ -206,6 +205,7 @@ public class PlayerStatisticDAO {
      * @param playerUUID The {@link UUID} of the player.
      * @param entry      The entry to save.
      * @return The {@link PreparedStatement} to execute.
+     * @throws RuntimeException wrapping {@link SQLException} if statement preparation fails.
      */
     @NotNull
     public static PreparedStatement savePlayerStatistic(
@@ -257,6 +257,7 @@ public class PlayerStatisticDAO {
      * @param playerUUID The {@link UUID} of the player.
      * @param key        The {@link NamespacedKey} of the statistic to delete.
      * @return The {@link PreparedStatement} to execute.
+     * @throws RuntimeException wrapping {@link SQLException} if statement preparation fails.
      */
     @NotNull
     public static PreparedStatement deletePlayerStatistic(
@@ -321,8 +322,16 @@ public class PlayerStatisticDAO {
                 i++; // skip opening quote
                 while (i < inner.length()) {
                     char c = inner.charAt(i);
-                    if (c == '\\' && i + 1 < inner.length() && inner.charAt(i + 1) == '"') {
-                        element.append('"');
+                    if (c == '\\' && i + 1 < inner.length()) {
+                        char next = inner.charAt(i + 1);
+                        if (next == '"') {
+                            element.append('"');
+                        } else if (next == '\\') {
+                            element.append('\\');
+                        } else {
+                            element.append(c);
+                            element.append(next);
+                        }
                         i += 2;
                     } else if (c == '"') {
                         i++; // skip closing quote
@@ -357,7 +366,7 @@ public class PlayerStatisticDAO {
         StringBuilder sb = new StringBuilder("[");
         var iterator = set.iterator();
         while (iterator.hasNext()) {
-            sb.append("\"").append(iterator.next().replace("\"", "\\\"")).append("\"");
+            sb.append("\"").append(iterator.next().replace("\\", "\\\\").replace("\"", "\\\"")).append("\"");
             if (iterator.hasNext()) {
                 sb.append(",");
             }
