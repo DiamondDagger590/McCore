@@ -386,6 +386,77 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
     }
 
     /**
+     * Gets a localized message using the provided {@link Route}, then substitutes {@code <key>}
+     * placeholders with the values from the provided map. This uses the same {@code <key>}
+     * placeholder convention as {@link #getLocalizedMessageAsComponent(CorePlayer, Route, Map)} so that
+     * locale YAML authors do not need to know whether a string will be resolved as a
+     * {@link Component} or a plain {@link String}.
+     *
+     * @param player       The {@link T} to localize for.
+     * @param route        The {@link Route} to check for a translated message.
+     * @param placeholders Map of placeholder keys (without angle brackets) to replacement values.
+     * @return The localized message with all matching placeholders substituted.
+     * @throws NoLocalizationContainsMessageException If there is no localization in the player's locale
+     *                                                chain that supports the provided route.
+     */
+    @NotNull
+    public String getLocalizedMessage(@NotNull T player, @NotNull Route route,
+                                      @NotNull Map<String, String> placeholders) {
+        return applyStringPlaceholders(getLocalizedMessage(player, route), placeholders);
+    }
+
+    /**
+     * Gets a localized message for the provided {@link Audience}, then substitutes {@code <key>}
+     * placeholders with the values from the provided map.
+     *
+     * @param audience     The {@link Audience} to localize for.
+     * @param route        The {@link Route} to check for a translated message.
+     * @param placeholders Map of placeholder keys (without angle brackets) to replacement values.
+     * @return The localized message with all matching placeholders substituted.
+     * @throws NoLocalizationContainsMessageException If there is no localization in the audience's locale
+     *                                                chain that supports the provided route.
+     */
+    @NotNull
+    public String getLocalizedMessage(@NotNull Audience audience, @NotNull Route route,
+                                      @NotNull Map<String, String> placeholders) {
+        return applyStringPlaceholders(getLocalizedMessage(audience, route), placeholders);
+    }
+
+    /**
+     * Gets a localized message using {@link Locale#ENGLISH} as the locale, then substitutes
+     * {@code <key>} placeholders with the values from the provided map.
+     *
+     * @param route        The {@link Route} to check for a translated message.
+     * @param placeholders Map of placeholder keys (without angle brackets) to replacement values.
+     * @return The localized message with all matching placeholders substituted.
+     * @throws NoLocalizationContainsMessageException If there is no localization in the default locale
+     *                                                chain that supports the provided route.
+     */
+    @NotNull
+    public String getLocalizedMessage(@NotNull Route route, @NotNull Map<String, String> placeholders) {
+        return applyStringPlaceholders(getLocalizedMessage(route), placeholders);
+    }
+
+    /**
+     * Substitutes {@code <key>} tokens in the given template using the provided map.
+     * Uses the same angle-bracket convention as MiniMessage so that locale YAML files
+     * need only one placeholder syntax regardless of how the string is resolved.
+     *
+     * @param template     the raw localized string
+     * @param placeholders map of token key to replacement value
+     * @return the string with all matching tokens replaced
+     */
+    @NotNull
+    private static String applyStringPlaceholders(@NotNull String template,
+                                                  @NotNull Map<String, String> placeholders) {
+        String result = template;
+        for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+            result = result.replace("<" + entry.getKey() + ">", entry.getValue());
+        }
+        return result;
+    }
+
+    /**
      * Gets a {@link List} of localized messages from the provided {@link Route} assuming the route
      * maps to a string list.
      *

@@ -3,6 +3,7 @@ package com.diamonddagger590.mccore.external.mythicmobs;
 import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.external.common.CustomEntityHook;
 import com.diamonddagger590.mccore.registry.plugin.PluginHook;
+import com.diamonddagger590.mccore.util.item.CustomEntityWrapper;
 import io.lumine.mythic.bukkit.MythicBukkit;
 import org.bukkit.entity.Entity;
 import org.jetbrains.annotations.NotNull;
@@ -43,5 +44,20 @@ public class CoreMythicMobsHook extends PluginHook<CorePlugin> implements Custom
     public Optional<Set<String>> entityModels(@NotNull Entity entity) {
         var activeMobOptional = MythicBukkit.inst().getMobManager().getActiveMob(entity.getUniqueId());
         return activeMobOptional.map(activeMob -> Set.of(activeMob.getMobType()));
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Resolves the display name configured on the MythicMobs mob type definition.
+     * Falls back to the raw mob type ID if no mob type is found for the custom entity identifier.
+     */
+    @NotNull
+    @Override
+    public String entityName(@NotNull CustomEntityWrapper customEntityWrapper) {
+        return customEntityWrapper.customEntity()
+                .flatMap(id -> MythicBukkit.inst().getMobManager().getMythicMob(id))
+                .map(mob -> mob.getDisplayName().get())
+                .orElseGet(() -> customEntityWrapper.customEntity().orElse("Unknown"));
     }
 }

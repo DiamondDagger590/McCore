@@ -100,6 +100,33 @@ public class CustomBlockWrapper {
     }
 
     /**
+     * Returns a player-friendly display name for this block as a MiniMessage string.
+     * <p>
+     * For vanilla materials this returns a MiniMessage {@code <lang:key>} tag (e.g.
+     * {@code <lang:block.minecraft.iron_ore>}), which the Minecraft client resolves to the
+     * block's localized name in the player's own language.
+     * <p>
+     * For custom blocks the name is resolved via the registered {@link CustomBlockHook}, falling
+     * back to {@code "Missing Block"} if no hook recognises the custom block identifier.
+     *
+     * @return A MiniMessage string representing the display name of this block.
+     */
+    @NotNull
+    public String blockName() {
+        if (customBlock != null) {
+            List<CustomBlockHook> pluginHooks = RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHooks(CustomBlockHook.class);
+            for (CustomBlockHook hook : pluginHooks) {
+                if (hook.isCustomBlock(customBlock)) {
+                    return hook.blockName(this);
+                }
+            }
+            return "Missing Block";
+        } else {
+            return "<lang:" + material.translationKey() + ">";
+        }
+    }
+
+    /**
      * Get an {@link ItemBuilder} representation of this custom block, meant to allow for conversion between
      * custom blocks and custom items.
      *

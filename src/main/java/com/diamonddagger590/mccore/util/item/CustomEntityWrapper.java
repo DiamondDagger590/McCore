@@ -92,6 +92,33 @@ public class CustomEntityWrapper {
     }
 
     /**
+     * Returns a player-friendly display name for this entity as a MiniMessage string.
+     * <p>
+     * For vanilla entity types this returns a MiniMessage {@code <lang:key>} tag (e.g.
+     * {@code <lang:entity.minecraft.zombie>}), which the Minecraft client resolves to the
+     * entity's localized name in the player's own language.
+     * <p>
+     * For custom entities the name is resolved via the registered {@link CustomEntityHook}, falling
+     * back to {@code "Unknown"} if no hook recognises the custom entity identifier.
+     *
+     * @return A MiniMessage string representing the display name of this entity.
+     */
+    @NotNull
+    public String entityName() {
+        if (customEntity != null) {
+            List<CustomEntityHook> pluginHooks = RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHooks(CustomEntityHook.class);
+            for (CustomEntityHook hook : pluginHooks) {
+                if (hook.isCustomEntity(customEntity)) {
+                    return hook.entityName(this);
+                }
+            }
+            return "Unknown";
+        } else {
+            return "<lang:" + entityType.translationKey() + ">";
+        }
+    }
+
+    /**
      * Checks to see if the provided {@link EntityType} equals this wrapper.
      *
      * @param entityType The entity type to check.

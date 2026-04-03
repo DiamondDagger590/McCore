@@ -3,6 +3,7 @@ package com.diamonddagger590.mccore.external.modelengine;
 import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.external.common.CustomEntityHook;
 import com.diamonddagger590.mccore.registry.plugin.PluginHook;
+import com.diamonddagger590.mccore.util.item.CustomEntityWrapper;
 import com.ticxo.modelengine.api.ModelEngineAPI;
 import com.ticxo.modelengine.api.model.ActiveModel;
 import com.ticxo.modelengine.api.model.ModeledEntity;
@@ -55,5 +56,17 @@ public class CoreModelEngineHook extends PluginHook<CorePlugin> implements Custo
             return Optional.empty();
         }
         return Optional.of(modeledEntity.getModels().keySet());
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * ModelEngine only provides visual model data and has no display name concept for blueprints,
+     * so the raw custom entity identifier (blueprint name) is returned as-is.
+     */
+    @NotNull
+    @Override
+    public String entityName(@NotNull CustomEntityWrapper customEntityWrapper) {
+        return customEntityWrapper.customEntity().orElse("Unknown");
     }
 }

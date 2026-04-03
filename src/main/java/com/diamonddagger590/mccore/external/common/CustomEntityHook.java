@@ -78,4 +78,14 @@ public interface CustomEntityHook {
      */
     @NotNull
     Optional<Set<String>> entityModels(@NotNull Entity entity);
+
+    /**
+     * Returns a player-friendly display name for the custom entity represented by the provided
+     * {@link CustomEntityWrapper} as a MiniMessage string.
+     *
+     * @param customEntityWrapper The {@link CustomEntityWrapper} to get the name of.
+     * @return A MiniMessage string representing the display name of this entity.
+     */
+    @NotNull
+    String entityName(@NotNull CustomEntityWrapper customEntityWrapper);
 }
