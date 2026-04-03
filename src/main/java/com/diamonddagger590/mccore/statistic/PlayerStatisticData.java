@@ -68,6 +68,13 @@ public final class PlayerStatisticData {
     private final UUID uuid;
     private final ConcurrentHashMap<NamespacedKey, Object> values;
     private final Set<NamespacedKey> dirtyKeys;
+    /**
+     * Per-instance, per-key lock objects. Using instance-scoped locks (rather than
+     * {@code statistic.getStatisticKey()}) ensures that mutations for different players
+     * never contend on the same monitor, while still serializing concurrent mutations of
+     * the same stat key within a single player's data.
+     */
+    private final ConcurrentHashMap<NamespacedKey, Object> locks;
     private final StatisticEventDispatcher dispatcher;
     private final CorePlayerResolver playerResolver;
 
@@ -103,6 +110,7 @@ public final class PlayerStatisticData {
         this.uuid = uuid;
         this.values = new ConcurrentHashMap<>();
         this.dirtyKeys = ConcurrentHashMap.newKeySet();
+        this.locks = new ConcurrentHashMap<>();
         this.dispatcher = dispatcher;
         this.playerResolver = playerResolver;
     }
@@ -247,20 +255,22 @@ public final class PlayerStatisticData {
      */
     public void setValue(@NotNull NamespacedKey key, @NotNull Object newValue) {
         Statistic statistic = getRegisteredStatisticOrThrow(key);
-        Object oldValue = resolveCurrentValue(key, statistic);
-        StatisticModifyEvent preEvent = new StatisticModifyEvent(
-                playerResolver.resolve(uuid), key, statistic, oldValue, newValue, ModificationType.SET
-        );
-        dispatcher.dispatch(preEvent);
-        if (preEvent.isCancelled()) {
-            return;
+        synchronized (lockFor(key)) {
+            Object oldValue = resolveCurrentValue(key, statistic);
+            StatisticModifyEvent preEvent = new StatisticModifyEvent(
+                    playerResolver.resolve(uuid), key, statistic, oldValue, newValue, ModificationType.SET
+            );
+            dispatcher.dispatch(preEvent);
+            if (preEvent.isCancelled()) {
+                return;
+            }
+            Object finalValue = preEvent.getNewValue();
+            values.put(key, finalValue);
+            dirtyKeys.add(key);
+            dispatcher.dispatch(new PostStatisticModifyEvent(
+                    playerResolver.resolve(uuid), key, statistic, oldValue, finalValue, ModificationType.SET
+            ));
         }
-        Object finalValue = preEvent.getNewValue();
-        values.put(key, finalValue);
-        dirtyKeys.add(key);
-        dispatcher.dispatch(new PostStatisticModifyEvent(
-                playerResolver.resolve(uuid), key, statistic, oldValue, finalValue, ModificationType.SET
-        ));
     }
 
     /**
@@ -272,8 +282,7 @@ public final class PlayerStatisticData {
      */
     public void incrementLong(@NotNull NamespacedKey key, long delta) {
         Statistic statistic = getRegisteredStatisticOrThrow(key);
-        Object syncKey = statistic.getStatisticKey();
-        synchronized (syncKey) {
+        synchronized (lockFor(key)) {
             long oldValue = getLongValue(key).orElse(0L);
             long newValue = oldValue + delta;
             StatisticModifyEvent preEvent = new StatisticModifyEvent(
@@ -314,8 +323,7 @@ public final class PlayerStatisticData {
      */
     public void incrementInt(@NotNull NamespacedKey key, int delta) {
         Statistic statistic = getRegisteredStatisticOrThrow(key);
-        Object syncKey = statistic.getStatisticKey();
-        synchronized (syncKey) {
+        synchronized (lockFor(key)) {
             int oldValue = getIntValue(key).orElse(0);
             int newValue = oldValue + delta;
             StatisticModifyEvent preEvent = new StatisticModifyEvent(
@@ -343,8 +351,7 @@ public final class PlayerStatisticData {
      */
     public void incrementDouble(@NotNull NamespacedKey key, double delta) {
         Statistic statistic = getRegisteredStatisticOrThrow(key);
-        Object syncKey = statistic.getStatisticKey();
-        synchronized (syncKey) {
+        synchronized (lockFor(key)) {
             double oldValue = getDoubleValue(key).orElse(0.0);
             double newValue = oldValue + delta;
             StatisticModifyEvent preEvent = new StatisticModifyEvent(
@@ -373,8 +380,7 @@ public final class PlayerStatisticData {
      */
     public void setMaxLong(@NotNull NamespacedKey key, long value) {
         Statistic statistic = getRegisteredStatisticOrThrow(key);
-        Object syncKey = statistic.getStatisticKey();
-        synchronized (syncKey) {
+        synchronized (lockFor(key)) {
             long oldValue = getLongValue(key).orElse((Long) statistic.getDefaultValue());
             if (value <= oldValue) {
                 return;
@@ -405,8 +411,7 @@ public final class PlayerStatisticData {
      */
     public void setMaxInt(@NotNull NamespacedKey key, int value) {
         Statistic statistic = getRegisteredStatisticOrThrow(key);
-        Object syncKey = statistic.getStatisticKey();
-        synchronized (syncKey) {
+        synchronized (lockFor(key)) {
             int oldValue = getIntValue(key).orElse((Integer) statistic.getDefaultValue());
             if (value <= oldValue) {
                 return;
@@ -437,8 +442,7 @@ public final class PlayerStatisticData {
      */
     public void setMaxDouble(@NotNull NamespacedKey key, double value) {
         Statistic statistic = getRegisteredStatisticOrThrow(key);
-        Object syncKey = statistic.getStatisticKey();
-        synchronized (syncKey) {
+        synchronized (lockFor(key)) {
             double oldValue = getDoubleValue(key).orElse((Double) statistic.getDefaultValue());
             if (value <= oldValue) {
                 return;
@@ -468,8 +472,7 @@ public final class PlayerStatisticData {
      */
     public void setTimestampIfAbsent(@NotNull NamespacedKey key, @NotNull Instant instant) {
         Statistic statistic = getRegisteredStatisticOrThrow(key);
-        Object syncKey = statistic.getStatisticKey();
-        synchronized (syncKey) {
+        synchronized (lockFor(key)) {
             if (values.containsKey(key)) {
                 return;
             }
@@ -501,8 +504,7 @@ public final class PlayerStatisticData {
     @SuppressWarnings("unchecked")
     public boolean addToSet(@NotNull NamespacedKey key, @NotNull String element) {
         Statistic statistic = getRegisteredStatisticOrThrow(key);
-        Object syncKey = statistic.getStatisticKey();
-        synchronized (syncKey) {
+        synchronized (lockFor(key)) {
             LinkedHashSet<String> currentSet = getOrCreateSet(key, statistic);
             if (currentSet.contains(element)) {
                 return false;
@@ -546,8 +548,7 @@ public final class PlayerStatisticData {
     @SuppressWarnings("unchecked")
     public boolean removeFromSet(@NotNull NamespacedKey key, @NotNull String element) {
         Statistic statistic = getRegisteredStatisticOrThrow(key);
-        Object syncKey = statistic.getStatisticKey();
-        synchronized (syncKey) {
+        synchronized (lockFor(key)) {
             LinkedHashSet<String> currentSet = getOrCreateSet(key, statistic);
             if (!currentSet.contains(element)) {
                 return false;
@@ -627,6 +628,18 @@ public final class PlayerStatisticData {
      */
     public void markClean(@NotNull Set<NamespacedKey> savedKeys) {
         dirtyKeys.removeAll(savedKeys);
+    }
+
+    /**
+     * Returns the per-instance, per-key lock object for the given statistic key.
+     * Creates one on first access via {@link ConcurrentHashMap#computeIfAbsent}.
+     *
+     * @param key The statistic key.
+     * @return A stable lock object scoped to this player instance and key.
+     */
+    @NotNull
+    private Object lockFor(@NotNull NamespacedKey key) {
+        return locks.computeIfAbsent(key, k -> new Object());
     }
 
     /**
