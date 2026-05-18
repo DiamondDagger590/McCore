@@ -566,6 +566,45 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
         return (B) this;
     }
 
+    /**
+     * Applies the provided tag replacements to this builder's display name and all lore lines.
+     * Each key in the map is replaced with its corresponding value in the display name and every
+     * lore entry. Replacements are applied in iteration order. This is a no-op when the
+     * replacement map is empty or when neither the display name nor any lore entry contains a
+     * matching key.
+     * <p>
+     * This method is intended for palette placeholder resolution (e.g. replacing {@code <primary>}
+     * with {@code <color:#D4A76A>}) before the builder is finalized into an {@link ItemStack}.
+     *
+     * @param replacements Map of tag strings to their replacement values.
+     * @return This builder for chaining.
+     */
+    @NotNull
+    public B applyTagReplacements(@NotNull Map<String, String> replacements) {
+        if (replacements.isEmpty()) {
+            return (B) this;
+        }
+        if (displayName != null) {
+            String name = displayName;
+            for (Map.Entry<String, String> entry : replacements.entrySet()) {
+                name = name.replace(entry.getKey(), entry.getValue());
+            }
+            this.displayName = name;
+        }
+        if (!lore.isEmpty()) {
+            List<String> processedLore = new ArrayList<>(lore.size());
+            for (String line : lore) {
+                String processedLine = line;
+                for (Map.Entry<String, String> entry : replacements.entrySet()) {
+                    processedLine = processedLine.replace(entry.getKey(), entry.getValue());
+                }
+                processedLore.add(processedLine);
+            }
+            this.lore = processedLore;
+        }
+        return (B) this;
+    }
+
     // TODO remove as part of https://github.com/DiamondDagger590/McRPG/issues/168
     /**
      * Adds to the lore to be used for the item being built.

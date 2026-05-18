@@ -46,6 +46,10 @@ import java.util.stream.Collectors;
  * translation, then {@link NoLocalizationContainsMessageException} will be thrown.
  * <p>
  * Third party plugins can add their own configuration files to be included for localization by using {@link #registerLanguageFile(Localization)}.
+ * <p>
+ * Subclasses may override {@link #postProcessResolvedString(String)} to apply custom string transformations
+ * (such as palette placeholder replacement) to every resolved locale string before it is returned or
+ * parsed by MiniMessage. The default implementation is a no-op identity transform.
  */
 public abstract class LocalizationManager<P extends CorePlugin, T extends CorePlayer> extends Manager<P> {
 
@@ -66,6 +70,24 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
      */
     @NotNull
     protected abstract ReloadableContent<LinkedNode<Locale>> generateLocaleChain();
+
+    /**
+     * Post-processes a resolved locale string before it is returned or parsed by MiniMessage.
+     * The default implementation is an identity transform — the raw string is returned unchanged.
+     * <p>
+     * Subclasses override this to apply plugin-specific transformations such as palette
+     * placeholder replacement (e.g. {@code <primary>} → {@code <color:#D4A76A>}).
+     * This hook is applied in every {@code getLocalizedMessage} and {@code getLocalizedMessages}
+     * overload, ensuring all resolution paths — direct string return, Component deserialization,
+     * and list variants — receive the transformation before the string reaches MiniMessage.
+     *
+     * @param raw The resolved locale string.
+     * @return The post-processed string.
+     */
+    @NotNull
+    protected String postProcessResolvedString(@NotNull String raw) {
+        return raw;
+    }
 
     /**
      * Gets a localized {@link Component} using the provided {@link Route} to find a translated message.
@@ -293,7 +315,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
                         if (papiHookOptional.isPresent() && playerOptional.isPresent()) {
                             message = papiHookOptional.get().translateMessage(playerOptional.get(), message);
                         }
-                        return message;
+                        return postProcessResolvedString(message);
                     }
                 }
             }
@@ -376,7 +398,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
             // Check all registered configurations for the message
             for (YamlDocument yamlDocument : documents) {
                 if (yamlDocument.contains(route)) {
-                    return yamlDocument.getString(route);
+                    return postProcessResolvedString(yamlDocument.getString(route));
                 }
             }
         }
@@ -492,10 +514,12 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
                         List<String> returnList = new ArrayList<>();
                         if (papiHookOptional.isPresent() && playerOptional.isPresent()) {
                             for (String line : message) {
-                                returnList.add(papiHookOptional.get().translateMessage(playerOptional.get(), line));
+                                returnList.add(postProcessResolvedString(papiHookOptional.get().translateMessage(playerOptional.get(), line)));
                             }
                         } else {
-                            returnList = message;
+                            for (String line : message) {
+                                returnList.add(postProcessResolvedString(line));
+                            }
                         }
                         return returnList;
                     }
@@ -548,7 +572,9 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
             // Check all registered configurations for the message
             for (YamlDocument yamlDocument : documents) {
                 if (yamlDocument.contains(route)) {
-                    return yamlDocument.getStringList(route);
+                    return yamlDocument.getStringList(route).stream()
+                            .map(this::postProcessResolvedString)
+                            .collect(Collectors.toList());
                 }
             }
         }
