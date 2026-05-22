@@ -30,6 +30,16 @@ public class ItemBuilder extends BaseItemBuilder<ItemBuilder> {
     }
 
     /**
+     * Copy constructor that transfers all mutable builder state from an existing builder
+     * without triggering {@link #asItemStack()}.
+     *
+     * @param source The builder to copy state from.
+     */
+    protected ItemBuilder(@NotNull ItemBuilder source) {
+        super(source);
+    }
+
+    /**
      * Returns a {@link PotionBuilder} using the provided {@link ItemType}.
      *
      * @param itemType The {@link ItemType} to use.

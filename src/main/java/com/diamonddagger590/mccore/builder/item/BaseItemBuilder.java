@@ -139,6 +139,27 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
     }
 
     /**
+     * Copy constructor that transfers all mutable builder state from an existing builder
+     * without triggering {@link #asItemStack()}. This keeps the lore and display name in
+     * their original string form so that placeholders added later are resolved in the same
+     * MiniMessage parse pass as everything else.
+     *
+     * @param source The builder to copy state from.
+     */
+    protected BaseItemBuilder(@NotNull BaseItemBuilder<?> source) {
+        this.itemStack = source.itemStack;
+        this.displayName = source.displayName;
+        this.displayNameComponent = source.displayNameComponent;
+        this.lore = new ArrayList<>(source.lore);
+        this.loreAsComponent = new ArrayList<>(source.loreAsComponent);
+        this.placeholders = new HashMap<>(source.placeholders);
+        this.itemFlags.addAll(source.itemFlags);
+        this.customItem = source.customItem;
+        this.staticItemName = source.staticItemName;
+        this.applyAudienceSkullTexture = source.applyAudienceSkullTexture;
+    }
+
+    /**
      * Gets an {@link ItemStack} from this builder using the provided {@link Audience} to
      * use when replacing PlaceholderAPI placeholders.
      * <p>
@@ -158,11 +179,15 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
             this.itemStack.setData(DataComponentTypes.ITEM_NAME, displayComponent);
             this.itemStack.setData(DataComponentTypes.CUSTOM_NAME, displayComponent);
         }
+        List<Component> finalLore = new ArrayList<>();
         if (!this.lore.isEmpty()) {
-            this.itemStack.setData(DataComponentTypes.LORE, ItemLore.lore(lore.stream().map(loreLine -> parseString(loreLine, audience)).toList()));
+            finalLore.addAll(lore.stream().map(loreLine -> parseString(loreLine, audience)).toList());
         }
         if (!this.loreAsComponent.isEmpty()) {
-            this.itemStack.setData(DataComponentTypes.LORE, ItemLore.lore(loreAsComponent.stream().map(this::parseComponent).toList()));
+            finalLore.addAll(loreAsComponent.stream().map(this::parseComponent).toList());
+        }
+        if (!finalLore.isEmpty()) {
+            this.itemStack.setData(DataComponentTypes.LORE, ItemLore.lore(finalLore));
         }
         if (!this.itemFlags.isEmpty()) { // temporary for now.
             this.itemStack.editMeta(itemMeta -> this.itemFlags.forEach(flag -> {
