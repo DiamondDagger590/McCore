@@ -1,11 +1,14 @@
 package com.diamonddagger590.mccore.external.common;
 
 import com.diamonddagger590.mccore.util.item.CustomItemWrapper;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A type of {@link com.diamonddagger590.mccore.registry.plugin.PluginHook} which supports custom item models.
@@ -66,4 +69,13 @@ public interface CustomItemHook {
      */
     @NotNull
     Optional<Set<String>> itemModels(@NotNull ItemStack itemStack);
+
+    /**
+     * Gets the name to use to represent the {@link CustomItemWrapper}.
+     *
+     * @param customItemWrapper The {@link CustomItemWrapper} to get the name of.
+     * @return The name to use to represent the {@link CustomItemWrapper}.
+     */
+    @NotNull
+    String itemName(@NotNull CustomItemWrapper customItemWrapper);
 }

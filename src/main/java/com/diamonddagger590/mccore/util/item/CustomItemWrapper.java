@@ -111,6 +111,33 @@ public class CustomItemWrapper {
     }
 
     /**
+     * Returns a player-friendly display name for this item as a MiniMessage string.
+     * <p>
+     * For vanilla materials this returns a MiniMessage {@code <lang:key>} tag (e.g.
+     * {@code <lang:item.minecraft.iron_ingot>}), which the Minecraft client resolves to the
+     * item's localized name in the player's own language.
+     * <p>
+     * For custom items the name is resolved via the registered {@link CustomItemHook}, falling
+     * back to {@code "Missing Item"} if no hook recognises the custom item identifier.
+     *
+     * @return A MiniMessage string representing the display name of this item.
+     */
+    @NotNull
+    public String itemName() {
+        if (customItem != null) {
+            List<CustomItemHook> pluginHooks = RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHooks(CustomItemHook.class);
+            for (CustomItemHook hook : pluginHooks) {
+                if (hook.isItem(customItem)) {
+                    return hook.itemName(this);
+                }
+            }
+            return "Missing Item";
+        } else {
+            return "<lang:" + material.translationKey() + ">";
+        }
+    }
+
+    /**
      * Checks to see if the provided {@link Material} equals this wrapper.
      *
      * @param material The material to check.
