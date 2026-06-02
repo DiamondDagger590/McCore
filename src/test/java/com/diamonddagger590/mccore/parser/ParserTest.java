@@ -360,7 +360,14 @@ class ParserTest {
     @Test
     @DisplayName("Given function without parenthesis, when evaluating, then throws ParseError")
     void getValue_throwsParseError_whenFunctionMissingParenthesis() {
-        assertThrows(ParseError.class, () -> new Parser("sin 5").getValue());
+        assertThrows(ParseError.class, () -> new Parser("sin").getValue());
+    }
+
+    @Test
+    @DisplayName("Given function name with space-separated argument, when evaluating, then treats as variable due to space stripping")
+    void getValue_treatsAsVariable_whenFunctionNameSpaceSeparatedFromArgument() {
+        // "sin 5" has its space stripped → "sin5" → not a function name, treated as variable → default 0.0
+        assertEquals(0.0, new Parser("sin 5").getValue(), 1e-10);
     }
 
     @Test

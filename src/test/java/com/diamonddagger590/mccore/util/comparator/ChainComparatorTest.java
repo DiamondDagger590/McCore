@@ -15,7 +15,7 @@ class ChainComparatorTest {
     @Test
     @DisplayName("Given a single comparator, when comparing, then delegates to that comparator")
     void compare_delegatesToSingleComparator_whenOnlyOneProvided() {
-        ChainComparator<Integer> chain = new ChainComparator<>(Comparator.naturalOrder());
+        ChainComparator<Integer> chain = new ChainComparator<>(Comparator.<Integer>naturalOrder());
         assertTrue(chain.compare(1, 2) < 0);
         assertTrue(chain.compare(2, 1) > 0);
         assertEquals(0, chain.compare(5, 5));
@@ -91,7 +91,7 @@ class ChainComparatorTest {
     @Test
     @DisplayName("Given a reverse-order comparator in the chain, when comparing, then orders descending")
     void compare_ordersDescending_whenReverseComparatorUsed() {
-        ChainComparator<Integer> chain = new ChainComparator<>(Comparator.reverseOrder());
+        ChainComparator<Integer> chain = new ChainComparator<>(Comparator.<Integer>reverseOrder());
 
         assertTrue(chain.compare(1, 2) > 0);
         assertTrue(chain.compare(2, 1) < 0);
