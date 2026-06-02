@@ -61,6 +61,20 @@ Built-in `CoreManagerKey` constants: `CORE_GUI_MANAGER`, `CORE_PLAYER_MANAGER`, 
 
 - `@NotNull` (IntelliJ v12) on all non-null return types and parameters
 - `@Override` on all overridden methods
+- `@DisplayName` on every test method — human-readable Given/When/Then sentence
+
+## Test Naming Convention
+
+Every test method must follow the Given/When/Then pattern:
+
+- **Method name:** `methodUnderTest_expectedOutcome_whenCondition` (descriptive, snake_case segments)
+- **@DisplayName:** `"Given [precondition], when [action], then [expected outcome]"`
+
+```java
+@Test
+@DisplayName("Given a registered statistic, when getting by key, then returns the statistic")
+void getStatistic_returnsStatistic_whenKeyIsRegistered() { ... }
+```
 
 ## Code Style
 

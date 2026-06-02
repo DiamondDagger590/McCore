@@ -1,5 +1,6 @@
 package com.diamonddagger590.mccore.util.filter;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -13,7 +14,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ChainFilterTest {
 
     @Test
-    void singleFilterApplied() {
+    @DisplayName("Given a single evens-only filter, when filtering a list, then returns only even numbers")
+    void filter_returnsEvenNumbers_whenSingleEvensFilterApplied() {
         Filter<Integer> evensOnly = collection ->
                 collection.stream().filter(n -> n % 2 == 0).collect(Collectors.toList());
 
@@ -24,7 +26,8 @@ class ChainFilterTest {
     }
 
     @Test
-    void multipleFiltersAppliedInOrder() {
+    @DisplayName("Given evens-only then greater-than-three filters, when filtering, then returns even numbers greater than three")
+    void filter_appliesBothFilters_whenTwoFiltersChained() {
         Filter<Integer> evensOnly = collection ->
                 collection.stream().filter(n -> n % 2 == 0).collect(Collectors.toList());
 
@@ -38,7 +41,8 @@ class ChainFilterTest {
     }
 
     @Test
-    void filterOrderMatters() {
+    @DisplayName("Given two filters in different orders, when filtering same input, then produces different results")
+    void filter_producesDifferentResults_whenFilterOrderDiffers() {
         Filter<String> takeFirstTwo = collection ->
                 collection.stream().limit(2).collect(Collectors.toList());
 
@@ -58,7 +62,8 @@ class ChainFilterTest {
     }
 
     @Test
-    void emptyInputReturnsEmpty() {
+    @DisplayName("Given an empty input collection, when filtering, then returns empty collection")
+    void filter_returnsEmpty_whenInputIsEmpty() {
         Filter<Integer> evensOnly = collection ->
                 collection.stream().filter(n -> n % 2 == 0).collect(Collectors.toList());
 
@@ -69,7 +74,8 @@ class ChainFilterTest {
     }
 
     @Test
-    void filterThatRemovesAllReturnsEmpty() {
+    @DisplayName("Given a filter that rejects all elements, when filtering, then returns empty collection")
+    void filter_returnsEmpty_whenFilterRejectsAll() {
         Filter<Integer> removeAll = collection ->
                 collection.stream().filter(n -> false).collect(Collectors.toList());
 
@@ -80,7 +86,8 @@ class ChainFilterTest {
     }
 
     @Test
-    void identityFilterReturnsAllElements() {
+    @DisplayName("Given an identity filter, when filtering, then returns all original elements")
+    void filter_returnsAllElements_whenIdentityFilterUsed() {
         Filter<String> identity = collection -> collection;
 
         ChainFilter<String> chain = new ChainFilter<>(identity);
@@ -91,7 +98,8 @@ class ChainFilterTest {
     }
 
     @Test
-    void threeFiltersChained() {
+    @DisplayName("Given three chained filters (non-negative, even, less-than-ten), when filtering, then all three conditions apply")
+    void filter_appliesAllThreeConditions_whenThreeFiltersChained() {
         Filter<Integer> removeNegatives = collection ->
                 collection.stream().filter(n -> n >= 0).collect(Collectors.toList());
 
@@ -109,7 +117,8 @@ class ChainFilterTest {
     }
 
     @Test
-    void stringFilterChain() {
+    @DisplayName("Given non-empty and starts-with-a filters, when filtering strings, then returns only non-empty strings starting with 'a'")
+    void filter_returnsMatchingStrings_whenStringFiltersChained() {
         Filter<String> nonEmpty = collection ->
                 collection.stream().filter(s -> !s.isEmpty()).collect(Collectors.toList());
 

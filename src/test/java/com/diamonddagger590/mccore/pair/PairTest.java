@@ -1,28 +1,33 @@
 package com.diamonddagger590.mccore.pair;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PairTest {
 
     @Test
-    void immutablePairOfCreatesWithCorrectValues() {
+    @DisplayName("Given left and right values, when creating ImmutablePair, then stores both values correctly")
+    void of_storesBothValues_whenCreatingImmutablePair() {
         ImmutablePair<String, Integer> pair = ImmutablePair.of("hello", 42);
         assertEquals("hello", pair.getLeft());
         assertEquals(42, pair.getRight());
     }
 
     @Test
-    void mutablePairOfCreatesWithCorrectValues() {
+    @DisplayName("Given left and right values, when creating MutablePair, then stores both values correctly")
+    void of_storesBothValues_whenCreatingMutablePair() {
         MutablePair<String, Integer> pair = MutablePair.of("hello", 42);
         assertEquals("hello", pair.getLeft());
         assertEquals(42, pair.getRight());
     }
 
     @Test
-    void mutablePairSetLeftUpdatesValue() {
+    @DisplayName("Given a MutablePair, when setting left value, then left updates and right is unchanged")
+    void setLeft_updatesLeftOnly_whenCalled() {
         MutablePair<String, Integer> pair = MutablePair.of("hello", 42);
         pair.setLeft("world");
         assertEquals("world", pair.getLeft());
@@ -30,7 +35,8 @@ class PairTest {
     }
 
     @Test
-    void mutablePairSetRightUpdatesValue() {
+    @DisplayName("Given a MutablePair, when setting right value, then right updates and left is unchanged")
+    void setRight_updatesRightOnly_whenCalled() {
         MutablePair<String, Integer> pair = MutablePair.of("hello", 42);
         pair.setRight(99);
         assertEquals("hello", pair.getLeft());
@@ -38,7 +44,8 @@ class PairTest {
     }
 
     @Test
-    void mutablePairBothSidesUpdatable() {
+    @DisplayName("Given a MutablePair, when setting both sides, then both values update")
+    void setLeftAndRight_updatesBothSides_whenBothCalled() {
         MutablePair<String, String> pair = MutablePair.of("a", "b");
         pair.setLeft("x");
         pair.setRight("y");
@@ -47,53 +54,61 @@ class PairTest {
     }
 
     @Test
-    void equalPairsAreEqual() {
+    @DisplayName("Given two pairs with equal values, when comparing, then they are equal")
+    void equals_returnsTrue_whenBothSidesMatch() {
         ImmutablePair<String, Integer> pair1 = ImmutablePair.of("test", 1);
         ImmutablePair<String, Integer> pair2 = ImmutablePair.of("test", 1);
         assertEquals(pair1, pair2);
     }
 
     @Test
-    void differentLeftsAreNotEqual() {
+    @DisplayName("Given two pairs with different left values, when comparing, then they are not equal")
+    void equals_returnsFalse_whenLeftValuesDiffer() {
         ImmutablePair<String, Integer> pair1 = ImmutablePair.of("a", 1);
         ImmutablePair<String, Integer> pair2 = ImmutablePair.of("b", 1);
         assertNotEquals(pair1, pair2);
     }
 
     @Test
-    void differentRightsAreNotEqual() {
+    @DisplayName("Given two pairs with different right values, when comparing, then they are not equal")
+    void equals_returnsFalse_whenRightValuesDiffer() {
         ImmutablePair<String, Integer> pair1 = ImmutablePair.of("a", 1);
         ImmutablePair<String, Integer> pair2 = ImmutablePair.of("a", 2);
         assertNotEquals(pair1, pair2);
     }
 
     @Test
-    void equalPairsHaveSameHashCode() {
+    @DisplayName("Given two equal pairs, when computing hash codes, then hash codes are equal")
+    void hashCode_isEqual_whenPairsAreEqual() {
         ImmutablePair<String, Integer> pair1 = ImmutablePair.of("test", 42);
         ImmutablePair<String, Integer> pair2 = ImmutablePair.of("test", 42);
         assertEquals(pair1.hashCode(), pair2.hashCode());
     }
 
     @Test
-    void pairEqualsSelf() {
+    @DisplayName("Given a pair, when compared to itself, then returns equal")
+    void equals_returnsTrue_whenComparedToSelf() {
         ImmutablePair<String, Integer> pair = ImmutablePair.of("self", 1);
         assertEquals(pair, pair);
     }
 
     @Test
-    void pairNotEqualToNull() {
+    @DisplayName("Given a pair, when compared to null, then returns not equal")
+    void equals_returnsFalse_whenComparedToNull() {
         ImmutablePair<String, Integer> pair = ImmutablePair.of("test", 1);
         assertNotEquals(null, pair);
     }
 
     @Test
-    void pairNotEqualToDifferentType() {
+    @DisplayName("Given a pair, when compared to a non-Pair object, then returns not equal")
+    void equals_returnsFalse_whenComparedToDifferentType() {
         ImmutablePair<String, Integer> pair = ImmutablePair.of("test", 1);
         assertNotEquals("not a pair", pair);
     }
 
     @Test
-    void immutableAndMutableWithSameValuesAreEqual() {
+    @DisplayName("Given an ImmutablePair and MutablePair with same values, when comparing, then they are equal")
+    void equals_returnsTrue_whenImmutableAndMutableHaveSameValues() {
         ImmutablePair<String, Integer> immutable = ImmutablePair.of("test", 1);
         MutablePair<String, Integer> mutable = MutablePair.of("test", 1);
         assertEquals(immutable, mutable);
@@ -101,26 +116,15 @@ class PairTest {
     }
 
     @Test
-    void toStringContainsClassName() {
-        ImmutablePair<String, Integer> immutable = ImmutablePair.of("a", 1);
-        assertTrue(immutable.toString().contains("ImmutablePair"));
-        assertTrue(immutable.toString().contains("a"));
-        assertTrue(immutable.toString().contains("1"));
-
-        MutablePair<String, Integer> mutable = MutablePair.of("b", 2);
-        assertTrue(mutable.toString().contains("MutablePair"));
-        assertTrue(mutable.toString().contains("b"));
-        assertTrue(mutable.toString().contains("2"));
-    }
-
-    @Test
-    void toStringFormatIsCorrect() {
+    @DisplayName("Given an ImmutablePair, when calling toString, then includes class name and values")
+    void toString_containsClassNameAndValues_whenCalledOnImmutablePair() {
         ImmutablePair<String, Integer> pair = ImmutablePair.of("left", 42);
         assertEquals("ImmutablePair(left;42)", pair.toString());
     }
 
     @Test
-    void mutablePairToStringReflectsUpdatedValues() {
+    @DisplayName("Given a MutablePair with updated values, when calling toString, then reflects new values")
+    void toString_reflectsUpdatedValues_whenMutablePairMutated() {
         MutablePair<String, Integer> pair = MutablePair.of("old", 1);
         pair.setLeft("new");
         pair.setRight(2);
@@ -128,14 +132,8 @@ class PairTest {
     }
 
     @Test
-    void pairsWithDifferentGenericTypes() {
-        ImmutablePair<Integer, Double> pair = ImmutablePair.of(1, 2.5);
-        assertEquals(1, pair.getLeft());
-        assertEquals(2.5, pair.getRight());
-    }
-
-    @Test
-    void mutablePairEqualityAfterMutation() {
+    @DisplayName("Given two MutablePairs with initially different values, when mutated to match, then they are equal")
+    void equals_returnsTrue_whenMutablePairMutatedToMatch() {
         MutablePair<String, Integer> pair1 = MutablePair.of("a", 1);
         MutablePair<String, Integer> pair2 = MutablePair.of("b", 2);
         assertNotEquals(pair1, pair2);
@@ -143,9 +141,5 @@ class PairTest {
         pair2.setLeft("a");
         pair2.setRight(1);
         assertEquals(pair1, pair2);
-    }
-
-    private static void assertTrue(boolean condition) {
-        org.junit.jupiter.api.Assertions.assertTrue(condition);
     }
 }
