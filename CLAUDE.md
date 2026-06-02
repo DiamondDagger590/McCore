@@ -9,7 +9,8 @@ McCore is a Java 21 Paper plugin framework library that provides shared infrastr
 | Command | Description |
 |---------|-------------|
 | `./gradlew shadowJar` | Build shaded jar **(recommended)** |
-| `./gradlew test` | Run tests only |
+| `./gradlew test` | Run tests only (automatically generates JaCoCo coverage report) |
+| `./gradlew jacocoTestReport` | Generate coverage report (HTML at `build/reports/jacoco/test/html/index.html`, XML at `build/reports/jacoco/test/jacocoTestReport.xml`) |
 | `./gradlew publishToMavenLocal` | Publish snapshot to local Maven cache for downstream consumption |
 | `./gradlew build` | Compile + shadowJar |
 
