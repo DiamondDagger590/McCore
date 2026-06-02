@@ -9,7 +9,8 @@ McCore is a Java 21 Paper plugin framework library that provides shared infrastr
 | Command | Description |
 |---------|-------------|
 | `./gradlew shadowJar` | Build shaded jar **(recommended)** |
-| `./gradlew test` | Run tests only |
+| `./gradlew test` | Run tests only (automatically generates JaCoCo coverage report) |
+| `./gradlew jacocoTestReport` | Generate coverage report (HTML at `build/reports/jacoco/test/html/index.html`, XML at `build/reports/jacoco/test/jacocoTestReport.xml`) |
 | `./gradlew publishToMavenLocal` | Publish snapshot to local Maven cache for downstream consumption |
 | `./gradlew build` | Compile + shadowJar |
 
@@ -28,6 +29,27 @@ Caffeine is shadowed and relocated to `com.diamonddagger590.mccore.caffeine` in 
 - Tests run via `useJUnitPlatform()` in Gradle
 - Use `RegistryResetExtension` / `InternalResetTestTools` where available to reset singleton state between tests
 - There are no integration tests — server behavior is validated manually on a running Paper server
+
+### Test Naming Convention
+
+Every test method **must** follow the Given/When/Then naming pattern and carry a `@DisplayName` annotation:
+
+- **Method name:** `methodUnderTest_expectedOutcome_whenCondition` (descriptive, snake_case segments)
+- **@DisplayName:** `"Given [precondition], when [action], then [expected outcome]"` — a full human-readable sentence
+
+```java
+@Test
+@DisplayName("Given a registered statistic, when getting by key, then returns the statistic")
+void getStatistic_returnsStatistic_whenKeyIsRegistered() { ... }
+
+@Test
+@DisplayName("Given an uninitialized variable with error mode, when evaluating, then throws EvaluationException")
+void getValue_throwsEvaluationException_whenVariableUninitializedAndErrorModeEnabled() { ... }
+```
+
+- Test methods must be `public` or package-private (not `private`)
+- Every test method must have at least one assertion
+- Tests that do not need Bukkit APIs must be plain JUnit tests — do not spin up MockBukkit unnecessarily
 
 ---
 

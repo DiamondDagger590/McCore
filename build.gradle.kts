@@ -5,6 +5,7 @@ plugins {
     `java-library`
     `java-test-fixtures`
     `maven-publish`
+    jacoco
     id("io.github.goooler.shadow") version "8.1.7"
 }
 
@@ -125,6 +126,16 @@ tasks {
 
     test {
         useJUnitPlatform()
+        finalizedBy(jacocoTestReport)
+    }
+
+    jacocoTestReport {
+        dependsOn(test)
+        reports {
+            xml.required.set(true)
+            html.required.set(true)
+            csv.required.set(false)
+        }
     }
 
     shadowJar {
