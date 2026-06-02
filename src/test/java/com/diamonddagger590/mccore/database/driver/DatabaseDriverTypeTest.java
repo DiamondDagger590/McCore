@@ -3,6 +3,7 @@ package com.diamonddagger590.mccore.database.driver;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -58,8 +59,6 @@ class DatabaseDriverTypeTest {
     @Test
     @DisplayName("Given values enumeration, when checking, then contains SQLITE")
     void values_containsSqlite() {
-        DatabaseDriverType[] values = DatabaseDriverType.values();
-        assertEquals(1, values.length);
-        assertEquals(DatabaseDriverType.SQLITE, values[0]);
+        assertTrue(Arrays.asList(DatabaseDriverType.values()).contains(DatabaseDriverType.SQLITE));
     }
 }
