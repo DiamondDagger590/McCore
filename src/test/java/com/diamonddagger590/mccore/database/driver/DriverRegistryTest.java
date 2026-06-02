@@ -125,4 +125,14 @@ class DriverRegistryTest {
         Optional<DatabaseDriver> result = registry.getDriver(DatabaseDriverType.SQLITE);
         assertFalse(result.isPresent());
     }
+
+    @Test
+    @DisplayName("Given a driver already registered for a type, when registering another driver for the same type, then overwrites the first")
+    void register_overwritesExistingDriver_whenSameDriverTypeRegisteredTwice() {
+        TestDriver first = new TestDriver(true);
+        TestDriver second = new TestDriver(true);
+        registry.register(first);
+        registry.register(second);
+        assertEquals(second, registry.getDriver(DatabaseDriverType.SQLITE).orElse(null));
+    }
 }
