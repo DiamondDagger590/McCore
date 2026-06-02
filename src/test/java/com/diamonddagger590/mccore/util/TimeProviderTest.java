@@ -1,5 +1,8 @@
 package com.diamonddagger590.mccore.util;
 
+import com.diamonddagger590.mccore.testing.RegistryResetExtension;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +18,16 @@ class TimeProviderTest {
 
     private static final Instant FIXED_INSTANT = Instant.parse("2025-06-15T12:30:00Z");
     private static final ZoneId UTC = ZoneOffset.UTC;
+
+    @BeforeEach
+    void setUp() {
+        RegistryResetExtension.setupRegistry();
+    }
+
+    @AfterEach
+    void tearDown() {
+        RegistryResetExtension.resetRegistry();
+    }
 
     private TimeProvider createFixedProvider() {
         return new TimeProvider(Clock.fixed(FIXED_INSTANT, UTC));
