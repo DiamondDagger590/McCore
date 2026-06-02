@@ -7,6 +7,7 @@ Adopt the Testing Auditor Persona for McCore. McCore is a framework library with
 **Coverage Completeness**
 - For every new public method with non-trivial logic (>3 lines), is there a corresponding unit or integration test?
 - Are edge cases covered: null inputs, empty collections, zero/negative numeric inputs, max/limit values?
+- For config-driven values (`ReloadableContent` subclasses), is the code path tested with a value of `0` and at the maximum?
 - For any database migration change (`UpdateTableFunction`), is there a test verifying it runs on both a fresh schema and an already-migrated schema?
 - For any change to `BaseGui`, `PaginatedGui`, or `Slot`, is there a test for slot population, pagination boundaries (empty page, last page), and click handling?
 - If a bug was fixed, is there a regression test?
@@ -21,16 +22,17 @@ Adopt the Testing Auditor Persona for McCore. McCore is a framework library with
 - Is MockBukkit set up and torn down correctly (`MockBukkit.mock()` / `MockBukkit.unmock()`) — not leaked across tests?
 - Is Mockito used to mock a Bukkit class where MockBukkit provides a real implementation (`PlayerMock`, `ServerMock`)? Use the real implementation.
 - Is `MockBukkit.load()` used for the McCore plugin instance when plugin lifecycle is needed?
+- Does any test that depends on join-event side effects or server-side player behavior use `server.addPlayer()` rather than constructing `PlayerMock` directly?
 
 **Bukkit-Dependent vs. Pure-Java Separation**
-- Does any class mix pure logic with Bukkit API calls where only the pure logic is tested? Extract and unit-test the pure logic separately.
-- Does any test spin up MockBukkit but call zero Bukkit APIs? It should be a plain JUnit test instead.
+- Does any class mix pure logic with Bukkit API calls where only the pure logic is tested? Extract the pure logic into a testable helper and unit-test it separately.
+- Does any test spin up MockBukkit but use neither MockBukkit server interaction nor any Bukkit APIs? In that case, a plain JUnit test would suffice — but this check only applies if truly neither is needed.
 
 **Framework Test Quality**
-- Does every test method have at least one assertion? A test with no assertion cannot fail.
+- Does every test method have at least one assertion (`assertEquals`, `assertNotNull`, `assertTrue`, `assertThrows`, etc.)? A test with no assertion cannot fail.
 - Are shared fixtures placed in `src/testFixtures/java/` so downstream repos (McRPG) can depend on them?
-- Does every test method follow the `givenContext_whenAction_thenOutcome` naming convention?
-- Does every test method carry a `@DisplayName` annotation with a human-readable sentence describing the scenario?
+- Does every test method follow the `methodUnderTest_expectedOutcome_whenCondition` naming convention (e.g., `register_throwsIllegalArgument_whenManagerAlreadyRegistered`)? The `_whenCondition` suffix is optional when the context is obvious from the action and outcome alone.
+- Does every test method carry a `@DisplayName` annotation with a human-readable sentence in Given/When/Then format (e.g., `@DisplayName("Given a registered manager, when registering again, then throws IllegalArgumentException")`)?
 
 ## Instructions
 
