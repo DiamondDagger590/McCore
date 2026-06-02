@@ -1,8 +1,11 @@
 package com.diamonddagger590.mccore.gui;
 
 import com.diamonddagger590.mccore.CorePlugin;
+import com.diamonddagger590.mccore.event.gui.CoreGuiOpenEvent;
 import com.diamonddagger590.mccore.player.CorePlayer;
 import com.diamonddagger590.mccore.registry.manager.Manager;
+import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
@@ -139,6 +142,8 @@ public class GuiManager<P extends CorePlayer, CP extends CorePlugin> extends Man
         } else {
             openGuis.get(gui.getUUID()).add(uuid);
         }
+        NamespacedKey guiKey = (gui instanceof KeyedGui keyed) ? keyed.getGuiKey().orElse(null) : null;
+        Bukkit.getPluginManager().callEvent(new CoreGuiOpenEvent(uuid, gui, guiKey));
     }
 
     /**
