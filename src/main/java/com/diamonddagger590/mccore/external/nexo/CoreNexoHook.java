@@ -5,6 +5,7 @@ import com.diamonddagger590.mccore.external.common.CustomBlockHook;
 import com.diamonddagger590.mccore.external.common.CustomItemHook;
 import com.diamonddagger590.mccore.registry.plugin.PluginHook;
 import com.diamonddagger590.mccore.util.item.CustomBlockWrapper;
+import com.diamonddagger590.mccore.util.item.CustomItemWrapper;
 import com.nexomc.nexo.api.NexoBlocks;
 import com.nexomc.nexo.api.NexoItems;
 import com.nexomc.nexo.items.ItemBuilder;
@@ -186,6 +187,42 @@ public class CoreNexoHook extends PluginHook<CorePlugin> implements CustomItemHo
                 0.25, 0.25, 0.25,
                 0.05,
                 data);
+    }
+
+    /**
+     * Gets a player-friendly name for the item represented by the provided {@link CustomItemWrapper}.
+     * <p>
+     * For Nexo custom items, the item name is resolved via {@link ItemBuilder#getItemName()}
+     * when set, falling back to {@link ItemBuilder#getCustomName()}. If neither yields a name,
+     * the item ID is formatted into
+     * title case (e.g. {@code "my_namespace:cool_item"} → {@code "Cool Item"}).
+     * For vanilla materials, the material name is similarly title-cased.
+     *
+     * @param customItemWrapper The {@link CustomItemWrapper} to get the name of.
+     * @return The player-friendly name for the item.
+     */
+    @Override
+    @NotNull
+    public String itemName(@NotNull CustomItemWrapper customItemWrapper) {
+        if (customItemWrapper.customItem().isPresent()) {
+            String itemId = customItemWrapper.customItem().get();
+            if (isItem(itemId)) {
+                ItemBuilder nexoItem = NexoItems.itemFromId(itemId);
+                if (nexoItem != null) {
+                    Component nameComponent = Boolean.TRUE.equals(nexoItem.hasItemName())
+                        ? nexoItem.getItemName()
+                        : nexoItem.getCustomName();
+                    if (nameComponent != null) {
+                        String name = PlainTextComponentSerializer.plainText().serialize(nameComponent);
+                        if (!name.isEmpty()) {
+                            return name;
+                        }
+                    }
+                }
+            }
+            return formatBlockId(itemId);
+        }
+        return formatMaterial(customItemWrapper.material().orElseThrow());
     }
 
     /**

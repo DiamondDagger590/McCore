@@ -5,6 +5,7 @@ import com.diamonddagger590.mccore.external.common.CustomBlockHook;
 import com.diamonddagger590.mccore.external.common.CustomItemHook;
 import com.diamonddagger590.mccore.registry.plugin.PluginHook;
 import com.diamonddagger590.mccore.util.item.CustomBlockWrapper;
+import com.diamonddagger590.mccore.util.item.CustomItemWrapper;
 import dev.lone.itemsadder.api.CustomBlock;
 import dev.lone.itemsadder.api.CustomStack;
 import net.kyori.adventure.text.Component;
@@ -163,6 +164,42 @@ public class CoreItemsAdderHook extends PluginHook<CorePlugin> implements Custom
         } else {
             block.setType(Material.AIR);
         }
+    }
+
+    /**
+     * Gets a player-friendly name for the item represented by the provided {@link CustomItemWrapper}.
+     * <p>
+     * For ItemsAdder custom items, the item name is resolved via {@link CustomStack#itemName()},
+     * falling back to {@link CustomStack#getDisplayName()} (with legacy color codes stripped).
+     * If neither yields a name, the item ID is formatted into
+     * title case (e.g. {@code "my_namespace:cool_item"} → {@code "Cool Item"}).
+     * For vanilla materials, the material name is similarly title-cased.
+     *
+     * @param customItemWrapper The {@link CustomItemWrapper} to get the name of.
+     * @return The player-friendly name for the item.
+     */
+    @Override
+    @NotNull
+    public String itemName(@NotNull CustomItemWrapper customItemWrapper) {
+        if (customItemWrapper.customItem().isPresent()) {
+            String itemId = customItemWrapper.customItem().get();
+            CustomStack customStack = CustomStack.getInstance(itemId);
+            if (customStack != null) {
+                Component nameComponent = customStack.itemName();
+                if (nameComponent != null) {
+                    String name = PlainTextComponentSerializer.plainText().serialize(nameComponent);
+                    if (!name.isEmpty()) {
+                        return name;
+                    }
+                }
+                String legacyName = customStack.getDisplayName();
+                if (legacyName != null && !legacyName.isEmpty()) {
+                    return legacyName.replaceAll("§[0-9a-fklmnorA-FKLMNOR]", "");
+                }
+            }
+            return formatBlockId(itemId);
+        }
+        return formatMaterial(customItemWrapper.material().orElseThrow());
     }
 
     /**
