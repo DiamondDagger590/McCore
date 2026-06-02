@@ -360,7 +360,7 @@ class ParserTest {
     @Test
     @DisplayName("Given function without parenthesis, when evaluating, then throws ParseError")
     void getValue_throwsParseError_whenFunctionMissingParenthesis() {
-        assertThrows(ParseError.class, () -> new Parser("sin 5").getValue());
+        assertThrows(ParseError.class, () -> new Parser("sin").getValue());
     }
 
     @Test
