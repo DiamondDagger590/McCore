@@ -10,9 +10,6 @@ class SfunTest {
 
     private static final double DELTA = 1e-9;
     private static final double RELAXED_DELTA = 1e-6;
-
-    // ── acosh ──
-
     @Test
     @DisplayName("Given x = 1, when computing acosh, then returns 0")
     void acosh_returnsZero_whenXIsOne() {
@@ -44,9 +41,6 @@ class SfunTest {
         double expected = 0.69314718055994530941723212145818 + Math.log(x);
         assertEquals(expected, Sfun.acosh(x), DELTA);
     }
-
-    // ── asinh ──
-
     @Test
     @DisplayName("Given x = 0, when computing asinh, then returns 0")
     void asinh_returnsZero_whenXIsZero() {
@@ -86,9 +80,6 @@ class SfunTest {
         double expected = 0.69314718055994530941723212145818 + Math.log(x);
         assertEquals(expected, Sfun.asinh(x), DELTA);
     }
-
-    // ── atanh ──
-
     @Test
     @DisplayName("Given x = 0, when computing atanh, then returns 0")
     void atanh_returnsZero_whenXIsZero() {
@@ -141,9 +132,6 @@ class SfunTest {
         double expected = 0.5 * Math.log((1.0 + x) / (1.0 - x));
         assertEquals(expected, Sfun.atanh(x), DELTA);
     }
-
-    // ── cosh ──
-
     @Test
     @DisplayName("Given x = 0, when computing cosh, then returns 1")
     void cosh_returnsOne_whenXIsZero() {
@@ -168,9 +156,6 @@ class SfunTest {
     void cosh_returnsNaN_whenInputIsNaN() {
         assertTrue(Double.isNaN(Sfun.cosh(Double.NaN)));
     }
-
-    // ── sinh ──
-
     @Test
     @DisplayName("Given x = 0, when computing sinh, then returns 0")
     void sinh_returnsZero_whenXIsZero() {
@@ -223,9 +208,6 @@ class SfunTest {
         double expected = 0.5 * (y - 1.0 / y);
         assertEquals(expected, Sfun.sinh(x), expected * 1e-10);
     }
-
-    // ── tanh ──
-
     @Test
     @DisplayName("Given x = 0, when computing tanh, then returns 0")
     void tanh_returnsZero_whenXIsZero() {
@@ -265,9 +247,6 @@ class SfunTest {
         double expected = (y - 1.0 / y) / (y + 1.0 / y);
         assertEquals(expected, Sfun.tanh(x), DELTA);
     }
-
-    // ── cot ──
-
     @Test
     @DisplayName("Given x = pi/4, when computing cot, then returns approximately 1")
     void cot_returnsOne_whenXIsPiOverFour() {
@@ -291,9 +270,6 @@ class SfunTest {
     void cot_returnsNegative_whenXIsNegativePiOverFour() {
         assertEquals(-1.0, Sfun.cot(-Math.PI / 4), RELAXED_DELTA);
     }
-
-    // ── erf ──
-
     @Test
     @DisplayName("Given x = 0, when computing erf, then returns 0")
     void erf_returnsZero_whenXIsZero() {
@@ -332,9 +308,6 @@ class SfunTest {
         double result = Sfun.erf(2.0);
         assertTrue(result > 0.99 && result < 1.0);
     }
-
-    // ── erfc ──
-
     @Test
     @DisplayName("Given x = 0, when computing erfc, then returns 1")
     void erfc_returnsOne_whenXIsZero() {
@@ -373,9 +346,6 @@ class SfunTest {
         double result = Sfun.erfc(5.0);
         assertTrue(result >= 0.0 && result < 1e-10);
     }
-
-    // ── fact ──
-
     @Test
     @DisplayName("Given n = 0, when computing factorial, then returns 1")
     void fact_returnsOne_whenNIsZero() {
@@ -417,9 +387,6 @@ class SfunTest {
     void fact_returnsFiniteValue_whenNIs170() {
         assertTrue(Double.isFinite(Sfun.fact(170)));
     }
-
-    // ── gamma ──
-
     @Test
     @DisplayName("Given x = 1, when computing gamma, then returns 1 (0! = 1)")
     void gamma_returnsOne_whenXIsOne() {
@@ -475,9 +442,6 @@ class SfunTest {
         double result = Sfun.gamma(-10.5);
         assertTrue(Double.isFinite(result));
     }
-
-    // ── log10 ──
-
     @Test
     @DisplayName("Given x = 1, when computing log10, then returns 0")
     void log10_returnsZero_whenXIsOne() {
@@ -501,9 +465,6 @@ class SfunTest {
     void log10_returnsNegativeThree_whenXIsOneThousandth() {
         assertEquals(-3.0, Sfun.log10(0.001), DELTA);
     }
-
-    // ── logGamma ──
-
     @Test
     @DisplayName("Given x = 1, when computing logGamma, then returns 0")
     void logGamma_returnsZero_whenXIsOne() {
@@ -536,9 +497,6 @@ class SfunTest {
         double result = Sfun.logGamma(-10.5);
         assertTrue(Double.isFinite(result));
     }
-
-    // ── logBeta ──
-
     @Test
     @DisplayName("Given a = 1 and b = 1, when computing logBeta, then returns 0")
     void logBeta_returnsZero_whenBothAreOne() {

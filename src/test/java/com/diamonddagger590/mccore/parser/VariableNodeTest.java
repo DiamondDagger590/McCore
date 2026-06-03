@@ -10,9 +10,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class VariableNodeTest {
 
     private static final double DELTA = 1e-9;
-
-    // ── getValue ──
-
     @Test
     @DisplayName("Given uninitialized variable with error=false, when getting value, then returns 0")
     void getValue_returnsZero_whenUninitializedAndErrorDisabled() {
@@ -35,9 +32,6 @@ class VariableNodeTest {
         node.setVariable("x", 42.0);
         assertEquals(42.0, node.getValue(), DELTA);
     }
-
-    // ── setVariable ──
-
     @Test
     @DisplayName("Given matching name, when setting variable, then value is updated")
     void setVariable_updatesValue_whenNameMatches() {
@@ -71,26 +65,17 @@ class VariableNodeTest {
         node.setVariable("x", 99.0);
         assertEquals(99.0, node.getValue(), DELTA);
     }
-
-    // ── getType ──
-
     @Test
     @DisplayName("Given a VariableNode, when getting type, then returns VARIABLE_NODE")
     void getType_returnsVariableNode_always() {
         assertEquals(ExpressionNode.VARIABLE_NODE, new VariableNode("x", false).getType());
     }
-
-    // ── getSubtype ──
-
     @Test
     @DisplayName("Given a VariableNode, when getting subtype, then returns variable name")
     void getSubtype_returnsVariableName_always() {
         assertEquals("x", new VariableNode("x", false).getSubtype());
         assertEquals("myVar", new VariableNode("myVar", false).getSubtype());
     }
-
-    // ── getDepth / count ──
-
     @Test
     @DisplayName("Given a VariableNode, when getting depth, then returns 1")
     void getDepth_returnsOne_always() {
@@ -102,17 +87,11 @@ class VariableNodeTest {
     void count_returnsOne_always() {
         assertEquals(1, new VariableNode("x", false).count());
     }
-
-    // ── getChildrenNodes ──
-
     @Test
     @DisplayName("Given a VariableNode, when getting children, then returns empty array")
     void getChildrenNodes_returnsEmpty_always() {
         assertEquals(0, new VariableNode("x", false).getChildrenNodes().length);
     }
-
-    // ── clone ──
-
     @Test
     @DisplayName("Given an initialized VariableNode, when cloned, then clone has same value and name")
     void clone_preservesValueAndName_whenCloned() {
@@ -133,9 +112,6 @@ class VariableNodeTest {
         original.setVariable("x", 99.0);
         assertEquals(10.0, cloned.getValue(), DELTA);
     }
-
-    // ── toString ──
-
     @Test
     @DisplayName("Given a VariableNode, when converting to string, then returns variable name")
     void toString_returnsVariableName_always() {

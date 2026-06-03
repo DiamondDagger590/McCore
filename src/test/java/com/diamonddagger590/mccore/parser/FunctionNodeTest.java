@@ -15,9 +15,6 @@ class FunctionNodeTest {
     private ConstantNode c(double val) {
         return new ConstantNode(val);
     }
-
-    // ── Constructor (String) ──
-
     @Test
     @DisplayName("Given valid function name, when creating FunctionNode, then succeeds")
     void constructor_succeeds_whenFunctionNameIsValid() {
@@ -30,9 +27,6 @@ class FunctionNodeTest {
     void constructor_throwsException_whenFunctionNameInvalid() {
         assertThrows(IllegalArgumentException.class, () -> new FunctionNode(c(1.0), "bogus"));
     }
-
-    // ── getValue for each function ──
-
     @Test
     @DisplayName("Given negation function (index 0), when evaluating, then returns negated value")
     void getValue_returnsNegated_whenFunctionIsNegation() {
@@ -177,26 +171,17 @@ class FunctionNodeTest {
     void getValue_returnsLog2_whenFunctionIsLog2() {
         assertEquals(3.0, new FunctionNode(c(8.0), "log2").getValue(), DELTA);
     }
-
-    // ── getType ──
-
     @Test
     @DisplayName("Given a FunctionNode, when getting type, then returns FUNCTION_NODE")
     void getType_returnsFunctionNode_always() {
         assertEquals(ExpressionNode.FUNCTION_NODE, new FunctionNode(c(1.0), "sin").getType());
     }
-
-    // ── getSubtype ──
-
     @Test
     @DisplayName("Given a FunctionNode, when getting subtype, then returns function name")
     void getSubtype_returnsFunctionName_always() {
         assertEquals("sin", new FunctionNode(c(1.0), "sin").getSubtype());
         assertEquals("-", new FunctionNode(c(1.0), 0).getSubtype());
     }
-
-    // ── getDepth / count ──
-
     @Test
     @DisplayName("Given function with constant child, when getting depth, then returns 2")
     void getDepth_returnsTwo_whenChildIsConstant() {
@@ -216,9 +201,6 @@ class FunctionNodeTest {
     void count_returnsTwo_whenChildIsConstant() {
         assertEquals(2, new FunctionNode(c(1.0), "sin").count());
     }
-
-    // ── getChildrenNodes ──
-
     @Test
     @DisplayName("Given a FunctionNode, when getting children, then returns array with child")
     void getChildrenNodes_returnsSingleChild_always() {
@@ -228,9 +210,6 @@ class FunctionNodeTest {
         assertEquals(1, children.length);
         assertEquals(child, children[0]);
     }
-
-    // ── setVariable ──
-
     @Test
     @DisplayName("Given function with variable child, when setting variable, then propagates")
     void setVariable_propagatesToChild_whenVariableMatches() {
@@ -239,9 +218,6 @@ class FunctionNodeTest {
         node.setVariable("x", -7.0);
         assertEquals(7.0, node.getValue(), DELTA);
     }
-
-    // ── clone ──
-
     @Test
     @DisplayName("Given a FunctionNode, when cloned, then clone is independent")
     void clone_createsIndependentCopy_always() {
@@ -256,9 +232,6 @@ class FunctionNodeTest {
         assertEquals(4.0, original.getValue(), DELTA);
         assertEquals(2.0, cloned.getValue(), DELTA);
     }
-
-    // ── toString ──
-
     @Test
     @DisplayName("Given non-negation function, when converting to string, then returns function(child)")
     void toString_returnsFunctionFormat_whenNotNegation() {

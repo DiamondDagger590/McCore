@@ -13,9 +13,6 @@ class OperatorNodeTest {
     private ConstantNode c(double val) {
         return new ConstantNode(val);
     }
-
-    // ── getValue ──
-
     @Test
     @DisplayName("Given addition operator, when evaluating, then returns sum of children")
     void getValue_returnsSum_whenOperatorIsAddition() {
@@ -64,17 +61,11 @@ class OperatorNodeTest {
         OperatorNode node = new OperatorNode(c(1.0), c(0.0), '/');
         assertEquals(Double.POSITIVE_INFINITY, node.getValue());
     }
-
-    // ── getType ──
-
     @Test
     @DisplayName("Given an OperatorNode, when getting type, then returns OPERATOR_NODE")
     void getType_returnsOperatorNode_always() {
         assertEquals(ExpressionNode.OPERATOR_NODE, new OperatorNode(c(1.0), c(2.0), '+').getType());
     }
-
-    // ── getSubtype ──
-
     @Test
     @DisplayName("Given an OperatorNode, when getting subtype, then returns operator character")
     void getSubtype_returnsOperatorChar_always() {
@@ -85,9 +76,6 @@ class OperatorNodeTest {
         assertEquals("%", new OperatorNode(c(1.0), c(2.0), '%').getSubtype());
         assertEquals("^", new OperatorNode(c(1.0), c(2.0), '^').getSubtype());
     }
-
-    // ── getDepth ──
-
     @Test
     @DisplayName("Given two constant children, when getting depth, then returns 2")
     void getDepth_returnsTwo_whenChildrenAreConstants() {
@@ -102,9 +90,6 @@ class OperatorNodeTest {
         OperatorNode outer = new OperatorNode(inner, c(3.0), '*');
         assertEquals(3, outer.getDepth());
     }
-
-    // ── count ──
-
     @Test
     @DisplayName("Given two constant children, when counting, then returns 3")
     void count_returnsThree_whenChildrenAreConstants() {
@@ -119,9 +104,6 @@ class OperatorNodeTest {
         OperatorNode outer = new OperatorNode(inner, c(3.0), '*');
         assertEquals(5, outer.count());
     }
-
-    // ── getChildrenNodes ──
-
     @Test
     @DisplayName("Given an OperatorNode, when getting children, then returns array of left and right")
     void getChildrenNodes_returnsLeftAndRight_always() {
@@ -133,9 +115,6 @@ class OperatorNodeTest {
         assertEquals(left, children[0]);
         assertEquals(right, children[1]);
     }
-
-    // ── setVariable ──
-
     @Test
     @DisplayName("Given operator with variable children, when setting variable, then propagates to both")
     void setVariable_propagatesToBothChildren_always() {
@@ -155,9 +134,6 @@ class OperatorNodeTest {
         node.setVariable("x", 3.0);
         assertEquals(15.0, node.getValue(), DELTA);
     }
-
-    // ── clone ──
-
     @Test
     @DisplayName("Given an OperatorNode, when cloned, then clone is independent")
     void clone_createsIndependentCopy_always() {
@@ -173,9 +149,6 @@ class OperatorNodeTest {
         assertEquals(198.0, original.getValue(), DELTA);
         assertEquals(10.0, cloned.getValue(), DELTA);
     }
-
-    // ── toString ──
-
     @Test
     @DisplayName("Given simple addition of constants, when converting to string, then no brackets")
     void toString_omitsBrackets_whenChildrenAreConstants() {

@@ -12,9 +12,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class ConstantNodeTest {
 
     private static final double DELTA = 1e-9;
-
-    // ── Constructor (double) ──
-
     @Test
     @DisplayName("Given a numeric value, when creating ConstantNode, then getValue returns that value")
     void constructor_storesValue_whenCreatedWithDouble() {
@@ -42,9 +39,6 @@ class ConstantNodeTest {
         ConstantNode node = new ConstantNode(-7.3);
         assertEquals(-7.3, node.getValue(), DELTA);
     }
-
-    // ── Constructor (String) ──
-
     @Test
     @DisplayName("Given 'pi', when creating ConstantNode, then getValue returns Math.PI")
     void constructor_returnsPi_whenCreatedWithPiString() {
@@ -64,9 +58,6 @@ class ConstantNodeTest {
     void constructor_throwsException_whenConstantNameUnrecognized() {
         assertThrows(IllegalArgumentException.class, () -> new ConstantNode("tau"));
     }
-
-    // ── Constructor (int position) ──
-
     @Test
     @DisplayName("Given position 0, when creating ConstantNode, then represents pi")
     void constructor_representsPi_whenPositionIsZero() {
@@ -82,18 +73,12 @@ class ConstantNodeTest {
         assertEquals(Math.E, node.getValue(), DELTA);
         assertEquals("e", node.toString());
     }
-
-    // ── getType ──
-
     @Test
     @DisplayName("Given any ConstantNode, when getting type, then returns CONSTANT_NODE")
     void getType_returnsConstantNode_always() {
         assertEquals(ExpressionNode.CONSTANT_NODE, new ConstantNode(5.0).getType());
         assertEquals(ExpressionNode.CONSTANT_NODE, new ConstantNode("pi").getType());
     }
-
-    // ── getSubtype ──
-
     @Test
     @DisplayName("Given integer constant, when getting subtype, then returns integer string")
     void getSubtype_returnsIntegerString_whenValueIsWholeNumber() {
@@ -111,9 +96,6 @@ class ConstantNodeTest {
     void getSubtype_returnsZeroString_whenValueIsZero() {
         assertEquals("0", new ConstantNode(0.0).getSubtype());
     }
-
-    // ── getDepth / count ──
-
     @Test
     @DisplayName("Given a ConstantNode, when getting depth, then returns 1")
     void getDepth_returnsOne_always() {
@@ -125,18 +107,12 @@ class ConstantNodeTest {
     void count_returnsOne_always() {
         assertEquals(1, new ConstantNode(5.0).count());
     }
-
-    // ── getChildrenNodes ──
-
     @Test
     @DisplayName("Given a ConstantNode, when getting children, then returns empty array")
     void getChildrenNodes_returnsEmpty_always() {
         ExpressionNode[] children = new ConstantNode(5.0).getChildrenNodes();
         assertEquals(0, children.length);
     }
-
-    // ── setVariable ──
-
     @Test
     @DisplayName("Given a ConstantNode, when setting a variable, then value is unchanged")
     void setVariable_doesNothing_always() {
@@ -144,9 +120,6 @@ class ConstantNodeTest {
         node.setVariable("x", 10.0);
         assertEquals(5.0, node.getValue(), DELTA);
     }
-
-    // ── clone ──
-
     @Test
     @DisplayName("Given a ConstantNode, when cloned, then returns a different instance with same value")
     void clone_returnsSameValue_butDifferentInstance() {
@@ -155,9 +128,6 @@ class ConstantNodeTest {
         assertNotSame(original, cloned);
         assertEquals(original.getValue(), cloned.getValue(), DELTA);
     }
-
-    // ── toString ──
-
     @Test
     @DisplayName("Given named constant, when converting to string, then returns name")
     void toString_returnsName_whenNamedConstant() {
