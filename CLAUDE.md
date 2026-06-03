@@ -430,7 +430,7 @@ Register with `ReloadableContentManager` so it refreshes automatically on `/relo
 - Meaningful variable names — avoid single-letter names except loop counters
 - Prefer `var` for local variables when the declared type is long/nested and would be more distracting than helpful; otherwise prefer explicit types
 - Keep methods focused and short — split logic into private helpers rather than long method bodies
-- Javadoc on all public methods with `@param` and `@return` semantics
+- Javadoc on all methods (public and private) with `@param` and `@return` semantics
 
 **Third-party developer mindset:** McCore is extended by downstream plugins. Any change to a public API, interface, or registry must be made as if you were that downstream developer. Prefer additive, non-breaking changes. Document extension points clearly. When removing or changing a public API, consider providing a deprecation path first.
 
