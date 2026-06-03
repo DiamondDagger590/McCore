@@ -93,6 +93,7 @@ void getStatistic_returnsStatistic_whenKeyIsRegistered() { ... }
 - **No state stored in Registry/Manager objects beyond their scope** — domain state belongs on domain objects
 - **No hard-coded strings for namespaced keys or config routes** — define as constants
 - **No direct entity casting without guard** — use `instanceof` pattern matching: `if (entity instanceof Player player) { ... }`
+- **No decorative section-divider comments** — do not use `// ── Section ──`, `// --- Section ---`, or similar ASCII-art dividers to group methods or tests; rely on class structure, method naming, and `@DisplayName` annotations instead
 
 ---
 

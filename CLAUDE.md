@@ -419,6 +419,7 @@ Register with `ReloadableContentManager` so it refreshes automatically on `/relo
 - **No state stored in Registry or Manager objects beyond their management scope** — Registries store registered objects; Managers provide operations; domain state belongs on domain objects (e.g., `CorePlayer`)
 - **No hard-coded strings for namespaced keys or config routes** — define constants on the owning class or a dedicated constants file
 - **No direct entity casting without a null/type guard** — use `instanceof` pattern matching: `if (entity instanceof Player player) { ... }`
+- **No decorative section-divider comments** — do not use `// ── Section ──`, `// --- Section ---`, or similar ASCII-art dividers to group methods or tests; rely on class structure, method naming, and `@DisplayName` annotations to communicate organization
 
 ---
 
