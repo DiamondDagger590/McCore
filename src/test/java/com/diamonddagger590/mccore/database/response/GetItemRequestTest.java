@@ -4,6 +4,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -121,5 +125,81 @@ class GetItemRequestTest {
         GetItemRequest<String> request = new GetItemRequest<>(future);
 
         assertFalse(request.getItem().isPresent());
+    }
+
+    @Test
+    @DisplayName("Given a future completed from another thread, when polling state, then state and item are visible")
+    void getItemResponseState_isVisible_whenFutureCompletedFromAnotherThread() throws InterruptedException {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            for (int i = 0; i < 100; i++) {
+                CompletableFuture<String> future = new CompletableFuture<>();
+                GetItemRequest<String> request = new GetItemRequest<>(future);
+
+                CountDownLatch latch = new CountDownLatch(1);
+                executor.submit(() -> {
+                    future.complete("cross-thread-value");
+                    latch.countDown();
+                });
+
+                assertTrue(latch.await(5, TimeUnit.SECONDS));
+
+                assertEquals(GetItemResponseState.ITEM_FOUND, request.getItemResponseState());
+                assertTrue(request.getItem().isPresent());
+                assertEquals("cross-thread-value", request.getItem().get());
+            }
+        } finally {
+            executor.shutdown();
+        }
+    }
+
+    @Test
+    @DisplayName("Given a future completed with null from another thread, when polling state, then state reflects ITEM_NOT_FOUND")
+    void getItemResponseState_reflectsNotFound_whenNullCompletedFromAnotherThread() throws InterruptedException {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            for (int i = 0; i < 100; i++) {
+                CompletableFuture<String> future = new CompletableFuture<>();
+                GetItemRequest<String> request = new GetItemRequest<>(future);
+
+                CountDownLatch latch = new CountDownLatch(1);
+                executor.submit(() -> {
+                    future.complete(null);
+                    latch.countDown();
+                });
+
+                assertTrue(latch.await(5, TimeUnit.SECONDS));
+
+                assertEquals(GetItemResponseState.ITEM_NOT_FOUND, request.getItemResponseState());
+                assertTrue(request.getItem().isEmpty());
+            }
+        } finally {
+            executor.shutdown();
+        }
+    }
+
+    @Test
+    @DisplayName("Given a future failed from another thread, when polling state, then state reflects ERRORED")
+    void getItemResponseState_reflectsErrored_whenExceptionFromAnotherThread() throws InterruptedException {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            for (int i = 0; i < 100; i++) {
+                CompletableFuture<String> future = new CompletableFuture<>();
+                GetItemRequest<String> request = new GetItemRequest<>(future);
+
+                CountDownLatch latch = new CountDownLatch(1);
+                executor.submit(() -> {
+                    future.completeExceptionally(new RuntimeException("async failure"));
+                    latch.countDown();
+                });
+
+                assertTrue(latch.await(5, TimeUnit.SECONDS));
+
+                assertEquals(GetItemResponseState.ERRORED, request.getItemResponseState());
+                assertTrue(request.getItem().isEmpty());
+            }
+        } finally {
+            executor.shutdown();
+        }
     }
 }

@@ -34,9 +34,9 @@ import java.util.concurrent.CompletableFuture;
 public class GetItemRequest<T> {
 
     private final CompletableFuture<T> completableFuture;
-    private GetItemResponseState responseState;
+    private volatile GetItemResponseState responseState;
     @Nullable
-    private T item;
+    private volatile T item;
 
     public GetItemRequest(@NotNull CompletableFuture<T> completableFuture) {
         this.completableFuture = completableFuture;
