@@ -6,23 +6,17 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Optional;
 
 /**
- * Optional interface that {@link Gui} implementations can adopt to declare a type-level
- * {@link NamespacedKey} identifying what kind of GUI they are (e.g., {@code mcrpg:home},
- * {@code mcrpg:loadout_selection}).
- * <p>
- * Distinct from {@link BaseGui#getUUID()}, which returns the creating player's UUID
- * (instance identity), not a type key. Implementing this interface allows
- * {@link com.diamonddagger590.mccore.event.gui.CoreGuiOpenEvent} consumers to filter
- * GUI open events by type rather than by instance.
+ * Interface for GUI implementations that can be identified by a {@link NamespacedKey}.
+ * Downstream plugins implement this on their GUI classes to enable key-based
+ * identification (e.g., for objective tracking or event filtering).
  */
 public interface KeyedGui {
 
     /**
-     * Returns the type-level key identifying this GUI's purpose.
-     * GUIs that do not implement this interface (or return empty) are
-     * still tracked by {@link GuiManager} but are not identifiable by key.
+     * Returns the {@link NamespacedKey} identifying this GUI type, or empty if
+     * this GUI instance does not expose a key.
      *
-     * @return the GUI's type key, or empty if unkeyed
+     * @return the GUI key, or empty
      */
     @NotNull
     Optional<NamespacedKey> getGuiKey();
