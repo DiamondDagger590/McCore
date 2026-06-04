@@ -142,8 +142,8 @@ public class GuiManager<P extends CorePlayer, CP extends CorePlugin> extends Man
         } else {
             openGuis.get(gui.getUUID()).add(uuid);
         }
-        NamespacedKey guiKey = (gui instanceof KeyedGui keyed) ? keyed.getGuiKey().orElse(null) : null;
-        Bukkit.getPluginManager().callEvent(new CoreGuiOpenEvent(uuid, gui, guiKey));
+        Optional<NamespacedKey> guiKey = (gui instanceof KeyedGui keyed) ? keyed.getGuiKey() : Optional.empty();
+        Bukkit.getPluginManager().callEvent(new CoreGuiOpenEvent(uuid, guiKey));
     }
 
     /**
