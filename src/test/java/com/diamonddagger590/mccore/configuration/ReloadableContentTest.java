@@ -1,14 +1,7 @@
 package com.diamonddagger590.mccore.configuration;
 
-import com.diamonddagger590.mccore.CorePlugin;
-import com.diamonddagger590.mccore.registry.RegistryAccess;
-import com.diamonddagger590.mccore.registry.RegistryKey;
-import com.diamonddagger590.mccore.registry.manager.Manager;
-import com.diamonddagger590.mccore.registry.manager.ManagerRegistry;
-import com.diamonddagger590.mccore.testing.RegistryResetExtension;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import dev.dejvokep.boostedyaml.route.Route;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,7 +12,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.function.BiFunction;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
 class ReloadableContentTest {

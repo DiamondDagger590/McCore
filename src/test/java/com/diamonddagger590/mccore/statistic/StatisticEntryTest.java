@@ -49,9 +49,9 @@ class StatisticEntryTest {
     @Test
     @DisplayName("Given a TIMESTAMP entry, when getAsTimestamp is called, then returns the instant value")
     void getAsTimestamp_returnsValue_whenTypeIsTimestamp() {
-        Instant now = Instant.now();
-        StatisticEntry entry = new StatisticEntry(TEST_KEY, StatisticType.TIMESTAMP, now);
-        assertEquals(now, entry.getAsTimestamp());
+        Instant fixedInstant = Instant.ofEpochSecond(1_000_000);
+        StatisticEntry entry = new StatisticEntry(TEST_KEY, StatisticType.TIMESTAMP, fixedInstant);
+        assertEquals(fixedInstant, entry.getAsTimestamp());
     }
 
     @Test
@@ -71,16 +71,17 @@ class StatisticEntryTest {
     }
 
     @Test
-    @DisplayName("Given a SET_STRING entry, when original set is modified after creation, then entry copy is unaffected")
+    @DisplayName("Given a SET_STRING entry, when original set is modified after getting copy, then copy is unaffected")
     void getAsSetString_isDefensiveCopy_whenOriginalModified() {
         Set<String> original = new LinkedHashSet<>();
         original.add("x");
         StatisticEntry entry = new StatisticEntry(TEST_KEY, StatisticType.SET_STRING, original);
 
+        Set<String> result = entry.getAsSetString();
         original.add("y");
 
-        Set<String> result = entry.getAsSetString();
-        assertEquals(2, result.size());
+        assertEquals(1, result.size());
+        assertTrue(result.contains("x"));
     }
 
     @Test

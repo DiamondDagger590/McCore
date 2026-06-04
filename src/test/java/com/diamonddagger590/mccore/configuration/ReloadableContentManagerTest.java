@@ -1,7 +1,5 @@
 package com.diamonddagger590.mccore.configuration;
 
-import com.diamonddagger590.mccore.CorePlugin;
-import com.diamonddagger590.mccore.registry.manager.Manager;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import dev.dejvokep.boostedyaml.route.Route;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ReloadableContentManagerTest {
@@ -68,7 +67,7 @@ class ReloadableContentManagerTest {
     @Test
     @DisplayName("Given no tracked content, when reloadAllContent is called, then completes without error")
     void reloadAllContent_completesSuccessfully_whenNoContentTracked() {
-        manager.reloadAllContent();
+        assertDoesNotThrow(() -> manager.reloadAllContent());
     }
 
     @Test
