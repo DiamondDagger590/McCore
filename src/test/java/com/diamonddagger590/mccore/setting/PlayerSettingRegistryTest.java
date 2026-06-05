@@ -13,9 +13,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PlayerSettingRegistryTest {
@@ -166,6 +168,7 @@ class PlayerSettingRegistryTest {
         registry().register(TestSetting.OPTION_A);
         Optional<PlayerSetting> result = registry().getSetting(key("test", "toggle"));
         assertTrue(result.isPresent());
+        assertEquals(TestSetting.OPTION_A, result.get());
     }
 
     @Test
@@ -197,6 +200,8 @@ class PlayerSettingRegistryTest {
         registry().register(TestSetting.OPTION_A);
         registry().register(OtherSetting.VALUE);
         assertEquals(2, registry().getSettings().size());
+        assertTrue(registry().getSettings().contains(TestSetting.OPTION_A));
+        assertTrue(registry().getSettings().contains(OtherSetting.VALUE));
     }
 
     @Test
@@ -212,5 +217,30 @@ class PlayerSettingRegistryTest {
         Optional<PlayerSetting> result = registry().getSetting(key("test", "toggle"));
         assertTrue(result.isPresent());
         assertEquals(TestSetting.OPTION_A, result.get());
+    }
+
+    @Test
+    @DisplayName("Given a registered setting, when registering again with same key, then replaces existing entry")
+    void register_replacesExisting_whenSettingAlreadyRegistered() {
+        registry().register(TestSetting.OPTION_A);
+        registry().register(TestSetting.OPTION_A);
+        assertEquals(1, registry().getSettings().size());
+        assertTrue(registry().registered(TestSetting.OPTION_A));
+    }
+
+    @Test
+    @DisplayName("Given registered settings, when attempting to modify returned key set, then throws UnsupportedOperationException")
+    void getSettingKeys_returnsImmutableSet_whenModificationAttempted() {
+        registry().register(TestSetting.OPTION_A);
+        Set<NamespacedKey> keys = registry().getSettingKeys();
+        assertThrows(UnsupportedOperationException.class, () -> keys.add(key("test", "forbidden")));
+    }
+
+    @Test
+    @DisplayName("Given registered settings, when attempting to modify returned settings set, then throws UnsupportedOperationException")
+    void getSettings_returnsImmutableSet_whenModificationAttempted() {
+        registry().register(TestSetting.OPTION_A);
+        Set<PlayerSetting> settings = registry().getSettings();
+        assertThrows(UnsupportedOperationException.class, () -> settings.add(OtherSetting.VALUE));
     }
 }

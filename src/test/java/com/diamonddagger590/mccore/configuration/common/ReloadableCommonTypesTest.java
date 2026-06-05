@@ -99,6 +99,22 @@ class ReloadableCommonTypesTest {
         assertEquals(-5, ri.getContent());
     }
 
+    @Test
+    @DisplayName("Given Integer.MAX_VALUE in YAML, when constructing ReloadableInteger, then loads max value")
+    void reloadableInteger_loadsMaxValue_whenYamlIsMaxInt() throws IOException {
+        YamlDocument doc = createYaml("value: " + Integer.MAX_VALUE);
+        ReloadableInteger ri = new ReloadableInteger(doc, Route.from("value"));
+        assertEquals(Integer.MAX_VALUE, ri.getContent());
+    }
+
+    @Test
+    @DisplayName("Given Integer.MIN_VALUE in YAML, when constructing ReloadableInteger, then loads min value")
+    void reloadableInteger_loadsMinValue_whenYamlIsMinInt() throws IOException {
+        YamlDocument doc = createYaml("value: " + Integer.MIN_VALUE);
+        ReloadableInteger ri = new ReloadableInteger(doc, Route.from("value"));
+        assertEquals(Integer.MIN_VALUE, ri.getContent());
+    }
+
     // ── ReloadableDouble ────────────────────────────────────────────────────
 
     @Test
@@ -135,6 +151,14 @@ class ReloadableCommonTypesTest {
         assertEquals(0.0, rd.getContent(), 0.001);
     }
 
+    @Test
+    @DisplayName("Given negative double in YAML, when constructing ReloadableDouble, then loads negative value")
+    void reloadableDouble_loadsNegative_whenYamlIsNegative() throws IOException {
+        YamlDocument doc = createYaml("value: -3.14");
+        ReloadableDouble rd = new ReloadableDouble(doc, Route.from("value"));
+        assertEquals(-3.14, rd.getContent(), 0.001);
+    }
+
     // ── ReloadableString ────────────────────────────────────────────────────
 
     @Test
@@ -169,5 +193,13 @@ class ReloadableCommonTypesTest {
         YamlDocument doc = createYaml("name: hello");
         ReloadableString rs = new ReloadableString(doc, Route.from("name"));
         assertEquals("hello", rs.getContent());
+    }
+
+    @Test
+    @DisplayName("Given an empty string in YAML, when constructing ReloadableString, then loads empty string")
+    void reloadableString_loadsEmptyString_whenYamlIsEmpty() throws IOException {
+        YamlDocument doc = createYaml("value: \"\"");
+        ReloadableString rs = new ReloadableString(doc, Route.from("value"));
+        assertEquals("", rs.getContent());
     }
 }

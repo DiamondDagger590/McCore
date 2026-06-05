@@ -108,6 +108,15 @@ class ReloadableCollectionTypesTest {
     }
 
     @Test
+    @DisplayName("Given an empty list in YAML, when constructing ReloadableSet, then loads empty set")
+    void reloadableSet_loadsEmptySet_whenYamlListIsEmpty() throws IOException {
+        String yaml = "materials: []";
+        YamlDocument doc = createYaml(yaml);
+        ReloadableSet<String> rs = new ReloadableSet<>(doc, Route.from("materials"), strings -> new HashSet<>(strings));
+        assertTrue(rs.getContent().isEmpty());
+    }
+
+    @Test
     @DisplayName("Given a conversion function that transforms strings, when constructing ReloadableSet, then applies transformation")
     void reloadableSet_appliesConversion_whenGivenTransformFunction() throws IOException {
         String yaml = "items:\n  - hello\n  - world";
@@ -158,6 +167,15 @@ class ReloadableCollectionTypesTest {
         rl.reloadContent();
         assertEquals(2, rl.getContent().size());
         assertEquals("hello", rl.getContent().get(0));
+    }
+
+    @Test
+    @DisplayName("Given an empty list in YAML, when constructing ReloadableList, then loads empty list")
+    void reloadableList_loadsEmptyList_whenYamlListIsEmpty() throws IOException {
+        String yaml = "messages: []";
+        YamlDocument doc = createYaml(yaml);
+        ReloadableList<String> rl = new ReloadableList<>(doc, Route.from("messages"), strings -> new ArrayList<>(strings));
+        assertTrue(rl.getContent().isEmpty());
     }
 
     @Test

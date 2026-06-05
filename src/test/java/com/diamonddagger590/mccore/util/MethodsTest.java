@@ -71,6 +71,13 @@ class MethodsTest {
     // ── getTimeInSeconds ────────────────────────────────────────────────────
 
     @Test
+    @DisplayName("Given an empty string, when parsing time, then returns zero duration")
+    void getTimeInSeconds_returnsZero_whenGivenEmptyString() {
+        Duration result = Methods.getTimeInSeconds("");
+        assertEquals(Duration.ZERO, result);
+    }
+
+    @Test
     @DisplayName("Given a seconds-only time string, when parsing, then returns correct duration")
     void getTimeInSeconds_returnsDuration_whenGivenSeconds() {
         Duration result = Methods.getTimeInSeconds("30s");
@@ -430,6 +437,12 @@ class MethodsTest {
     void getRGB_returnsEmpty_whenGivenTooManyValues() {
         Optional<Color> result = Methods.getRGB("255,128,0,255");
         assertFalse(result.isPresent());
+    }
+
+    @Test
+    @DisplayName("Given non-numeric RGB values, when getting color, then throws NumberFormatException")
+    void getRGB_throwsNumberFormatException_whenGivenNonNumericValues() {
+        assertThrows(NumberFormatException.class, () -> Methods.getRGB("red,green,blue"));
     }
 
     @Test
