@@ -12,7 +12,7 @@ class ParseErrorTest {
 
     @Test
     @DisplayName("Given a message and position, when constructing, then both are stored correctly")
-    void constructor_storesMessageAndPosition() {
+    void getPosition_returnsPosition_whenConstructedWithMessageAndPosition() {
         ParseError error = new ParseError("Unexpected token", 5);
         assertEquals("Unexpected token", error.getMessage());
         assertEquals(5, error.getPosition());
@@ -20,21 +20,21 @@ class ParseErrorTest {
 
     @Test
     @DisplayName("Given position zero, when constructing, then getPosition returns zero")
-    void constructor_handlesZeroPosition() {
+    void getPosition_returnsZero_whenConstructedWithZeroPosition() {
         ParseError error = new ParseError("Error at start", 0);
         assertEquals(0, error.getPosition());
     }
 
     @Test
     @DisplayName("Given a negative position, when constructing, then getPosition returns the negative value")
-    void constructor_handlesNegativePosition() {
+    void getPosition_returnsNegativeValue_whenConstructedWithNegativePosition() {
         ParseError error = new ParseError("Error", -1);
         assertEquals(-1, error.getPosition());
     }
 
     @Test
     @DisplayName("Given only a message, when constructing, then message is stored and position defaults to zero")
-    void constructor_withMessageOnly_storesMessage() {
+    void getMessage_returnsMessage_whenConstructedWithMessageOnly() {
         ParseError error = new ParseError("Parse failure");
         assertEquals("Parse failure", error.getMessage());
         assertEquals(0, error.getPosition());
@@ -42,7 +42,7 @@ class ParseErrorTest {
 
     @Test
     @DisplayName("Given only a cause, when constructing, then cause is stored")
-    void constructor_withCauseOnly_storesCause() {
+    void getCause_returnsCause_whenConstructedWithCauseOnly() {
         RuntimeException cause = new RuntimeException("root cause");
         ParseError error = new ParseError(cause);
         assertSame(cause, error.getCause());
@@ -50,7 +50,7 @@ class ParseErrorTest {
 
     @Test
     @DisplayName("Given a message and cause, when constructing, then both are stored")
-    void constructor_withMessageAndCause_storesBoth() {
+    void getCause_returnsCause_whenConstructedWithMessageAndCause() {
         RuntimeException cause = new RuntimeException("root cause");
         ParseError error = new ParseError("Parse failure", cause);
         assertEquals("Parse failure", error.getMessage());
@@ -58,8 +58,8 @@ class ParseErrorTest {
     }
 
     @Test
-    @DisplayName("ParseError is a RuntimeException")
-    void parseError_isRuntimeException() {
+    @DisplayName("Given a ParseError, when checking type, then it is a RuntimeException")
+    void parseError_isRuntimeException_always() {
         ParseError error = new ParseError("test", 1);
         assertInstanceOf(RuntimeException.class, error);
     }

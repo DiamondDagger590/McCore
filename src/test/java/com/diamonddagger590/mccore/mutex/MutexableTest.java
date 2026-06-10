@@ -58,7 +58,7 @@ class MutexableTest {
 
     @Test
     @DisplayName("Given a Mutexable that was locked and unlocked, when locking again, then succeeds")
-    void lock_succeeds_afterUnlock() {
+    void lock_succeeds_whenLockedAndThenUnlocked() {
         mutexable.lock();
         mutexable.unlock();
         assertDoesNotThrow(() -> mutexable.lock());

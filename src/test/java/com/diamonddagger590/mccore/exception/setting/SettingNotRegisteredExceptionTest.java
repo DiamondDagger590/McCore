@@ -18,7 +18,7 @@ class SettingNotRegisteredExceptionTest {
 
     @Test
     @DisplayName("Given a setting key, when constructing, then the key is stored")
-    void constructor_storesSettingKey() {
+    void getSettingKey_returnsKey_whenConstructedWithKey() {
         NamespacedKey key = key("myplugin", "dark_mode");
         SettingNotRegisteredException ex = new SettingNotRegisteredException(key);
         assertEquals(key, ex.getSettingKey());
@@ -26,7 +26,7 @@ class SettingNotRegisteredExceptionTest {
 
     @Test
     @DisplayName("Given a setting key, when calling getMessage, then message contains the key")
-    void getMessage_containsSettingKey() {
+    void getMessage_containsKey_whenConstructedWithKey() {
         NamespacedKey key = key("myplugin", "dark_mode");
         SettingNotRegisteredException ex = new SettingNotRegisteredException(key);
 
@@ -35,8 +35,8 @@ class SettingNotRegisteredExceptionTest {
     }
 
     @Test
-    @DisplayName("SettingNotRegisteredException is a RuntimeException")
-    void settingNotRegisteredException_isRuntimeException() {
+    @DisplayName("Given a SettingNotRegisteredException, when checking type, then it is a RuntimeException")
+    void settingNotRegisteredException_isRuntimeException_always() {
         assertInstanceOf(RuntimeException.class, new SettingNotRegisteredException(key("test", "setting")));
     }
 }

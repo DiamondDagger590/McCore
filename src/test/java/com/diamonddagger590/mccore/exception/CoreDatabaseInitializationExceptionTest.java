@@ -11,21 +11,21 @@ class CoreDatabaseInitializationExceptionTest {
 
     @Test
     @DisplayName("Given no arguments, when constructing, then message is null")
-    void constructor_noArgs_messageIsNull() {
+    void getMessage_returnsNull_whenConstructedWithNoArgs() {
         CoreDatabaseInitializationException ex = new CoreDatabaseInitializationException();
         assertNull(ex.getMessage());
     }
 
     @Test
     @DisplayName("Given a message, when constructing, then message is stored")
-    void constructor_withMessage_storesMessage() {
+    void getMessage_returnsMessage_whenConstructedWithMessage() {
         CoreDatabaseInitializationException ex = new CoreDatabaseInitializationException("Failed to init DB");
         assertEquals("Failed to init DB", ex.getMessage());
     }
 
     @Test
-    @DisplayName("CoreDatabaseInitializationException is a RuntimeException")
-    void coreDatabaseInitializationException_isRuntimeException() {
+    @DisplayName("Given a CoreDatabaseInitializationException, when checking type, then it is a RuntimeException")
+    void coreDatabaseInitializationException_isRuntimeException_always() {
         assertInstanceOf(RuntimeException.class, new CoreDatabaseInitializationException());
     }
 }

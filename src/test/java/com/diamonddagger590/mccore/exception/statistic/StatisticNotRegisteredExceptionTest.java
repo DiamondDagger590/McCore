@@ -18,7 +18,7 @@ class StatisticNotRegisteredExceptionTest {
 
     @Test
     @DisplayName("Given a statistic key, when constructing, then the key is stored")
-    void constructor_storesStatisticKey() {
+    void getStatisticKey_returnsKey_whenConstructedWithKey() {
         NamespacedKey key = key("myplugin", "kills");
         StatisticNotRegisteredException ex = new StatisticNotRegisteredException(key);
         assertEquals(key, ex.getStatisticKey());
@@ -26,7 +26,7 @@ class StatisticNotRegisteredExceptionTest {
 
     @Test
     @DisplayName("Given a statistic key, when calling getMessage, then message contains the key")
-    void getMessage_containsStatisticKey() {
+    void getMessage_containsKey_whenConstructedWithKey() {
         NamespacedKey key = key("myplugin", "kills");
         StatisticNotRegisteredException ex = new StatisticNotRegisteredException(key);
 
@@ -35,8 +35,8 @@ class StatisticNotRegisteredExceptionTest {
     }
 
     @Test
-    @DisplayName("StatisticNotRegisteredException is a RuntimeException")
-    void statisticNotRegisteredException_isRuntimeException() {
+    @DisplayName("Given a StatisticNotRegisteredException, when checking type, then it is a RuntimeException")
+    void statisticNotRegisteredException_isRuntimeException_always() {
         assertInstanceOf(RuntimeException.class, new StatisticNotRegisteredException(key("test", "stat")));
     }
 }

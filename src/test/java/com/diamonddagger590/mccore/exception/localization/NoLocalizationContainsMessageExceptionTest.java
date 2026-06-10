@@ -10,13 +10,14 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class NoLocalizationContainsMessageExceptionTest {
 
     @Test
     @DisplayName("Given a route and checked locales, when constructing, then both are stored")
-    void constructor_storesRouteAndLocales() {
+    void getRoute_returnsRoute_whenConstructedWithRouteAndLocales() {
         Route route = Route.from("messages", "greeting");
         Set<Locale> locales = Set.of(Locale.ENGLISH, Locale.FRENCH);
         NoLocalizationContainsMessageException ex = new NoLocalizationContainsMessageException(route, locales);
@@ -29,7 +30,7 @@ class NoLocalizationContainsMessageExceptionTest {
 
     @Test
     @DisplayName("Given a route and locales, when calling getMessage, then message contains route info")
-    void getMessage_containsRouteInfo() {
+    void getMessage_containsRouteInfo_whenConstructedWithRouteAndLocales() {
         Route route = Route.from("messages", "test");
         Set<Locale> locales = Set.of(Locale.ENGLISH);
         NoLocalizationContainsMessageException ex = new NoLocalizationContainsMessageException(route, locales);
@@ -40,22 +41,29 @@ class NoLocalizationContainsMessageExceptionTest {
 
     @Test
     @DisplayName("Given checked locales, when getting them, then returned set is immutable")
-    void getCheckedLocales_returnsImmutableCopy() {
+    void getCheckedLocales_returnsImmutableSet_whenLocalesAreProvided() {
         Route route = Route.from("test");
         Set<Locale> locales = Set.of(Locale.ENGLISH);
         NoLocalizationContainsMessageException ex = new NoLocalizationContainsMessageException(route, locales);
 
         Set<Locale> returned = ex.getCheckedLocales();
-        assertInstanceOf(RuntimeException.class, ex);
         assertEquals(1, returned.size());
+        assertThrows(UnsupportedOperationException.class, () -> returned.add(Locale.FRENCH));
     }
 
     @Test
     @DisplayName("Given an empty locale set, when constructing, then getCheckedLocales returns empty set")
-    void constructor_withEmptyLocales_returnsEmptySet() {
+    void getCheckedLocales_returnsEmptySet_whenConstructedWithEmptyLocales() {
         Route route = Route.from("messages", "empty");
         NoLocalizationContainsMessageException ex = new NoLocalizationContainsMessageException(route, Set.of());
 
         assertTrue(ex.getCheckedLocales().isEmpty());
+    }
+
+    @Test
+    @DisplayName("Given a NoLocalizationContainsMessageException, when checking type, then it is a RuntimeException")
+    void noLocalizationContainsMessageException_isRuntimeException_always() {
+        assertInstanceOf(RuntimeException.class,
+            new NoLocalizationContainsMessageException(Route.from("test"), Set.of()));
     }
 }

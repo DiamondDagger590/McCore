@@ -11,21 +11,21 @@ class TaskCompletedExceptionTest {
 
     @Test
     @DisplayName("Given no arguments, when constructing, then message is null")
-    void constructor_noArgs_messageIsNull() {
+    void getMessage_returnsNull_whenConstructedWithNoArgs() {
         TaskCompletedException ex = new TaskCompletedException();
         assertNull(ex.getMessage());
     }
 
     @Test
     @DisplayName("Given a message, when constructing, then message is stored")
-    void constructor_withMessage_storesMessage() {
+    void getMessage_returnsMessage_whenConstructedWithMessage() {
         TaskCompletedException ex = new TaskCompletedException("Task already ran");
         assertEquals("Task already ran", ex.getMessage());
     }
 
     @Test
-    @DisplayName("TaskCompletedException is a RuntimeException")
-    void taskCompletedException_isRuntimeException() {
+    @DisplayName("Given a TaskCompletedException, when checking type, then it is a RuntimeException")
+    void taskCompletedException_isRuntimeException_always() {
         assertInstanceOf(RuntimeException.class, new TaskCompletedException());
     }
 }

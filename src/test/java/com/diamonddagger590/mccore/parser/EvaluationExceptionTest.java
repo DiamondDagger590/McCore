@@ -12,21 +12,21 @@ class EvaluationExceptionTest {
 
     @Test
     @DisplayName("Given no arguments, when constructing, then message is null")
-    void constructor_noArgs_messageIsNull() {
+    void getMessage_returnsNull_whenConstructedWithNoArgs() {
         EvaluationException ex = new EvaluationException();
         assertNull(ex.getMessage());
     }
 
     @Test
     @DisplayName("Given a message, when constructing, then message is stored")
-    void constructor_withMessage_storesMessage() {
+    void getMessage_returnsMessage_whenConstructedWithMessage() {
         EvaluationException ex = new EvaluationException("Variable x not initialized");
         assertEquals("Variable x not initialized", ex.getMessage());
     }
 
     @Test
     @DisplayName("Given a cause, when constructing, then cause is stored")
-    void constructor_withCause_storesCause() {
+    void getCause_returnsCause_whenConstructedWithCause() {
         RuntimeException cause = new RuntimeException("root cause");
         EvaluationException ex = new EvaluationException(cause);
         assertSame(cause, ex.getCause());
@@ -34,7 +34,7 @@ class EvaluationExceptionTest {
 
     @Test
     @DisplayName("Given a message and cause, when constructing, then both are stored")
-    void constructor_withMessageAndCause_storesBoth() {
+    void getCause_returnsCause_whenConstructedWithMessageAndCause() {
         RuntimeException cause = new RuntimeException("root cause");
         EvaluationException ex = new EvaluationException("eval failed", cause);
         assertEquals("eval failed", ex.getMessage());
@@ -42,8 +42,8 @@ class EvaluationExceptionTest {
     }
 
     @Test
-    @DisplayName("EvaluationException is a RuntimeException")
-    void evaluationException_isRuntimeException() {
+    @DisplayName("Given an EvaluationException, when checking type, then it is a RuntimeException")
+    void evaluationException_isRuntimeException_always() {
         assertInstanceOf(RuntimeException.class, new EvaluationException());
     }
 }

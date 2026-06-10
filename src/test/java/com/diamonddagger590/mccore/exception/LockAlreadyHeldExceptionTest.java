@@ -11,21 +11,21 @@ class LockAlreadyHeldExceptionTest {
 
     @Test
     @DisplayName("Given no arguments, when constructing, then message is null")
-    void constructor_noArgs_messageIsNull() {
+    void getMessage_returnsNull_whenConstructedWithNoArgs() {
         LockAlreadyHeldException ex = new LockAlreadyHeldException();
         assertNull(ex.getMessage());
     }
 
     @Test
     @DisplayName("Given a message, when constructing, then message is stored")
-    void constructor_withMessage_storesMessage() {
+    void getMessage_returnsMessage_whenConstructedWithMessage() {
         LockAlreadyHeldException ex = new LockAlreadyHeldException("Lock is held");
         assertEquals("Lock is held", ex.getMessage());
     }
 
     @Test
-    @DisplayName("LockAlreadyHeldException is a RuntimeException")
-    void lockAlreadyHeldException_isRuntimeException() {
+    @DisplayName("Given a LockAlreadyHeldException, when checking type, then it is a RuntimeException")
+    void lockAlreadyHeldException_isRuntimeException_always() {
         assertInstanceOf(RuntimeException.class, new LockAlreadyHeldException());
     }
 }
