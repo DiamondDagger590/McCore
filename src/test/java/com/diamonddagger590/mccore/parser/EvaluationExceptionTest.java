@@ -25,11 +25,12 @@ class EvaluationExceptionTest {
     }
 
     @Test
-    @DisplayName("Given a cause, when constructing, then cause is stored")
+    @DisplayName("Given a cause, when constructing, then cause is stored and message contains cause toString")
     void getCause_returnsCause_whenConstructedWithCause() {
         RuntimeException cause = new RuntimeException("root cause");
         EvaluationException ex = new EvaluationException(cause);
         assertSame(cause, ex.getCause());
+        assertEquals(cause.toString(), ex.getMessage());
     }
 
     @Test

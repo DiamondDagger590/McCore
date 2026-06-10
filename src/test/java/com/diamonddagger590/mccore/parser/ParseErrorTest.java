@@ -41,20 +41,22 @@ class ParseErrorTest {
     }
 
     @Test
-    @DisplayName("Given only a cause, when constructing, then cause is stored")
+    @DisplayName("Given only a cause, when constructing, then cause is stored and position defaults to zero")
     void getCause_returnsCause_whenConstructedWithCauseOnly() {
         RuntimeException cause = new RuntimeException("root cause");
         ParseError error = new ParseError(cause);
         assertSame(cause, error.getCause());
+        assertEquals(0, error.getPosition());
     }
 
     @Test
-    @DisplayName("Given a message and cause, when constructing, then both are stored")
+    @DisplayName("Given a message and cause, when constructing, then both are stored and position defaults to zero")
     void getCause_returnsCause_whenConstructedWithMessageAndCause() {
         RuntimeException cause = new RuntimeException("root cause");
         ParseError error = new ParseError("Parse failure", cause);
         assertEquals("Parse failure", error.getMessage());
         assertSame(cause, error.getCause());
+        assertEquals(0, error.getPosition());
     }
 
     @Test

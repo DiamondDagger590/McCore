@@ -29,14 +29,17 @@ class NoLocalizationContainsMessageExceptionTest {
     }
 
     @Test
-    @DisplayName("Given a route and locales, when calling getMessage, then message contains route info")
-    void getMessage_containsRouteInfo_whenConstructedWithRouteAndLocales() {
+    @DisplayName("Given a route and locales, when calling getMessage, then message contains route and locale info")
+    void getMessage_containsRouteAndLocaleInfo_whenConstructedWithRouteAndLocales() {
         Route route = Route.from("messages", "test");
         Set<Locale> locales = Set.of(Locale.ENGLISH);
         NoLocalizationContainsMessageException ex = new NoLocalizationContainsMessageException(route, locales);
 
-        assertNotNull(ex.getMessage());
-        assertTrue(ex.getMessage().contains("localization"));
+        String message = ex.getMessage();
+        assertNotNull(message);
+        assertTrue(message.contains("localization"));
+        assertTrue(message.contains(route.toString()));
+        assertTrue(message.contains(Locale.ENGLISH.getDisplayName()));
     }
 
     @Test

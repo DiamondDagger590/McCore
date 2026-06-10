@@ -3,9 +3,14 @@ package com.diamonddagger590.mccore.mutex;
 import com.diamonddagger590.mccore.exception.LockAlreadyHeldException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -62,6 +67,48 @@ class MutexableTest {
         mutexable.lock();
         mutexable.unlock();
         assertDoesNotThrow(() -> mutexable.lock());
+        assertTrue(mutexable.isLocked());
+    }
+
+    @RepeatedTest(50)
+    @DisplayName("Given two threads racing to lock, when both attempt lock, then exactly one succeeds")
+    void lock_onlyOneSucceeds_whenTwoThreadsRace() throws InterruptedException {
+        CountDownLatch startLatch = new CountDownLatch(1);
+        AtomicInteger successCount = new AtomicInteger(0);
+        AtomicInteger failureCount = new AtomicInteger(0);
+
+        Thread t1 = new Thread(() -> {
+            try {
+                startLatch.await();
+                mutexable.lock();
+                successCount.incrementAndGet();
+            } catch (LockAlreadyHeldException e) {
+                failureCount.incrementAndGet();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+
+        Thread t2 = new Thread(() -> {
+            try {
+                startLatch.await();
+                mutexable.lock();
+                successCount.incrementAndGet();
+            } catch (LockAlreadyHeldException e) {
+                failureCount.incrementAndGet();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+
+        t1.start();
+        t2.start();
+        startLatch.countDown();
+        t1.join(1000);
+        t2.join(1000);
+
+        assertEquals(1, successCount.get());
+        assertEquals(1, failureCount.get());
         assertTrue(mutexable.isLocked());
     }
 }
