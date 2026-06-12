@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -59,7 +60,7 @@ class SQLiteDatabaseDriverTest {
         Credentials credentials = new Credentials("localhost", 3306, "testdb", "user", "pass");
         HikariDataSource dataSource = new HikariDataSource();
         try {
-            driver.populateDataSourceCredentials(dataSource, credentials);
+            assertDoesNotThrow(() -> driver.populateDataSourceCredentials(dataSource, credentials));
         } finally {
             dataSource.close();
         }

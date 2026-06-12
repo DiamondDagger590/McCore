@@ -77,4 +77,5 @@ class ManagerKeyConstantsTest {
         ManagerKey<GuiManager> key2 = ManagerKeyImpl.create(GuiManager.class);
         assertEquals(key1, key2);
     }
+
 }

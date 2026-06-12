@@ -69,7 +69,7 @@ class GuiEventTest {
     @DisplayName("Given a GuiRefreshEvent, when getHandlers called, then matches static handler list")
     void guiRefreshEvent_getHandlers_matchesStaticHandlerList() {
         GuiRefreshEvent event = new GuiRefreshEvent(createStubGui());
-        assertEquals(GuiRefreshEvent.getHandlerList(), event.getHandlers());
+        assertSame(GuiRefreshEvent.getHandlerList(), event.getHandlers());
     }
 
     @Test
@@ -77,7 +77,7 @@ class GuiEventTest {
     void guiRefreshEvent_getHandlerList_returnsSameInstance() {
         HandlerList first = GuiRefreshEvent.getHandlerList();
         HandlerList second = GuiRefreshEvent.getHandlerList();
-        assertEquals(first, second);
+        assertSame(first, second);
     }
 
     // --- CoreGuiOpenEvent ---
@@ -129,7 +129,7 @@ class GuiEventTest {
     @DisplayName("Given a CoreGuiOpenEvent, when getHandlers called, then matches static handler list")
     void coreGuiOpenEvent_getHandlers_matchesStaticHandlerList() {
         CoreGuiOpenEvent event = new CoreGuiOpenEvent(UUID.randomUUID(), createStubGui(), null);
-        assertEquals(CoreGuiOpenEvent.getHandlerList(), event.getHandlers());
+        assertSame(CoreGuiOpenEvent.getHandlerList(), event.getHandlers());
     }
 
     @Test
@@ -137,7 +137,7 @@ class GuiEventTest {
     void coreGuiOpenEvent_getHandlerList_returnsSameInstance() {
         HandlerList first = CoreGuiOpenEvent.getHandlerList();
         HandlerList second = CoreGuiOpenEvent.getHandlerList();
-        assertEquals(first, second);
+        assertSame(first, second);
     }
 
     // --- Cross-event isolation ---

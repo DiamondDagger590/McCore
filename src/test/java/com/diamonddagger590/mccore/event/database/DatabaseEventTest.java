@@ -4,7 +4,7 @@ import org.bukkit.event.HandlerList;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 
@@ -25,7 +25,7 @@ class DatabaseEventTest {
         PreTablesCreateEvent event = new PreTablesCreateEvent();
         HandlerList instanceList = event.getHandlers();
         HandlerList staticList = PreTablesCreateEvent.getHandlerList();
-        assertEquals(staticList, instanceList);
+        assertSame(staticList, instanceList);
     }
 
     @Test
@@ -33,7 +33,7 @@ class DatabaseEventTest {
     void preTablesCreateEvent_getHandlerList_returnsSameInstance() {
         HandlerList first = PreTablesCreateEvent.getHandlerList();
         HandlerList second = PreTablesCreateEvent.getHandlerList();
-        assertEquals(first, second);
+        assertSame(first, second);
     }
 
     // --- TablesCreatedEvent ---
@@ -51,7 +51,7 @@ class DatabaseEventTest {
         TablesCreatedEvent event = new TablesCreatedEvent();
         HandlerList instanceList = event.getHandlers();
         HandlerList staticList = TablesCreatedEvent.getHandlerList();
-        assertEquals(staticList, instanceList);
+        assertSame(staticList, instanceList);
     }
 
     @Test
@@ -59,7 +59,7 @@ class DatabaseEventTest {
     void tablesCreatedEvent_getHandlerList_returnsSameInstance() {
         HandlerList first = TablesCreatedEvent.getHandlerList();
         HandlerList second = TablesCreatedEvent.getHandlerList();
-        assertEquals(first, second);
+        assertSame(first, second);
     }
 
     // --- PreTablesUpdateEvent ---
@@ -77,7 +77,7 @@ class DatabaseEventTest {
         PreTablesUpdateEvent event = new PreTablesUpdateEvent();
         HandlerList instanceList = event.getHandlers();
         HandlerList staticList = PreTablesUpdateEvent.getHandlerList();
-        assertEquals(staticList, instanceList);
+        assertSame(staticList, instanceList);
     }
 
     @Test
@@ -85,7 +85,7 @@ class DatabaseEventTest {
     void preTablesUpdateEvent_getHandlerList_returnsSameInstance() {
         HandlerList first = PreTablesUpdateEvent.getHandlerList();
         HandlerList second = PreTablesUpdateEvent.getHandlerList();
-        assertEquals(first, second);
+        assertSame(first, second);
     }
 
     // --- TablesUpdatedEvent ---
@@ -103,7 +103,7 @@ class DatabaseEventTest {
         TablesUpdatedEvent event = new TablesUpdatedEvent();
         HandlerList instanceList = event.getHandlers();
         HandlerList staticList = TablesUpdatedEvent.getHandlerList();
-        assertEquals(staticList, instanceList);
+        assertSame(staticList, instanceList);
     }
 
     @Test
@@ -111,7 +111,7 @@ class DatabaseEventTest {
     void tablesUpdatedEvent_getHandlerList_returnsSameInstance() {
         HandlerList first = TablesUpdatedEvent.getHandlerList();
         HandlerList second = TablesUpdatedEvent.getHandlerList();
-        assertEquals(first, second);
+        assertSame(first, second);
     }
 
     // --- Cross-event isolation ---

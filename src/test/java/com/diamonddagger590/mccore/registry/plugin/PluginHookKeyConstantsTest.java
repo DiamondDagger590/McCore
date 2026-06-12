@@ -89,4 +89,5 @@ class PluginHookKeyConstantsTest {
         PluginHookKey<CorePapiHook> key2 = PluginHookKeyImpl.create(CorePapiHook.class);
         assertEquals(key1, key2);
     }
+
 }
