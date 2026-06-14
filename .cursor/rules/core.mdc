@@ -76,6 +76,11 @@ Every test method must follow the Given/When/Then pattern:
 void getStatistic_returnsStatistic_whenKeyIsRegistered() { ... }
 ```
 
+## Test Fixtures
+
+- Use `RegistryResetExtension` / `InternalResetTestTools` to reset singleton state between tests
+- Use `ManagedExecutorExtension` (via `@RegisterExtension`) for any test that needs an `ExecutorService` — never create executors manually in tests
+
 ## Code Style
 
 - 4-space indentation, K&R brace style (standard Java)
