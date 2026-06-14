@@ -41,5 +41,23 @@ reviews:
         if persona automation is unavailable or skipped, include these domains
         in the review.
 
+    - path: "src/test/**/*.java"
+      instructions: |
+        Test method naming convention for this repository is:
+          methodUnderTest_expectedOutcome_whenCondition
+        For example: register_throwsIllegalArgument_whenManagerAlreadyRegistered
+
+        The @DisplayName annotation carries the Given/When/Then sentence:
+          @DisplayName("Given a registered manager, when registering again, then throws IllegalArgumentException")
+
+        Do NOT flag test method names that follow the methodUnderTest_expectedOutcome_whenCondition
+        pattern. Do NOT suggest renaming them to givenContext_whenAction_thenOutcome — that is
+        NOT the convention used in this repository.
+
+    - path: "src/testFixtures/**/*.java"
+      instructions: |
+        Test fixture files follow the same naming conventions as test files.
+        See the src/test path instructions for details.
+
 chat:
   auto_reply: true
