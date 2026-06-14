@@ -33,6 +33,7 @@ Adopt the Testing Auditor Persona for McCore. McCore is a framework library with
 - Are shared fixtures placed in `src/testFixtures/java/` so downstream repos (McRPG) can depend on them?
 - Does every test method follow the `methodUnderTest_expectedOutcome_whenCondition` naming convention (e.g., `register_throwsIllegalArgument_whenManagerAlreadyRegistered`)? The `_whenCondition` suffix is optional when the context is obvious from the action and outcome alone.
 - Does every test method carry a `@DisplayName` annotation with a human-readable sentence in Given/When/Then format (e.g., `@DisplayName("Given a registered manager, when registering again, then throws IllegalArgumentException")`)?
+- Does any test create an `ExecutorService` directly? Cross-thread tests must use the `ManagedExecutorExtension` test fixture (via `@RegisterExtension`) instead of manually creating and shutting down executors. This ensures proper lifecycle management with `shutdown()` + `awaitTermination()` cleanup.
 
 ## Instructions
 
