@@ -28,6 +28,7 @@ Caffeine is shadowed and relocated to `com.diamonddagger590.mccore.caffeine` in 
 - **Test structure:** Test files mirror the main source package structure under `src/test/java/`
 - Tests run via `useJUnitPlatform()` in Gradle
 - Use `RegistryResetExtension` / `InternalResetTestTools` where available to reset singleton state between tests
+- Use `ManagedExecutorExtension` (via `@RegisterExtension`) for any test that needs an `ExecutorService` — never create executors manually in tests
 - There are no integration tests — server behavior is validated manually on a running Paper server
 
 ### Test Naming Convention
@@ -50,6 +51,7 @@ void getValue_throwsEvaluationException_whenVariableUninitializedAndErrorModeEna
 - Test methods must be `public` or package-private (not `private`)
 - Every test method must have at least one assertion
 - Tests that do not need Bukkit APIs must be plain JUnit tests — do not spin up MockBukkit unnecessarily
+- Cross-thread tests must use `ManagedExecutorExtension` (via `@RegisterExtension`) instead of manually creating `ExecutorService` instances — it handles `shutdown()` + `awaitTermination()` cleanup automatically
 
 ---
 
