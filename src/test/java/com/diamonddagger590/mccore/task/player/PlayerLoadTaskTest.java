@@ -1,0 +1,296 @@
+package com.diamonddagger590.mccore.task.player;
+
+import com.diamonddagger590.mccore.CorePlugin;
+import com.diamonddagger590.mccore.database.Database;
+import com.diamonddagger590.mccore.database.DatabaseManager;
+import com.diamonddagger590.mccore.database.table.impl.MutexDAO;
+import com.diamonddagger590.mccore.player.CorePlayer;
+import com.diamonddagger590.mccore.player.PlayerManager;
+import com.diamonddagger590.mccore.registry.RegistryAccess;
+import com.diamonddagger590.mccore.registry.RegistryKey;
+import com.diamonddagger590.mccore.registry.manager.ManagerRegistry;
+import com.diamonddagger590.mccore.testing.RegistryResetExtension;
+import com.diamonddagger590.mccore.util.TimeProvider;
+import org.bukkit.Bukkit;
+import org.bukkit.scheduler.BukkitScheduler;
+import org.bukkit.scheduler.BukkitTask;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class PlayerLoadTaskTest {
+
+    @Mock
+    private CorePlugin mockPlugin;
+
+    @Mock
+    private CorePlayer mockCorePlayer;
+
+    @Mock
+    private Database mockDatabase;
+
+    @Mock
+    private Connection mockConnection;
+
+    @Mock
+    private BukkitScheduler mockScheduler;
+
+    @Mock
+    private BukkitTask mockBukkitTask;
+
+    @Mock
+    private PlayerManager<CorePlugin, CorePlayer> mockPlayerManager;
+
+    @Mock
+    private DatabaseManager<CorePlugin> mockDatabaseManager;
+
+    private MockedStatic<CorePlugin> corePluginStatic;
+    private MockedStatic<Bukkit> bukkitStatic;
+    private MockedStatic<MutexDAO> mutexDaoStatic;
+
+    private final TimeProvider timeProvider = new TimeProvider(Clock.fixed(Instant.ofEpochMilli(1000000), ZoneId.of("UTC")));
+    private final UUID playerUUID = UUID.randomUUID();
+
+    private boolean loadPlayerResult;
+
+    @BeforeEach
+    void setUp() {
+        RegistryResetExtension.setupRegistry();
+
+        lenient().when(mockPlugin.getTimeProvider()).thenReturn(timeProvider);
+        lenient().when(mockCorePlayer.getUUID()).thenReturn(playerUUID);
+        lenient().when(mockDatabaseManager.getDatabase()).thenReturn(mockDatabase);
+
+        ManagerRegistry managerRegistry = RegistryAccess.registryAccess().registry(RegistryKey.MANAGER);
+        managerRegistry.register(mockPlayerManager);
+        managerRegistry.register(mockDatabaseManager);
+
+        corePluginStatic = mockStatic(CorePlugin.class);
+        corePluginStatic.when(CorePlugin::getInstance).thenReturn(mockPlugin);
+        lenient().when(mockPlugin.registryAccess()).thenReturn(RegistryAccess.registryAccess());
+
+        bukkitStatic = mockStatic(Bukkit.class);
+        bukkitStatic.when(Bukkit::getScheduler).thenReturn(mockScheduler);
+
+        mutexDaoStatic = mockStatic(MutexDAO.class);
+
+        loadPlayerResult = true;
+    }
+
+    @AfterEach
+    void tearDown() {
+        mutexDaoStatic.close();
+        bukkitStatic.close();
+        corePluginStatic.close();
+        RegistryResetExtension.resetRegistry();
+    }
+
+    private PlayerLoadTask createTask() {
+        return new PlayerLoadTask(mockPlugin, mockCorePlayer) {
+            @Override
+            protected boolean loadPlayer() {
+                return loadPlayerResult;
+            }
+
+            @Override
+            protected void onDelayComplete() {}
+
+            @Override
+            protected void onIntervalStart() {}
+
+            @Override
+            protected void onIntervalPause() {}
+
+            @Override
+            protected void onIntervalResume() {}
+
+            @Override
+            protected void onTaskExpire() {}
+        };
+    }
+
+    @Test
+    @DisplayName("Given a new task, when constructed, then getResult returns a non-null CompletableFuture")
+    void constructor_resultFutureIsNotNull() {
+        PlayerLoadTask task = createTask();
+        assertNotNull(task.getResult());
+        assertFalse(task.getResult().isDone());
+    }
+
+    @Test
+    @DisplayName("Given a new task, when constructed, then getCorePlayer returns the correct player")
+    void constructor_corePlayerIsCorrect() {
+        PlayerLoadTask task = createTask();
+        assertSame(mockCorePlayer, task.getCorePlayer());
+    }
+
+    @Test
+    @DisplayName("Given a new task, when constructed, then getPlugin returns the CorePlugin")
+    void constructor_pluginIsCorrect() {
+        PlayerLoadTask task = createTask();
+        assertSame(mockPlugin, task.getPlugin());
+    }
+
+    @Test
+    @DisplayName("Given a new task, when constructed, then result future is not completed")
+    void constructor_resultNotCompleted() {
+        PlayerLoadTask task = createTask();
+        assertFalse(task.getResult().isDone());
+    }
+
+    @Test
+    @DisplayName("Given player already in manager, when onIntervalComplete, then task resumes and doesn't load")
+    void onIntervalComplete_playerAlreadyStored_resumesTask() throws SQLException {
+        when(mockPlayerManager.getPlayer(playerUUID)).thenReturn(Optional.of(mockCorePlayer));
+        when(mockDatabase.getConnection()).thenReturn(mockConnection);
+
+        PlayerLoadTask task = createTask();
+        task.onIntervalComplete();
+
+        assertFalse(task.getResult().isDone());
+    }
+
+    @Test
+    @DisplayName("Given player not in manager and no mutex, when onIntervalComplete, then loads player successfully")
+    void onIntervalComplete_noMutex_loadsSuccessfully() throws SQLException {
+        when(mockPlayerManager.getPlayer(playerUUID)).thenReturn(Optional.empty());
+        when(mockDatabase.getConnection()).thenReturn(mockConnection);
+        when(mockCorePlayer.useMutex()).thenReturn(false);
+        lenient().doNothing().when(mockScheduler).cancelTask(anyInt());
+        lenient().when(mockScheduler.scheduleSyncDelayedTask(eq(mockPlugin), any(Runnable.class))).thenReturn(1);
+
+        loadPlayerResult = true;
+        PlayerLoadTask task = createTask();
+        task.onIntervalComplete();
+
+        assertTrue(task.getResult().isDone());
+        assertTrue(task.getResult().join());
+    }
+
+    @Test
+    @DisplayName("Given player not in manager and no mutex but load fails, when onIntervalComplete, then result is false")
+    void onIntervalComplete_noMutex_loadFails() throws SQLException {
+        when(mockPlayerManager.getPlayer(playerUUID)).thenReturn(Optional.empty());
+        when(mockDatabase.getConnection()).thenReturn(mockConnection);
+        when(mockCorePlayer.useMutex()).thenReturn(false);
+        lenient().doNothing().when(mockScheduler).cancelTask(anyInt());
+
+        loadPlayerResult = false;
+        PlayerLoadTask task = createTask();
+        task.onIntervalComplete();
+
+        assertTrue(task.getResult().isDone());
+        assertFalse(task.getResult().join());
+    }
+
+    @Test
+    @DisplayName("Given player uses mutex and mutex is locked, when onIntervalComplete, then resumes and waits")
+    void onIntervalComplete_mutexLocked_resumesAndWaits() throws SQLException {
+        when(mockPlayerManager.getPlayer(playerUUID)).thenReturn(Optional.empty());
+        when(mockDatabase.getConnection()).thenReturn(mockConnection);
+        when(mockCorePlayer.useMutex()).thenReturn(true);
+        mutexDaoStatic.when(() -> MutexDAO.isUserMutexLocked(mockConnection, playerUUID)).thenReturn(true);
+
+        PlayerLoadTask task = createTask();
+        task.onIntervalComplete();
+
+        assertFalse(task.getResult().isDone());
+    }
+
+    @Test
+    @DisplayName("Given player uses mutex and mutex is unlocked, when onIntervalComplete with successful load, then locks mutex")
+    void onIntervalComplete_mutexUnlocked_loadsAndLocksMutex() throws SQLException {
+        when(mockPlayerManager.getPlayer(playerUUID)).thenReturn(Optional.empty());
+        when(mockDatabase.getConnection()).thenReturn(mockConnection);
+        when(mockCorePlayer.useMutex()).thenReturn(true);
+        lenient().doNothing().when(mockScheduler).cancelTask(anyInt());
+        lenient().when(mockScheduler.scheduleSyncDelayedTask(eq(mockPlugin), any(Runnable.class))).thenReturn(1);
+        mutexDaoStatic.when(() -> MutexDAO.isUserMutexLocked(mockConnection, playerUUID)).thenReturn(false);
+
+        loadPlayerResult = true;
+        PlayerLoadTask task = createTask();
+        task.onIntervalComplete();
+
+        assertTrue(task.getResult().isDone());
+        assertTrue(task.getResult().join());
+        verify(mockCorePlayer).lock();
+        mutexDaoStatic.verify(() -> MutexDAO.updateUserMutex(mockConnection, mockCorePlayer));
+    }
+
+    @Test
+    @DisplayName("Given player uses mutex and mutex is unlocked but load fails, when onIntervalComplete, then result is false")
+    void onIntervalComplete_mutexUnlocked_loadFails() throws SQLException {
+        when(mockPlayerManager.getPlayer(playerUUID)).thenReturn(Optional.empty());
+        when(mockDatabase.getConnection()).thenReturn(mockConnection);
+        when(mockCorePlayer.useMutex()).thenReturn(true);
+        lenient().doNothing().when(mockScheduler).cancelTask(anyInt());
+        mutexDaoStatic.when(() -> MutexDAO.isUserMutexLocked(mockConnection, playerUUID)).thenReturn(false);
+
+        loadPlayerResult = false;
+        PlayerLoadTask task = createTask();
+        task.onIntervalComplete();
+
+        assertTrue(task.getResult().isDone());
+        assertFalse(task.getResult().join());
+        verify(mockCorePlayer, never()).lock();
+    }
+
+    @Test
+    @DisplayName("Given task is cancelled externally (not completed), when onCancel, then result is false")
+    void onCancel_notCompleted_resultIsFalse() {
+        PlayerLoadTask task = createTask();
+        task.cancelTask();
+
+        lenient().doNothing().when(mockScheduler).cancelTask(anyInt());
+        task.run();
+
+        assertTrue(task.getResult().isDone());
+        assertFalse(task.getResult().join());
+    }
+
+    @Test
+    @DisplayName("Given a database runtime exception, when onIntervalComplete, then exception propagates")
+    void onIntervalComplete_runtimeException_propagates() {
+        when(mockPlayerManager.getPlayer(playerUUID)).thenReturn(Optional.empty());
+        when(mockDatabase.getConnection()).thenThrow(new RuntimeException(new SQLException("Test exception")));
+
+        PlayerLoadTask task = createTask();
+        // getConnection() wraps SQLException in RuntimeException, and the catch block in
+        // runLoadPlayerTask only catches SQLException, so RuntimeException propagates
+        org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, task::onIntervalComplete);
+    }
+}
