@@ -1,20 +1,28 @@
 package com.diamonddagger590.mccore.util;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.DyeColor;
+import org.bukkit.Location;
+import org.bukkit.Server;
+import org.bukkit.World;
 import org.bukkit.inventory.ItemFlag;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.MockedStatic;
 
 import java.time.Duration;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class MethodsTest {
 
@@ -539,5 +547,125 @@ class MethodsTest {
     void getMinecraftKey_lowercasesKey_whenGivenUppercase() {
         org.bukkit.NamespacedKey key = Methods.getMinecraftKey("STONE");
         assertEquals("stone", key.getKey());
+    }
+
+    // ── serializeLocation ──────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("Given a location with a world, when serializing, then returns semicolon-delimited string")
+    void serializeLocation_returnsDelimitedString_whenGivenValidLocation() {
+        World mockWorld = mock(World.class);
+        UUID worldUuid = UUID.fromString("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+        when(mockWorld.getUID()).thenReturn(worldUuid);
+
+        Location location = new Location(mockWorld, 100.5, 64.0, -200.75);
+        String serialized = Methods.serializeLocation(location);
+
+        assertEquals("100.5;64.0;-200.75;aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", serialized);
+    }
+
+    @Test
+    @DisplayName("Given a location at origin, when serializing, then returns zeros with world UUID")
+    void serializeLocation_returnsZeros_whenLocationIsOrigin() {
+        World mockWorld = mock(World.class);
+        UUID worldUuid = UUID.randomUUID();
+        when(mockWorld.getUID()).thenReturn(worldUuid);
+
+        Location location = new Location(mockWorld, 0, 0, 0);
+        String serialized = Methods.serializeLocation(location);
+
+        assertTrue(serialized.startsWith("0.0;0.0;0.0;"));
+        assertTrue(serialized.endsWith(worldUuid.toString()));
+    }
+
+    // ── deserializeLocation ────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("Given a valid serialized location with existing world, when deserializing, then returns location")
+    void deserializeLocation_returnsLocation_whenWorldExists() {
+        UUID worldUuid = UUID.randomUUID();
+        World mockWorld = mock(World.class);
+
+        try (MockedStatic<Bukkit> bukkit = org.mockito.Mockito.mockStatic(Bukkit.class)) {
+            bukkit.when(() -> Bukkit.getWorld(worldUuid.toString())).thenReturn(mockWorld);
+
+            Optional<Location> result = Methods.deserializeLocation("10;20;30;" + worldUuid);
+
+            assertTrue(result.isPresent());
+            Location loc = result.get();
+            assertEquals(10, loc.getBlockX());
+            assertEquals(20, loc.getBlockY());
+            assertEquals(30, loc.getBlockZ());
+        }
+    }
+
+    @Test
+    @DisplayName("Given a valid serialized location with unknown world, when deserializing, then returns empty")
+    void deserializeLocation_returnsEmpty_whenWorldDoesNotExist() {
+        UUID worldUuid = UUID.randomUUID();
+
+        try (MockedStatic<Bukkit> bukkit = org.mockito.Mockito.mockStatic(Bukkit.class)) {
+            bukkit.when(() -> Bukkit.getWorld(worldUuid.toString())).thenReturn(null);
+
+            Optional<Location> result = Methods.deserializeLocation("10;20;30;" + worldUuid);
+
+            assertTrue(result.isEmpty());
+        }
+    }
+
+    @Test
+    @DisplayName("Given an invalid serialized location with too few parts, when deserializing, then throws IllegalArgumentException")
+    void deserializeLocation_throwsIllegalArgument_whenTooFewParts() {
+        assertThrows(IllegalArgumentException.class, () -> Methods.deserializeLocation("10;20"));
+    }
+
+    @Test
+    @DisplayName("Given an invalid serialized location with too many parts, when deserializing, then throws IllegalArgumentException")
+    void deserializeLocation_throwsIllegalArgument_whenTooManyParts() {
+        assertThrows(IllegalArgumentException.class, () -> Methods.deserializeLocation("10;20;30;world;extra"));
+    }
+
+    // ── lookAt additional coverage ─────────────────────────────────────────
+
+    @Test
+    @DisplayName("Given target with negative dx, when calculating lookAt, then yaw is set correctly")
+    void lookAt_setsYaw_whenTargetHasNegativeDx() {
+        Location origin = new Location(null, 10, 0, 0);
+        Location target = new Location(null, -10, 0, 0);
+        Location result = Methods.lookAt(origin, target);
+        // dx < 0, so yaw starts at 1.5 * PI
+        assertTrue(Math.abs(result.getYaw()) > 0, "Yaw should be non-zero when target is behind on X");
+    }
+
+    @Test
+    @DisplayName("Given target with positive dx, when calculating lookAt, then yaw is set correctly")
+    void lookAt_setsYaw_whenTargetHasPositiveDx() {
+        Location origin = new Location(null, 0, 0, 0);
+        Location target = new Location(null, 10, 0, 5);
+        Location result = Methods.lookAt(origin, target);
+        assertTrue(Math.abs(result.getYaw()) > 0, "Yaw should be non-zero when target has positive dx");
+    }
+
+    @Test
+    @DisplayName("Given target above origin, when calculating lookAt, then pitch is negative (looking up)")
+    void lookAt_setsPitchNegative_whenTargetIsAbove() {
+        Location origin = new Location(null, 0, 0, 0);
+        Location target = new Location(null, 10, 10, 0);
+        Location result = Methods.lookAt(origin, target);
+        assertTrue(result.getPitch() < 0, "Pitch should be negative when looking up");
+    }
+
+    // ── toRoutePath additional coverage ─────────────────────────────────────
+
+    @Test
+    @DisplayName("Given no path elements, when creating route path, then returns empty string")
+    void toRoutePath_returnsEmpty_whenGivenNoPaths() {
+        assertEquals("", Methods.toRoutePath());
+    }
+
+    @Test
+    @DisplayName("Given four path elements, when creating route path, then joins all with dots")
+    void toRoutePath_joinsAll_whenGivenFourElements() {
+        assertEquals("a.b.c.d", Methods.toRoutePath("a", "b", "c", "d"));
     }
 }
