@@ -132,4 +132,19 @@ class ManagerRegistryTest {
     void manager_returnsNull_whenNoManagerRegisteredForKey() {
         assertNull(registry().manager(KEY_A));
     }
+
+    @Test
+    @DisplayName("Given a different manager registered, when retrieving by non-matching key, then returns null via fallback")
+    void manager_returnsNull_whenDifferentManagerRegisteredAndKeyDoesNotMatch() {
+        registry().register(new TestManagerB());
+        assertNull(registry().manager(KEY_A));
+    }
+
+    @Test
+    @DisplayName("Given a subclass manager registered, when checking registered by subclass instance, then returns true")
+    void registered_returnsTrue_whenSubclassInstanceRegisteredAndCheckedByParentInstance() {
+        TestManagerASub subManager = new TestManagerASub();
+        registry().register(subManager);
+        assertTrue(registry().registered(new TestManagerASub()));
+    }
 }
