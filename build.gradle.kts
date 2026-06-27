@@ -70,6 +70,13 @@ dependencies {
     testImplementation("org.mockito:mockito-junit-jupiter:$mockitoVersion")
     testFixturesApi("org.mockito:mockito-core:$mockitoVersion")
 
+    val mockBukkitVersion = "4.108.0"
+    testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v1.21:$mockBukkitVersion") {
+        exclude(group = "org.junit", module = "junit-bom")
+        exclude(group = "org.junit.jupiter")
+        exclude(group = "org.junit.platform")
+    }
+
     val sqliteVersion = "3.49.1.0"
     testImplementation("org.xerial:sqlite-jdbc:$sqliteVersion")
 
