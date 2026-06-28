@@ -1,0 +1,4 @@
+name: TestMcCore
+version: '1.0.0'
+main: com.diamonddagger590.mccore.testing.TestCorePlugin
+api-version: '1.21'
