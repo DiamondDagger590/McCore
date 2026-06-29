@@ -4,6 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -141,5 +142,50 @@ class PairTest {
         pair2.setLeft("a");
         pair2.setRight(1);
         assertEquals(pair1, pair2);
+    }
+
+    @Test
+    @DisplayName("Given a pair, when equals called with non-Pair object, then returns false")
+    void equals_returnsFalse_whenCalledDirectlyWithNonPairObject() {
+        ImmutablePair<String, Integer> pair = ImmutablePair.of("test", 1);
+        assertFalse(pair.equals("not a pair"));
+    }
+
+    @Test
+    @DisplayName("Given a pair, when equals called with null, then returns false")
+    void equals_returnsFalse_whenCalledDirectlyWithNull() {
+        ImmutablePair<String, Integer> pair = ImmutablePair.of("test", 1);
+        assertFalse(pair.equals(null));
+    }
+
+    @Test
+    @DisplayName("Given a pair with null left, when computing hashCode, then returns valid hash")
+    void hashCode_handlesNullLeft_whenLeftIsNull() {
+        MutablePair<String, Integer> pair = MutablePair.of(null, 42);
+        int hash = pair.hashCode();
+        assertEquals(42, hash);
+    }
+
+    @Test
+    @DisplayName("Given a pair with null right, when computing hashCode, then returns valid hash")
+    void hashCode_handlesNullRight_whenRightIsNull() {
+        MutablePair<String, Integer> pair = MutablePair.of("test", null);
+        int hash = pair.hashCode();
+        assertEquals("test".hashCode(), hash);
+    }
+
+    @Test
+    @DisplayName("Given a pair with both nulls, when computing hashCode, then returns zero")
+    void hashCode_returnsZero_whenBothSidesAreNull() {
+        MutablePair<String, Integer> pair = MutablePair.of(null, null);
+        assertEquals(0, pair.hashCode());
+    }
+
+    @Test
+    @DisplayName("Given two pairs with null values in same positions, when comparing, then they are equal")
+    void equals_returnsTrue_whenBothPairsHaveNullValues() {
+        MutablePair<String, Integer> pair1 = MutablePair.of(null, null);
+        MutablePair<String, Integer> pair2 = MutablePair.of(null, null);
+        assertTrue(pair1.equals(pair2));
     }
 }

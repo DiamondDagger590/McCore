@@ -415,4 +415,39 @@ class ParserTest {
     void getValue_appliesCorrectPrecedence_whenOperatorsAreMixed() {
         assertEquals(12.0, new Parser("2+3*4-6/2+1").getValue(), DELTA);
     }
+
+    @Test
+    @DisplayName("Given trailing extra token after valid expression, when evaluating, then throws ParseError")
+    void getValue_throwsParseError_whenExtraTokenAfterExpression() {
+        assertThrows(ParseError.class, () -> new Parser("2+3)").getValue());
+    }
+
+    @Test
+    @DisplayName("Given unmatched closing parenthesis mid-expression, when evaluating, then throws ParseError")
+    void getValue_throwsParseError_whenUnmatchedClosingParenMidExpression() {
+        assertThrows(ParseError.class, () -> new Parser(")2+3").getValue());
+    }
+
+    @Test
+    @DisplayName("Given function call missing closing bracket, when evaluating, then throws ParseError")
+    void getValue_throwsParseError_whenFunctionCallMissingClosingBracket() {
+        assertThrows(ParseError.class, () -> new Parser("sin(2+3").getValue());
+    }
+
+    @Test
+    @DisplayName("Given expression with getInputString, when called, then returns sanitized input")
+    void getInputString_returnsSanitizedInput_whenCalled() {
+        Parser parser = new Parser("2 + 3");
+        String input = parser.getInputString();
+        assertFalse(input.isEmpty());
+    }
+
+    @Test
+    @DisplayName("Given expression with getTree called twice, when called, then returns cached tree")
+    void getTree_returnsCachedTree_whenCalledTwice() {
+        Parser parser = new Parser("2+3");
+        ExpressionNode tree1 = parser.getTree();
+        ExpressionNode tree2 = parser.getTree();
+        assertEquals(tree1.getValue(), tree2.getValue(), DELTA);
+    }
 }
