@@ -220,4 +220,188 @@ class OperatorNodeTest {
         OperatorNode node = new OperatorNode(left, c(3.0), '%');
         assertEquals("(1+2)%3", node.toString());
     }
+
+    // ── needBrackets branch coverage: VARIABLE_NODE child ──────────────────
+
+    @Test
+    @DisplayName("Given addition with variable children, when converting to string, then omits brackets")
+    void toString_omitsBrackets_whenChildrenAreVariables() {
+        VariableNode x = new VariableNode("x", false);
+        VariableNode y = new VariableNode("y", false);
+        OperatorNode node = new OperatorNode(x, y, '+');
+        assertEquals("x+y", node.toString());
+    }
+
+    // ── needBrackets branch coverage: FUNCTION_NODE non-negation child ─────
+
+    @Test
+    @DisplayName("Given multiplication with non-negation function child, when converting to string, then omits brackets")
+    void toString_omitsBrackets_whenFunctionChildIsNotNegation() {
+        FunctionNode sinNode = new FunctionNode(c(1.0), 1);
+        OperatorNode node = new OperatorNode(sinNode, c(2.0), '*');
+        assertEquals("sin(1)*2", node.toString());
+    }
+
+    @Test
+    @DisplayName("Given addition with non-negation function child on right, when converting to string, then omits brackets")
+    void toString_omitsBrackets_whenRightChildIsFunctionNotNegation() {
+        FunctionNode cosNode = new FunctionNode(c(3.14), 2);
+        OperatorNode node = new OperatorNode(c(1.0), cosNode, '+');
+        assertEquals("1+cos(3.14)", node.toString());
+    }
+
+    // ── needBrackets branch coverage: '-' operator with left add/sub child ─
+
+    @Test
+    @DisplayName("Given subtraction with left child being addition, when converting to string, then omits left brackets")
+    void toString_omitsLeftBrackets_whenSubtractionWithAdditionLeft() {
+        OperatorNode left = new OperatorNode(c(1.0), c(2.0), '+');
+        OperatorNode node = new OperatorNode(left, c(3.0), '-');
+        assertEquals("1+2-3", node.toString());
+    }
+
+    @Test
+    @DisplayName("Given subtraction with left child being subtraction, when converting to string, then omits left brackets")
+    void toString_omitsLeftBrackets_whenSubtractionWithSubtractionLeft() {
+        OperatorNode left = new OperatorNode(c(5.0), c(2.0), '-');
+        OperatorNode node = new OperatorNode(left, c(1.0), '-');
+        assertEquals("5-2-1", node.toString());
+    }
+
+    @Test
+    @DisplayName("Given subtraction with right child being subtraction, when converting to string, then adds right brackets")
+    void toString_addsBrackets_whenSubtractionWithSubtractionRight() {
+        OperatorNode right = new OperatorNode(c(3.0), c(1.0), '-');
+        OperatorNode node = new OperatorNode(c(10.0), right, '-');
+        assertEquals("10-(3-1)", node.toString());
+    }
+
+    // ── needBrackets branch coverage: '-' operator with non-add/sub child ──
+
+    @Test
+    @DisplayName("Given subtraction with right child being multiplication, when converting to string, then omits right brackets")
+    void toString_omitsRightBrackets_whenSubtractionWithMultiplicationRight() {
+        OperatorNode right = new OperatorNode(c(2.0), c(3.0), '*');
+        OperatorNode node = new OperatorNode(c(10.0), right, '-');
+        assertEquals("10-2*3", node.toString());
+    }
+
+    // ── needBrackets branch coverage: '*' operator with '%' child ──────────
+
+    @Test
+    @DisplayName("Given multiplication with left modulo child, when converting to string, then adds brackets")
+    void toString_addsBrackets_whenMultiplicationWithModuloLeft() {
+        OperatorNode left = new OperatorNode(c(7.0), c(3.0), '%');
+        OperatorNode node = new OperatorNode(left, c(2.0), '*');
+        assertEquals("(7%3)*2", node.toString());
+    }
+
+    // ── needBrackets branch coverage: '*' operator with '*' or '/' child ───
+
+    @Test
+    @DisplayName("Given multiplication with left multiplication child, when converting to string, then omits brackets")
+    void toString_omitsBrackets_whenMultiplicationWithMultiplicationLeft() {
+        OperatorNode left = new OperatorNode(c(2.0), c(3.0), '*');
+        OperatorNode node = new OperatorNode(left, c(4.0), '*');
+        assertEquals("2*3*4", node.toString());
+    }
+
+    @Test
+    @DisplayName("Given multiplication with right division child, when converting to string, then omits brackets")
+    void toString_omitsBrackets_whenMultiplicationWithDivisionRight() {
+        OperatorNode right = new OperatorNode(c(6.0), c(2.0), '/');
+        OperatorNode node = new OperatorNode(c(3.0), right, '*');
+        assertEquals("3*6/2", node.toString());
+    }
+
+    // ── needBrackets branch coverage: '/' operator with left add child ─────
+
+    @Test
+    @DisplayName("Given division with left addition child, when converting to string, then adds brackets")
+    void toString_addsBrackets_whenDivisionWithAdditionLeft() {
+        OperatorNode left = new OperatorNode(c(1.0), c(2.0), '+');
+        OperatorNode node = new OperatorNode(left, c(3.0), '/');
+        assertEquals("(1+2)/3", node.toString());
+    }
+
+    // ── needBrackets branch coverage: '^' with variable children ───────────
+
+    @Test
+    @DisplayName("Given exponentiation with variable children, when converting to string, then omits brackets")
+    void toString_omitsBrackets_whenExponentiationWithVariableChildren() {
+        VariableNode x = new VariableNode("x", false);
+        VariableNode y = new VariableNode("y", false);
+        OperatorNode node = new OperatorNode(x, y, '^');
+        assertEquals("x^y", node.toString());
+    }
+
+    // ── needBrackets branch coverage: '%' with constant children ───────────
+
+    @Test
+    @DisplayName("Given modulo with constant children, when converting to string, then omits brackets")
+    void toString_omitsBrackets_whenModuloWithConstantChildren() {
+        OperatorNode node = new OperatorNode(c(10.0), c(3.0), '%');
+        assertEquals("10%3", node.toString());
+    }
+
+    // ── needBrackets branch coverage: '/' with right multiplication child ──
+
+    @Test
+    @DisplayName("Given division with right multiplication child, when converting to string, then adds brackets")
+    void toString_addsBrackets_whenDivisionWithMultiplicationRight() {
+        OperatorNode right = new OperatorNode(c(2.0), c(3.0), '*');
+        OperatorNode node = new OperatorNode(c(12.0), right, '/');
+        assertEquals("12/(2*3)", node.toString());
+    }
+
+    // ── needBrackets branch coverage: '+' with operator children ───────────
+
+    @Test
+    @DisplayName("Given addition with multiplication children, when converting to string, then omits all brackets")
+    void toString_omitsBrackets_whenAdditionWithMultiplicationChildren() {
+        OperatorNode left = new OperatorNode(c(2.0), c(3.0), '*');
+        OperatorNode right = new OperatorNode(c(4.0), c(5.0), '*');
+        OperatorNode node = new OperatorNode(left, right, '+');
+        assertEquals("2*3+4*5", node.toString());
+    }
+
+    // ── needBrackets branch coverage: '*' with subtraction child ───────────
+
+    @Test
+    @DisplayName("Given multiplication with right subtraction child, when converting to string, then adds brackets")
+    void toString_addsBrackets_whenMultiplicationWithSubtractionRight() {
+        OperatorNode right = new OperatorNode(c(5.0), c(1.0), '-');
+        OperatorNode node = new OperatorNode(c(3.0), right, '*');
+        assertEquals("3*(5-1)", node.toString());
+    }
+
+    // ── needBrackets branch coverage: negation function on right ────────────
+
+    @Test
+    @DisplayName("Given addition with negation function on right, when converting to string, then adds brackets for negation")
+    void toString_addsBrackets_whenNegationFunctionOnRight() {
+        FunctionNode neg = new FunctionNode(c(3.0), 0);
+        OperatorNode node = new OperatorNode(c(5.0), neg, '+');
+        assertEquals("5+(-3)", node.toString());
+    }
+
+    // ── needBrackets branch coverage: '^' with operator children ───────────
+
+    @Test
+    @DisplayName("Given exponentiation with modulo left child, when converting to string, then adds brackets")
+    void toString_addsBrackets_whenExponentiationWithModuloLeft() {
+        OperatorNode left = new OperatorNode(c(10.0), c(3.0), '%');
+        OperatorNode node = new OperatorNode(left, c(2.0), '^');
+        assertEquals("(10%3)^2", node.toString());
+    }
+
+    // ── needBrackets branch coverage: '/' with left '/' child ──────────────
+
+    @Test
+    @DisplayName("Given division with left division child, when converting to string, then adds brackets for left")
+    void toString_addsBrackets_whenDivisionWithDivisionLeft() {
+        OperatorNode left = new OperatorNode(c(8.0), c(2.0), '/');
+        OperatorNode node = new OperatorNode(left, c(4.0), '/');
+        assertEquals("(8/2)/4", node.toString());
+    }
 }
