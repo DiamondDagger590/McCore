@@ -113,6 +113,20 @@ class StatisticEntryTest {
     }
 
     @Test
+    @DisplayName("Given a STRING entry, when getAsDouble is called, then throws ClassCastException")
+    void getAsDouble_throwsClassCast_whenValueIsNotDouble() {
+        StatisticEntry entry = new StatisticEntry(TEST_KEY, StatisticType.STRING, "not-a-double");
+        assertThrows(ClassCastException.class, entry::getAsDouble);
+    }
+
+    @Test
+    @DisplayName("Given an INT entry, when getAsSetString is called, then throws ClassCastException")
+    void getAsSetString_throwsClassCast_whenValueIsNotSet() {
+        StatisticEntry entry = new StatisticEntry(TEST_KEY, StatisticType.INT, 42);
+        assertThrows(ClassCastException.class, entry::getAsSetString);
+    }
+
+    @Test
     @DisplayName("Given an entry, when record accessors are called, then returns constructor values")
     void recordAccessors_returnConstructorValues() {
         StatisticEntry entry = new StatisticEntry(TEST_KEY, StatisticType.INT, 99);

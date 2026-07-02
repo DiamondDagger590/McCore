@@ -12,6 +12,7 @@ import org.bukkit.event.Event;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -379,6 +380,153 @@ class PlayerStatisticDataBranchCoverageTest {
     @DisplayName("Given a PlayerStatisticData instance, when calling getUUID, then returns the UUID passed to the constructor")
     void getUUID_returnsConstructedUUID_always() {
         assertEquals(PLAYER_UUID, data.getUUID());
+    }
+
+    @Nested
+    @DisplayName("Cross-type getter filter branches")
+    class CrossTypeGetterTests {
+
+        @Test
+        @DisplayName("Given a LONG-registered key with no stored value, when getIntValue is called, then returns empty")
+        void getIntValue_returnsEmpty_whenKeyIsLong() {
+            assertTrue(data.getIntValue(LONG_KEY).isEmpty());
+        }
+
+        @Test
+        @DisplayName("Given a STRING-registered key with no stored value, when getIntValue is called, then returns empty")
+        void getIntValue_returnsEmpty_whenKeyIsString() {
+            assertTrue(data.getIntValue(STRING_KEY).isEmpty());
+        }
+
+        @Test
+        @DisplayName("Given an INT-registered key with no stored value, when getLongValue is called, then returns empty")
+        void getLongValue_returnsEmpty_whenKeyIsInt() {
+            assertTrue(data.getLongValue(INT_KEY).isEmpty());
+        }
+
+        @Test
+        @DisplayName("Given a DOUBLE-registered key with no stored value, when getLongValue is called, then returns empty")
+        void getLongValue_returnsEmpty_whenKeyIsDouble() {
+            assertTrue(data.getLongValue(DOUBLE_KEY).isEmpty());
+        }
+
+        @Test
+        @DisplayName("Given an INT-registered key with no stored value, when getDoubleValue is called, then returns empty")
+        void getDoubleValue_returnsEmpty_whenKeyIsInt() {
+            assertTrue(data.getDoubleValue(INT_KEY).isEmpty());
+        }
+
+        @Test
+        @DisplayName("Given a LONG-registered key with no stored value, when getDoubleValue is called, then returns empty")
+        void getDoubleValue_returnsEmpty_whenKeyIsLong() {
+            assertTrue(data.getDoubleValue(LONG_KEY).isEmpty());
+        }
+
+        @Test
+        @DisplayName("Given an INT-registered key with no stored value, when getStringValue is called, then returns empty")
+        void getStringValue_returnsEmpty_whenKeyIsInt() {
+            assertTrue(data.getStringValue(INT_KEY).isEmpty());
+        }
+
+        @Test
+        @DisplayName("Given a TIMESTAMP-registered key with no stored value, when getStringValue is called, then returns empty")
+        void getStringValue_returnsEmpty_whenKeyIsTimestamp() {
+            assertTrue(data.getStringValue(TIMESTAMP_KEY).isEmpty());
+        }
+
+        @Test
+        @DisplayName("Given a STRING-registered key with no stored value, when getTimestampValue is called, then returns empty")
+        void getTimestampValue_returnsEmpty_whenKeyIsString() {
+            assertTrue(data.getTimestampValue(STRING_KEY).isEmpty());
+        }
+
+        @Test
+        @DisplayName("Given an INT-registered key with no stored value, when getTimestampValue is called, then returns empty")
+        void getTimestampValue_returnsEmpty_whenKeyIsInt() {
+            assertTrue(data.getTimestampValue(INT_KEY).isEmpty());
+        }
+
+        @Test
+        @DisplayName("Given an INT-registered key with no stored value, when getSetValue is called, then returns empty")
+        void getSetValue_returnsEmpty_whenKeyIsInt() {
+            assertTrue(data.getSetValue(INT_KEY).isEmpty());
+        }
+
+        @Test
+        @DisplayName("Given a STRING-registered key with no stored value, when getSetValue is called, then returns empty")
+        void getSetValue_returnsEmpty_whenKeyIsString() {
+            assertTrue(data.getSetValue(STRING_KEY).isEmpty());
+        }
+    }
+
+    @Nested
+    @DisplayName("getStringValue instanceof branch")
+    class GetStringValueInstanceofTests {
+
+        @Test
+        @DisplayName("Given a stored string value, when getStringValue is called, then returns the stored value")
+        void getStringValue_returnsStored_whenValueIsString() {
+            data.populateFromEntries(Map.of(
+                    STRING_KEY, new StatisticEntry(STRING_KEY, StatisticType.STRING, "hello")
+            ));
+            assertEquals("hello", data.getStringValue(STRING_KEY).orElse(null));
+        }
+
+        @Test
+        @DisplayName("Given a stored non-String value under a STRING key, when getStringValue is called, then falls through to default")
+        void getStringValue_returnsDefault_whenStoredValueIsNotString() {
+            data.populateFromEntries(Map.of(
+                    STRING_KEY, new StatisticEntry(STRING_KEY, StatisticType.STRING, 42)
+            ));
+            assertEquals("", data.getStringValue(STRING_KEY).orElse(null));
+        }
+    }
+
+    @Nested
+    @DisplayName("getModifiedEntries edge cases")
+    class GetModifiedEntriesTests {
+
+        @Test
+        @DisplayName("Given a dirty key whose statistic was unregistered, when getModifiedEntries is called, then skips the key")
+        void getModifiedEntries_skipsKey_whenStatisticUnregistered() {
+            data.setValue(INT_KEY, 42);
+            assertTrue(data.isDirty());
+
+            RegistryResetExtension.resetRegistry();
+            RegistryResetExtension.setupRegistry();
+
+            Map<NamespacedKey, StatisticEntry> modified = data.getModifiedEntries();
+            assertTrue(modified.isEmpty());
+        }
+    }
+
+    @Nested
+    @DisplayName("resolveCurrentValue branches")
+    class ResolveCurrentValueTests {
+
+        @Test
+        @DisplayName("Given a stored value, when setValue is called, then the pre-event carries the stored value as oldValue")
+        void setValue_usesStoredOldValue_whenValueExists() {
+            data.setValue(INT_KEY, 10);
+            firedEvents.clear();
+
+            data.setValue(INT_KEY, 20);
+
+            assertFalse(firedEvents.isEmpty(), "Expected at least one event to be fired");
+            StatisticModifyEvent preEvent = (StatisticModifyEvent) firedEvents.get(0);
+            assertEquals(10, preEvent.getOldValue());
+            assertEquals(20, preEvent.getNewValue());
+        }
+
+        @Test
+        @DisplayName("Given no stored value, when setValue is called, then the pre-event carries the default as oldValue")
+        void setValue_usesDefaultOldValue_whenNoStoredValue() {
+            data.setValue(INT_KEY, 50);
+
+            assertFalse(firedEvents.isEmpty(), "Expected at least one event to be fired");
+            StatisticModifyEvent preEvent = (StatisticModifyEvent) firedEvents.get(0);
+            assertEquals(0, preEvent.getOldValue());
+        }
     }
 
     private PlayerStatisticData createCancellingData() {
