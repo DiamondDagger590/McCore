@@ -1,5 +1,8 @@
 package com.diamonddagger590.mccore.util;
 
+import com.diamonddagger590.mccore.testing.CorePluginTestHelper;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.DyeColor;
@@ -7,6 +10,8 @@ import org.bukkit.Location;
 import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.inventory.ItemFlag;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -19,12 +24,23 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class MethodsTest {
+
+    @BeforeAll
+    static void setUpPlugin() {
+        CorePluginTestHelper.installMinimalInstance();
+    }
+
+    @AfterAll
+    static void tearDownPlugin() {
+        CorePluginTestHelper.uninstallInstance();
+    }
 
     // ── isInt ────────────────────────────────────────────────────────────────
 
@@ -146,6 +162,140 @@ class MethodsTest {
     void getTimeInSeconds_returnsZero_whenGivenZeroSeconds() {
         Duration result = Methods.getTimeInSeconds("0s");
         assertEquals(Duration.ZERO, result);
+    }
+
+    // ── getProgressBarAsString ────────────────────────────────────────────
+
+    @Test
+    @DisplayName("Given negative progress, when getting progress bar string, then throws IllegalArgumentException")
+    void getProgressBarAsString_throwsIllegalArgument_whenProgressIsNegative() {
+        assertThrows(IllegalArgumentException.class, () -> Methods.getProgressBarAsString(-0.1, 10));
+    }
+
+    @Test
+    @DisplayName("Given progress above 1.0, when getting progress bar string, then throws IllegalArgumentException")
+    void getProgressBarAsString_throwsIllegalArgument_whenProgressAboveOne() {
+        assertThrows(IllegalArgumentException.class, () -> Methods.getProgressBarAsString(1.1, 10));
+    }
+
+    @Test
+    @DisplayName("Given zero progress, when getting progress bar string, then contains all red bars")
+    void getProgressBarAsString_containsAllRedBars_whenProgressIsZero() {
+        String result = Methods.getProgressBarAsString(0.0, 10);
+        assertNotNull(result);
+        assertTrue(result.contains("<green></green>"), "Should have empty green section");
+        assertTrue(result.contains("<color:#ff1418>" + "|".repeat(10) + "</color>"), "Should have 10 red bars");
+    }
+
+    @Test
+    @DisplayName("Given full progress, when getting progress bar string, then contains all green bars")
+    void getProgressBarAsString_containsAllGreenBars_whenProgressIsFull() {
+        String result = Methods.getProgressBarAsString(1.0, 10);
+        assertNotNull(result);
+        assertTrue(result.contains("<green>" + "|".repeat(10) + "</green>"), "Should have 10 green bars");
+    }
+
+    @Test
+    @DisplayName("Given partial progress with remainder <= 0.25, when getting progress bar string, then includes yellow-green transition color")
+    void getProgressBarAsString_includesYellowGreenColor_whenRemainderIsLow() {
+        String result = Methods.getProgressBarAsString(0.1, 4);
+        assertNotNull(result);
+        assertTrue(result.contains("<color:#c9ff29>|</color>"), "Should have yellow-green transition bar");
+    }
+
+    @Test
+    @DisplayName("Given partial progress with remainder <= 0.50, when getting progress bar string, then includes gold transition color")
+    void getProgressBarAsString_includesGoldColor_whenRemainderIsMediumLow() {
+        String result = Methods.getProgressBarAsString(0.4, 4);
+        assertNotNull(result);
+        assertTrue(result.contains("<color:#ffcb21>|</color>"), "Should have gold transition bar");
+    }
+
+    @Test
+    @DisplayName("Given partial progress with remainder <= 0.75, when getting progress bar string, then includes orange transition color")
+    void getProgressBarAsString_includesOrangeColor_whenRemainderIsMediumHigh() {
+        String result = Methods.getProgressBarAsString(0.6, 4);
+        assertNotNull(result);
+        assertTrue(result.contains("<color:#ff822e>|</color>"), "Should have orange transition bar");
+    }
+
+    @Test
+    @DisplayName("Given partial progress with remainder > 0.75, when getting progress bar string, then includes red-orange transition color")
+    void getProgressBarAsString_includesRedOrangeColor_whenRemainderIsHigh() {
+        String result = Methods.getProgressBarAsString(0.8, 4);
+        assertNotNull(result);
+        assertTrue(result.contains("<color:#ff6417>|</color>"), "Should have red-orange transition bar");
+    }
+
+    @Test
+    @DisplayName("Given half progress, when getting progress bar string, then has green and red sections")
+    void getProgressBarAsString_hasMixedColors_whenProgressIsHalf() {
+        String result = Methods.getProgressBarAsString(0.5, 10);
+        assertNotNull(result);
+        assertTrue(result.contains("<green>"), "Should have green section");
+        assertTrue(result.contains("<color:#ff1418>"), "Should have red section");
+    }
+
+    // ── getProgressBar ─────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("Given negative progress, when getting progress bar, then throws IllegalArgumentException")
+    void getProgressBar_throwsIllegalArgument_whenProgressIsNegative() {
+        assertThrows(IllegalArgumentException.class, () -> Methods.getProgressBar(-0.1, 10));
+    }
+
+    @Test
+    @DisplayName("Given progress above 1.0, when getting progress bar, then throws IllegalArgumentException")
+    void getProgressBar_throwsIllegalArgument_whenProgressAboveOne() {
+        assertThrows(IllegalArgumentException.class, () -> Methods.getProgressBar(1.1, 10));
+    }
+
+    @Test
+    @DisplayName("Given zero progress, when getting progress bar, then returns Component containing only pipe characters")
+    void getProgressBar_returnsComponentWithBars_whenProgressIsZero() {
+        Component result = Methods.getProgressBar(0.0, 10);
+        String plain = PlainTextComponentSerializer.plainText().serialize(result);
+        assertEquals("|".repeat(10), plain, "Plain text should contain exactly 10 pipe characters");
+    }
+
+    @Test
+    @DisplayName("Given full progress, when getting progress bar, then returns Component containing only pipe characters")
+    void getProgressBar_returnsComponentWithBars_whenProgressIsFull() {
+        Component result = Methods.getProgressBar(1.0, 10);
+        String plain = PlainTextComponentSerializer.plainText().serialize(result);
+        assertEquals("|".repeat(10), plain, "Plain text should contain exactly 10 pipe characters");
+    }
+
+    @Test
+    @DisplayName("Given partial progress with low remainder, when getting progress bar, then returns Component with correct bar count")
+    void getProgressBar_returnsComponentWithBars_whenRemainderIsLow() {
+        Component result = Methods.getProgressBar(0.1, 4);
+        String plain = PlainTextComponentSerializer.plainText().serialize(result);
+        assertEquals("|".repeat(4), plain, "Plain text should contain exactly 4 pipe characters");
+    }
+
+    @Test
+    @DisplayName("Given partial progress with medium-low remainder, when getting progress bar, then returns Component with correct bar count")
+    void getProgressBar_returnsComponentWithBars_whenRemainderIsMediumLow() {
+        Component result = Methods.getProgressBar(0.4, 4);
+        String plain = PlainTextComponentSerializer.plainText().serialize(result);
+        assertEquals("|".repeat(4), plain, "Plain text should contain exactly 4 pipe characters");
+    }
+
+    @Test
+    @DisplayName("Given partial progress with medium-high remainder, when getting progress bar, then returns Component with correct bar count")
+    void getProgressBar_returnsComponentWithBars_whenRemainderIsMediumHigh() {
+        Component result = Methods.getProgressBar(0.6, 4);
+        String plain = PlainTextComponentSerializer.plainText().serialize(result);
+        assertEquals("|".repeat(4), plain, "Plain text should contain exactly 4 pipe characters");
+    }
+
+    @Test
+    @DisplayName("Given partial progress with high remainder, when getting progress bar, then returns Component with correct bar count")
+    void getProgressBar_returnsComponentWithBars_whenRemainderIsHigh() {
+        Component result = Methods.getProgressBar(0.8, 4);
+        String plain = PlainTextComponentSerializer.plainText().serialize(result);
+        assertEquals("|".repeat(4), plain, "Plain text should contain exactly 4 pipe characters");
     }
 
     // ── getColor ────────────────────────────────────────────────────────────
@@ -540,6 +690,24 @@ class MethodsTest {
     }
 
     @Test
+    @DisplayName("Given target with negative dx and negative dz, when calculating lookAt, then yaw is computed correctly")
+    void lookAt_computesYaw_whenBothDxAndDzAreNegative() {
+        org.bukkit.Location origin = new org.bukkit.Location(null, 10, 10, 10);
+        org.bukkit.Location target = new org.bukkit.Location(null, 0, 10, 0);
+        org.bukkit.Location result = Methods.lookAt(origin, target);
+        assertTrue(Float.isFinite(result.getYaw()), "Yaw should be finite for negative dx and dz");
+    }
+
+    @Test
+    @DisplayName("Given target directly ahead on positive Z with dx=0, when calculating lookAt, then yaw is 0")
+    void lookAt_setsYawZero_whenTargetIsDirectlyAheadOnPositiveZ() {
+        org.bukkit.Location origin = new org.bukkit.Location(null, 0, 10, 0);
+        org.bukkit.Location target = new org.bukkit.Location(null, 0, 10, 10);
+        org.bukkit.Location result = Methods.lookAt(origin, target);
+        assertEquals(0.0, result.getYaw(), 0.01);
+    }
+
+    @Test
     @DisplayName("Given target above the origin, when calculating lookAt, then pitch is negative")
     void lookAt_setsNegativePitch_whenTargetIsAbove() {
         org.bukkit.Location origin = new org.bukkit.Location(null, 0, 0, 0);
@@ -547,6 +715,17 @@ class MethodsTest {
         org.bukkit.Location result = Methods.lookAt(origin, target);
         assertTrue(result.getPitch() < 0, "Pitch should be negative when looking up");
     }
+
+    @Test
+    @DisplayName("Given target at same position, when calculating lookAt, then yaw and pitch are not infinite")
+    void lookAt_returnsNonInfiniteValues_whenTargetIsSamePosition() {
+        org.bukkit.Location origin = new org.bukkit.Location(null, 5, 5, 5);
+        org.bukkit.Location target = new org.bukkit.Location(null, 5, 5, 5);
+        org.bukkit.Location result = Methods.lookAt(origin, target);
+        assertFalse(Float.isInfinite(result.getYaw()), "Yaw should not be infinite");
+        assertFalse(Float.isInfinite(result.getPitch()), "Pitch should not be infinite");
+    }
+
 
     // ── getMinecraftKey ─────────────────────────────────────────────────────
 
