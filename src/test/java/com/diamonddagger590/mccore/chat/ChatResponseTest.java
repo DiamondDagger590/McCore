@@ -8,6 +8,9 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 
 class ChatResponseTest {
 
@@ -75,7 +78,18 @@ class ChatResponseTest {
     void onExpire_tracksExpiration() {
         TestChatResponse response = new TestChatResponse(UUID.randomUUID(), 30);
         response.onExpire();
-        assertEquals(true, response.isExpired());
+        assertTrue(response.isExpired());
+    }
+
+    @Test
+    @DisplayName("Given a response, when onResponse called with event, then event is captured")
+    void onResponse_capturesEvent() {
+        TestChatResponse response = new TestChatResponse(UUID.randomUUID(), 30);
+        assertNull(response.getLastEvent());
+
+        PlayerChatEvent event = mock(PlayerChatEvent.class);
+        response.onResponse(event);
+        assertEquals(event, response.getLastEvent());
     }
 
     @Test

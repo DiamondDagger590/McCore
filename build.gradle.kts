@@ -65,7 +65,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")
     testFixturesApi("org.junit.jupiter:junit-jupiter:$junitVersion")
 
-    val mockitoVersion = "5.23.0"
+    val mockitoVersion = "5.14.2"
     testImplementation("org.mockito:mockito-core:$mockitoVersion")
     testImplementation("org.mockito:mockito-junit-jupiter:$mockitoVersion")
     testFixturesApi("org.mockito:mockito-core:$mockitoVersion")

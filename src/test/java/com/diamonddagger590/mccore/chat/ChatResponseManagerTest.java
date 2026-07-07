@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -147,7 +148,9 @@ class ChatResponseManagerTest {
     @Test
     @DisplayName("Given no pending response, when removePendingResponse by UUID, then no error")
     void removePendingResponse_byUUID_noErrorWhenNoPending() {
-        manager.removePendingResponse(UUID.randomUUID());
+        UUID uuid = UUID.randomUUID();
+        assertDoesNotThrow(() -> manager.removePendingResponse(uuid));
+        assertFalse(manager.doesChatterHavePendingResponse(uuid));
     }
 
     @Test
@@ -178,7 +181,8 @@ class ChatResponseManagerTest {
     @DisplayName("Given no pending response, when removePendingResponse by ChatResponse, then no error")
     void removePendingResponse_byChatResponse_noErrorWhenNoPending() {
         UUID uuid = UUID.randomUUID();
-        manager.removePendingResponse(new TestChatResponse(uuid, 30));
+        assertDoesNotThrow(() -> manager.removePendingResponse(new TestChatResponse(uuid, 30)));
+        assertFalse(manager.doesChatterHavePendingResponse(uuid));
     }
 
     @Test

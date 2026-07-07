@@ -454,6 +454,26 @@ class LocalizationManagerTest {
         assertEquals("Console msg", result.get(0));
     }
 
+    // --- getLocalizedMessages with placeholders (player/audience) ---
+
+    @Test
+    @DisplayName("Given player and list route with placeholders, when getLocalizedMessages is not a list variant, then placeholders are applied via getLocalizedMessage")
+    void getLocalizedMessages_playerWithPlaceholders_notAvailable() {
+        // LocalizationManager does not have a getLocalizedMessages(player, route, map) overload
+        // that returns List<String> with string placeholders — placeholder substitution on lists
+        // is done via the Component variants (getLocalizedMessageAsComponents).
+        // This test documents that the string-list path for player applies postProcess only.
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getStringList(testRoute)).thenReturn(List.of("Item <name>", "Count <count>"));
+
+        TestCorePlayer player = createPlayerWithLocale(Locale.ENGLISH);
+        List<String> result = localizationManager.getLocalizedMessages(player, testRoute);
+        assertEquals(2, result.size());
+        assertEquals("Item <name>", result.get(0));
+        assertEquals("Count <count>", result.get(1));
+    }
+
     // --- doesAnyLocaleContainRoute ---
 
     @Test
