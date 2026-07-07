@@ -1,7 +1,6 @@
 package com.diamonddagger590.mccore.event.player;
 
 import com.diamonddagger590.mccore.player.CorePlayer;
-import com.diamonddagger590.mccore.util.TimeProvider;
 import org.bukkit.event.HandlerList;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

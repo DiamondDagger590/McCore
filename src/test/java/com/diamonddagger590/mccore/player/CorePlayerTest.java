@@ -1,5 +1,10 @@
 package com.diamonddagger590.mccore.player;
 
+import com.diamonddagger590.mccore.CorePlugin;
+import com.diamonddagger590.mccore.external.common.AfkPluginHook;
+import com.diamonddagger590.mccore.registry.RegistryAccess;
+import com.diamonddagger590.mccore.registry.RegistryKey;
+import com.diamonddagger590.mccore.registry.plugin.PluginHook;
 import com.diamonddagger590.mccore.testing.RegistryResetExtension;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +40,20 @@ class CorePlayerTest {
         }
     }
 
+    private static class TestAfkPluginHook extends PluginHook<CorePlugin> implements AfkPluginHook {
+        private final boolean afk;
+
+        TestAfkPluginHook(boolean afk) {
+            super(null);
+            this.afk = afk;
+        }
+
+        @Override
+        public boolean isAfk(CorePlayer corePlayer) {
+            return afk;
+        }
+    }
+
     private UUID testUUID;
     private TestCorePlayer player;
 
@@ -65,9 +84,10 @@ class CorePlayerTest {
     }
 
     @Test
-    @DisplayName("Given a CorePlayer, when calling getStatisticData, then returns non-null")
-    void getStatisticData_returnsNonNull() {
+    @DisplayName("Given a CorePlayer, when calling getStatisticData, then returns non-null with matching UUID")
+    void getStatisticData_returnsNonNullWithMatchingUUID() {
         assertNotNull(player.getStatisticData());
+        assertEquals(testUUID, player.getStatisticData().getUUID());
     }
 
     @Test
@@ -103,6 +123,20 @@ class CorePlayerTest {
     @Test
     @DisplayName("Given no AfkPluginHook registered, when calling isAfk, then returns false")
     void isAfk_returnsFalse_whenNoHooksRegistered() {
+        assertFalse(player.isAfk());
+    }
+
+    @Test
+    @DisplayName("Given an AfkPluginHook that returns true, when calling isAfk, then returns true")
+    void isAfk_returnsTrue_whenRegisteredHookReturnsTrue() {
+        RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(new TestAfkPluginHook(true));
+        assertTrue(player.isAfk());
+    }
+
+    @Test
+    @DisplayName("Given an AfkPluginHook that returns false, when calling isAfk, then returns false")
+    void isAfk_returnsFalse_whenRegisteredHookReturnsFalse() {
+        RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(new TestAfkPluginHook(false));
         assertFalse(player.isAfk());
     }
 
