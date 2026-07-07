@@ -142,7 +142,7 @@ class ManagerRegistryTest {
 
     @Test
     @DisplayName("Given a subclass manager registered, when checking registered by subclass instance, then returns true")
-    void registered_returnsTrue_whenSubclassInstanceRegisteredAndCheckedByParentInstance() {
+    void registered_returnsTrue_whenSubclassInstanceRegisteredAndCheckedBySubclassInstance() {
         TestManagerASub subManager = new TestManagerASub();
         registry().register(subManager);
         assertTrue(registry().registered(new TestManagerASub()));

@@ -22,6 +22,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.jetbrains.annotations.NotNull;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -58,11 +59,12 @@ class HooksRegistrarTest {
         RegistryResetExtension.resetRegistry();
     }
 
+    @NotNull
     private BootstrapContext<CorePlugin> context() {
         return new BootstrapContext<>(mockPlugin, StartupProfile.PROD);
     }
 
-    private void enablePlugin(String name) {
+    private void enablePlugin(@NotNull String name) {
         when(mockPluginManager.isPluginEnabled(name)).thenReturn(true);
     }
 

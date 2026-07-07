@@ -161,14 +161,14 @@ class SfunTest {
     @DisplayName("Given positive infinity, when computing cosh, then returns infinity")
     void cosh_returnsInfinity_whenInputIsPositiveInfinity() {
         double result = Sfun.cosh(Double.POSITIVE_INFINITY);
-        assertTrue(Double.isInfinite(result));
+        assertEquals(Double.POSITIVE_INFINITY, result);
     }
 
     @Test
-    @DisplayName("Given negative infinity, when computing cosh, then returns infinity")
-    void cosh_returnsInfinity_whenInputIsNegativeInfinity() {
+    @DisplayName("Given negative infinity, when computing cosh, then returns negative infinity")
+    void cosh_returnsNegativeInfinity_whenInputIsNegativeInfinity() {
         double result = Sfun.cosh(Double.NEGATIVE_INFINITY);
-        assertTrue(Double.isInfinite(result));
+        assertEquals(Double.NEGATIVE_INFINITY, result);
     }
 
     @Test
