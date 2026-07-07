@@ -147,4 +147,18 @@ class ManagerRegistryTest {
         registry().register(subManager);
         assertTrue(registry().registered(new TestManagerASub()));
     }
+
+    @Test
+    @DisplayName("Given only a different manager registered, when checking registered by instance, then returns false")
+    void registered_returnsFalse_whenOnlyNonMatchingManagerRegistered() {
+        registry().register(new TestManagerB());
+        assertFalse(registry().registered(new TestManagerA()));
+    }
+
+    @Test
+    @DisplayName("Given only a different manager registered, when checking registered by key, then returns false")
+    void registered_returnsFalse_whenOnlyNonMatchingManagerRegisteredByKey() {
+        registry().register(new TestManagerB());
+        assertFalse(registry().registered(KEY_A));
+    }
 }
