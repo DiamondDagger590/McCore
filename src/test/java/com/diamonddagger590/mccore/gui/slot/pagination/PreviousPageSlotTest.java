@@ -6,7 +6,6 @@ import com.diamonddagger590.mccore.gui.PaginatedGui;
 import com.diamonddagger590.mccore.player.CorePlayer;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
 import com.diamonddagger590.mccore.registry.RegistryKey;
-import com.diamonddagger590.mccore.registry.manager.CoreManagerKey;
 import com.diamonddagger590.mccore.registry.manager.ManagerRegistry;
 import com.diamonddagger590.mccore.testing.RegistryResetExtension;
 import org.bukkit.entity.Player;
@@ -24,7 +23,6 @@ import org.mockito.quality.Strictness;
 
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

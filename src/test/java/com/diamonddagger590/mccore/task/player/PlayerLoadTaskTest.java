@@ -272,10 +272,10 @@ class PlayerLoadTaskTest {
     @Test
     @DisplayName("Given task is cancelled externally (not completed), when onCancel, then result is false")
     void onCancel_notCompleted_resultIsFalse() {
+        lenient().doNothing().when(mockScheduler).cancelTask(anyInt());
+
         PlayerLoadTask task = createTask();
         task.cancelTask();
-
-        lenient().doNothing().when(mockScheduler).cancelTask(anyInt());
         task.run();
 
         assertTrue(task.getResult().isDone());
