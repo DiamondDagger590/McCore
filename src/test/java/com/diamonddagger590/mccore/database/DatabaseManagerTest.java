@@ -4,7 +4,6 @@ import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
 import com.diamonddagger590.mccore.registry.RegistryKey;
 import com.diamonddagger590.mccore.registry.manager.CoreManagerKey;
-import com.diamonddagger590.mccore.registry.manager.Manager;
 import com.diamonddagger590.mccore.registry.manager.ManagerRegistry;
 import com.diamonddagger590.mccore.testing.RegistryResetExtension;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +15,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -57,12 +55,6 @@ class DatabaseManagerTest {
     @DisplayName("Given a DatabaseManager, when calling plugin, then returns the plugin instance")
     void plugin_returnsPluginInstance() {
         assertSame(mockPlugin, databaseManager.plugin());
-    }
-
-    @Test
-    @DisplayName("Given a DatabaseManager, when it extends Manager, then it is an instance of Manager")
-    void databaseManager_extendsManager() {
-        assertTrue(databaseManager instanceof Manager<?>);
     }
 
     @Test

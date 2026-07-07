@@ -57,22 +57,23 @@ class SlotTest {
     }
 
     @Test
-    @DisplayName("Given a Slot implementation, when onClick with different ClickTypes, then each invocation completes")
-    void onClick_withDifferentClickTypes_completesSuccessfully() {
+    @DisplayName("Given a Slot implementation, when onClick with different ClickTypes, then returns false for all")
+    void onClick_returnsFalse_forAllClickTypes() {
         Slot<CorePlayer> slot = new TestSlot();
         for (ClickType clickType : ClickType.values()) {
-            slot.onClick(mockPlayer, clickType);
+            assertFalse(slot.onClick(mockPlayer, clickType));
         }
     }
 
     @Test
-    @DisplayName("Given a Slot with default getValidGuiTypes, when set is mutated, then original contract not violated")
-    void defaultGetValidGuiTypes_returnsMutableEmptySet() {
+    @DisplayName("Given a Slot with default getValidGuiTypes, when set is mutated, then subsequent calls return fresh empty set")
+    void defaultGetValidGuiTypes_returnsNewSetPerCall() {
         Slot<CorePlayer> slot = new TestSlot();
-        Set<Class<?>> validTypes = slot.getValidGuiTypes();
-        validTypes.add(BaseGui.class);
-        assertEquals(1, validTypes.size());
-        assertTrue(new TestSlot().getValidGuiTypes().isEmpty());
+        Set<Class<?>> firstCall = slot.getValidGuiTypes();
+        firstCall.add(BaseGui.class);
+        assertEquals(1, firstCall.size());
+        Set<Class<?>> secondCall = slot.getValidGuiTypes();
+        assertTrue(secondCall.isEmpty());
     }
 
     private static class TestSlot implements Slot<CorePlayer> {
