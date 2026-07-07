@@ -726,6 +726,15 @@ class MethodsTest {
         assertFalse(Float.isInfinite(result.getPitch()), "Pitch should not be infinite");
     }
 
+    @Test
+    @DisplayName("Given target on positive Z with same X, when calculating lookAt, then yaw is zero and pitch is near zero")
+    void lookAt_setsYawToZero_whenTargetIsOnPositiveZWithSameX() {
+        org.bukkit.Location origin = new org.bukkit.Location(null, 0, 0, 0);
+        org.bukkit.Location target = new org.bukkit.Location(null, 0, 0, 10);
+        org.bukkit.Location result = Methods.lookAt(origin, target);
+        assertEquals(0.0, result.getYaw(), 0.01);
+        assertEquals(0.0, result.getPitch(), 0.01);
+    }
 
     // ── getMinecraftKey ─────────────────────────────────────────────────────
 
