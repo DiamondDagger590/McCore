@@ -59,6 +59,12 @@ class ModificationTypeTest {
     }
 
     @Test
+    @DisplayName("Given null, when calling valueOf, then throws NullPointerException")
+    void valueOf_throwsNullPointerException_whenGivenNull() {
+        assertThrows(NullPointerException.class, () -> ModificationType.valueOf(null));
+    }
+
+    @Test
     @DisplayName("Given each ModificationType, when calling name(), then returns the expected string")
     void name_returnsExpectedString_forEachType() {
         assertEquals("SET", ModificationType.SET.name());

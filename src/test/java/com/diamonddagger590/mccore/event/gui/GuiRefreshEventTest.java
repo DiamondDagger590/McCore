@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
@@ -103,6 +104,6 @@ class GuiRefreshEventTest {
     void getEventName_returnsClassName() {
         Gui<?> gui = createStubGui();
         GuiRefreshEvent event = new GuiRefreshEvent(gui);
-        assertNotNull(event.getEventName());
+        assertEquals("GuiRefreshEvent", event.getEventName());
     }
 }

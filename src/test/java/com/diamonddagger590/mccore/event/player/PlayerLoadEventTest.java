@@ -6,8 +6,10 @@ import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
 class PlayerLoadEventTest {
@@ -91,5 +93,12 @@ class PlayerLoadEventTest {
         PlayerLoadEvent event = new PlayerLoadEvent(player);
 
         assertNotNull(event.getEventName());
+    }
+
+    @Test
+    @DisplayName("Given null player, when constructing PlayerLoadEvent, then does not throw at construction")
+    void constructor_doesNotThrow_whenPlayerIsNull() {
+        PlayerLoadEvent event = assertDoesNotThrow(() -> new PlayerLoadEvent(null));
+        assertNull(event.getCorePlayer());
     }
 }
