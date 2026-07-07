@@ -64,8 +64,6 @@ class CustomEntityHookTest {
         );
     }
 
-    // ── isCustomEntity(Entity) ─────────────────────────────────────────────
-
     @Test
     @DisplayName("Given an entity with a recognized UUID, when checking isCustomEntity via Entity default method, then returns true")
     void isCustomEntity_returnsTrue_whenEntityUuidIsRecognized() {
@@ -83,8 +81,6 @@ class CustomEntityHookTest {
 
         assertFalse(hook.isCustomEntity(entity));
     }
-
-    // ── isCustomEntityOfType(Entity, String) ───────────────────────────────
 
     @Test
     @DisplayName("Given a matching entity and type, when checking isCustomEntityOfType via default method, then returns true")
@@ -112,8 +108,6 @@ class CustomEntityHookTest {
 
         assertFalse(hook.isCustomEntityOfType(entity, "custom_dragon"));
     }
-
-    // ── isCustomEntity(CustomEntityWrapper) ────────────────────────────────
 
     @Test
     @DisplayName("Given a vanilla entity wrapper, when checking isCustomEntity via wrapper default method, then returns false")

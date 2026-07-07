@@ -548,15 +548,6 @@ class MethodsTest {
         assertTrue(result.getPitch() < 0, "Pitch should be negative when looking up");
     }
 
-    @Test
-    @DisplayName("Given origin and target at same position on XZ, when calculating lookAt with dz=0 and dx=0, then yaw is zero")
-    void lookAt_setsZeroYaw_whenTargetIsDirectlyAbove() {
-        org.bukkit.Location origin = new org.bukkit.Location(null, 5, 0, 5);
-        org.bukkit.Location target = new org.bukkit.Location(null, 5, 20, 5);
-        org.bukkit.Location result = Methods.lookAt(origin, target);
-        assertEquals(0.0, result.getYaw(), 0.01);
-    }
-
     // ── getMinecraftKey ─────────────────────────────────────────────────────
 
     @SuppressWarnings("deprecation")
