@@ -104,9 +104,6 @@ class PaginatedGuiTest {
             return paintCallCount.get();
         }
 
-        public void callBuildInventory() {
-            buildInventory();
-        }
     }
 
     private TestCorePlayer player;
@@ -224,7 +221,15 @@ class PaginatedGuiTest {
             TestPaginatedGui gui = new TestPaginatedGui(player, mockInventory, 3);
             gui.getInventory();
 
-            assertThrows(InventoryAlreadyExistsForGuiException.class, gui::callBuildInventory);
+            assertThrows(InventoryAlreadyExistsForGuiException.class, () -> {
+                java.lang.reflect.Method buildMethod = PaginatedGui.class.getDeclaredMethod("buildInventory");
+                buildMethod.setAccessible(true);
+                try {
+                    buildMethod.invoke(gui);
+                } catch (java.lang.reflect.InvocationTargetException e) {
+                    throw e.getCause();
+                }
+            });
         }
     }
 
