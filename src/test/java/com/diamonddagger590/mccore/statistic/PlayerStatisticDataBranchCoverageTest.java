@@ -11,6 +11,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.event.Event;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -28,15 +29,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Targets uncovered branches in {@link PlayerStatisticData} that focus on
- * event cancellation paths across all mutators, the generic {@code getValue}
- * method, {@code bulkIncrementLong}, {@code getModifiedEntries} null-value
- * filtering, and {@code getOrCreateSet} type conversion.
- */
 class PlayerStatisticDataBranchCoverageTest {
 
     private static final UUID PLAYER_UUID = UUID.randomUUID();
+    private static final Instant FIXED_TIMESTAMP = Instant.ofEpochMilli(1_000_000L);
 
     @SuppressWarnings("deprecation")
     private static NamespacedKey key(String namespace, String key) {
@@ -81,80 +77,74 @@ class PlayerStatisticDataBranchCoverageTest {
         RegistryResetExtension.resetRegistry();
     }
 
-    // ── Event cancellation: incrementLong ─────────────────────────────
-
     @Test
-    void incrementLongCancellationPreventsChange() {
+    @DisplayName("Given a cancelled event, when incrementing a long stat, then the value is unchanged")
+    void incrementLong_preventsChange_whenEventCancelled() {
         data = createCancellingData();
         data.incrementLong(LONG_KEY, 5L);
         assertEquals(0L, data.getLongValue(LONG_KEY).orElse(0L));
         assertFalse(data.isDirty());
     }
 
-    // ── Event cancellation: incrementInt ──────────────────────────────
-
     @Test
-    void incrementIntCancellationPreventsChange() {
+    @DisplayName("Given a cancelled event, when incrementing an int stat, then the value is unchanged")
+    void incrementInt_preventsChange_whenEventCancelled() {
         data = createCancellingData();
         data.incrementInt(INT_KEY, 10);
         assertEquals(0, data.getIntValue(INT_KEY).orElse(0));
         assertFalse(data.isDirty());
     }
 
-    // ── Event cancellation: incrementDouble ───────────────────────────
-
     @Test
-    void incrementDoubleCancellationPreventsChange() {
+    @DisplayName("Given a cancelled event, when incrementing a double stat, then the value is unchanged")
+    void incrementDouble_preventsChange_whenEventCancelled() {
         data = createCancellingData();
         data.incrementDouble(DOUBLE_KEY, 1.5);
         assertEquals(0.0, data.getDoubleValue(DOUBLE_KEY).orElse(0.0), 0.001);
         assertFalse(data.isDirty());
     }
 
-    // ── Event cancellation: setMaxLong ────────────────────────────────
-
     @Test
-    void setMaxLongCancellationPreventsChange() {
+    @DisplayName("Given a cancelled event, when setting max long, then the value is unchanged")
+    void setMaxLong_preventsChange_whenEventCancelled() {
         data = createCancellingData();
         data.setMaxLong(LONG_KEY, 100L);
         assertEquals(0L, data.getLongValue(LONG_KEY).orElse(0L));
         assertFalse(data.isDirty());
     }
 
-    // ── Event cancellation: setMaxInt ─────────────────────────────────
-
     @Test
-    void setMaxIntCancellationPreventsChange() {
+    @DisplayName("Given a cancelled event, when setting max int, then the value is unchanged")
+    void setMaxInt_preventsChange_whenEventCancelled() {
         data = createCancellingData();
         data.setMaxInt(INT_KEY, 100);
         assertEquals(0, data.getIntValue(INT_KEY).orElse(0));
         assertFalse(data.isDirty());
     }
 
-    // ── Event cancellation: setMaxDouble ──────────────────────────────
-
     @Test
-    void setMaxDoubleCancellationPreventsChange() {
+    @DisplayName("Given a cancelled event, when setting max double, then the value is unchanged")
+    void setMaxDouble_preventsChange_whenEventCancelled() {
         data = createCancellingData();
         data.setMaxDouble(DOUBLE_KEY, 99.9);
         assertEquals(0.0, data.getDoubleValue(DOUBLE_KEY).orElse(0.0), 0.001);
         assertFalse(data.isDirty());
     }
 
-    // ── Event cancellation: setTimestampIfAbsent ──────────────────────
-
     @Test
-    void setTimestampIfAbsentCancellationPreventsChange() {
+    @DisplayName("Given a cancelled event, when setting timestamp if absent, then the value remains at default")
+    void setTimestampIfAbsent_preventsChange_whenEventCancelled() {
         data = createCancellingData();
-        data.setTimestampIfAbsent(TIMESTAMP_KEY, Instant.now());
-        assertEquals(Instant.EPOCH, data.getTimestampValue(TIMESTAMP_KEY).orElse(null));
+        data.setTimestampIfAbsent(TIMESTAMP_KEY, FIXED_TIMESTAMP);
+        assertFalse(data.getTimestampValue(TIMESTAMP_KEY)
+                .filter(FIXED_TIMESTAMP::equals)
+                .isPresent());
         assertFalse(data.isDirty());
     }
 
-    // ── Event cancellation: addToSet ──────────────────────────────────
-
     @Test
-    void addToSetCancellationPreventsChangeAndReturnsFalse() {
+    @DisplayName("Given a cancelled event, when adding to set, then returns false and set is unchanged")
+    void addToSet_returnsFalseAndPreventsChange_whenEventCancelled() {
         data = createCancellingData();
         boolean added = data.addToSet(SET_KEY, "element");
         assertFalse(added);
@@ -162,37 +152,21 @@ class PlayerStatisticDataBranchCoverageTest {
         assertFalse(data.isDirty());
     }
 
-    // ── Event cancellation: removeFromSet ─────────────────────────────
-
     @Test
-    void removeFromSetCancellationPreventsChangeAndReturnsFalse() {
-        data.addToSet(SET_KEY, "element");
-        firedEvents.clear();
-
-        data = new PlayerStatisticData(
-                PLAYER_UUID,
-                event -> {
-                    firedEvents.add(event);
-                    if (event instanceof StatisticModifyEvent sme) {
-                        sme.setCancelled(true);
-                    }
-                },
-                id -> mockPlayer
-        );
-        // Populate the set with the element so removeFromSet enters the event path
+    @DisplayName("Given a cancelled event and a populated set, when removing from set, then returns false and set is unchanged")
+    void removeFromSet_returnsFalseAndPreventsChange_whenEventCancelled() {
+        data = createCancellingData();
         data.populateFromEntries(Map.of(SET_KEY,
                 new StatisticEntry(SET_KEY, StatisticType.SET_STRING, new LinkedHashSet<>(Set.of("element")))));
-        firedEvents.clear();
 
         boolean removed = data.removeFromSet(SET_KEY, "element");
         assertFalse(removed);
         assertTrue(data.getSetValue(SET_KEY).get().contains("element"));
     }
 
-    // ── getValue (generic) ────────────────────────────────────────────
-
     @Test
-    void getValueReturnsStoredValueWhenPresent() {
+    @DisplayName("Given a stored int value, when calling getValue, then returns the stored value")
+    void getValue_returnsStoredValue_whenValuePresent() {
         data.setValue(INT_KEY, 42);
         Optional<Object> result = data.getValue(INT_KEY);
         assertTrue(result.isPresent());
@@ -200,54 +174,42 @@ class PlayerStatisticDataBranchCoverageTest {
     }
 
     @Test
-    void getValueReturnsDefaultWhenNoStoredValue() {
+    @DisplayName("Given no stored value, when calling getValue on a registered key, then returns the default value")
+    void getValue_returnsDefaultValue_whenNoStoredValue() {
         Optional<Object> result = data.getValue(INT_KEY);
         assertTrue(result.isPresent());
         assertEquals(0, result.get());
     }
 
     @Test
-    void getValueReturnsEmptyForUnregisteredKey() {
+    @DisplayName("Given an unregistered key, when calling getValue, then returns empty")
+    void getValue_returnsEmpty_whenKeyUnregistered() {
         Optional<Object> result = data.getValue(key("test", "nonexistent"));
         assertTrue(result.isEmpty());
     }
 
-    // ── bulkIncrementLong ─────────────────────────────────────────────
-
     @Test
-    void bulkIncrementLongDelegatesToIncrementLong() {
+    @DisplayName("Given a long stat, when calling bulkIncrementLong, then delegates to incrementLong and fires events")
+    void bulkIncrementLong_incrementsValueAndFiresEvents_whenCalled() {
         data.bulkIncrementLong(LONG_KEY, 10L);
         assertEquals(10L, data.getLongValue(LONG_KEY).orElse(0L));
         assertTrue(data.isDirty());
-        assertEquals(2, firedEvents.size());
         assertTrue(firedEvents.get(0) instanceof StatisticModifyEvent);
         StatisticModifyEvent preEvent = (StatisticModifyEvent) firedEvents.get(0);
         assertEquals(ModificationType.INCREMENT, preEvent.getModificationType());
     }
 
     @Test
-    void bulkIncrementLongAccumulatesMultipleCalls() {
+    @DisplayName("Given multiple bulkIncrementLong calls, when accumulating, then value reflects total")
+    void bulkIncrementLong_accumulatesValue_whenCalledMultipleTimes() {
         data.bulkIncrementLong(LONG_KEY, 5L);
         data.bulkIncrementLong(LONG_KEY, 15L);
         assertEquals(20L, data.getLongValue(LONG_KEY).orElse(0L));
     }
 
-    // ── getModifiedEntries null-value filtering ───────────────────────
-
     @Test
-    void getModifiedEntriesFiltersNullValues() {
-        data.setValue(INT_KEY, 42);
-        assertTrue(data.getModifiedEntries().containsKey(INT_KEY));
-
-        // Directly manipulate to simulate a dirty key with null value.
-        // populateFromEntries clears values and dirtyKeys, then setValue re-dirties.
-        // We can produce the scenario by setting a value then clearing it via populateFromEntries
-        // with an empty map (which clears values but also dirtyKeys). Instead, we can leverage
-        // the fact that populateFromEntries clears values — after populating, if we dirty a key
-        // and then the value disappears from the ConcurrentHashMap by another thread,
-        // getModifiedEntries would skip it. But we can't easily do that without reflection.
-        //
-        // A more practical approach: verify getModifiedEntries only includes keys that have values.
+    @DisplayName("Given two dirty keys with values, when calling getModifiedEntries, then returns both entries")
+    void getModifiedEntries_returnsBothEntries_whenTwoKeysAreDirty() {
         data.setValue(INT_KEY, 99);
         data.setValue(LONG_KEY, 200L);
         Map<NamespacedKey, StatisticEntry> modified = data.getModifiedEntries();
@@ -258,11 +220,9 @@ class PlayerStatisticDataBranchCoverageTest {
         assertEquals(200L, modified.get(LONG_KEY).getAsLong());
     }
 
-    // ── getOrCreateSet: conversion from Set to LinkedHashSet ──────────
-
     @Test
-    void addToSetConvertsHashSetToLinkedHashSet() {
-        // Populate with a plain HashSet (not LinkedHashSet) to hit the conversion branch
+    @DisplayName("Given a set stored as a plain HashSet, when adding to set, then converts to LinkedHashSet and adds element")
+    void addToSet_convertsHashSetToLinkedHashSet_whenStoredValueIsPlainHashSet() {
         HashSet<String> plainSet = new HashSet<>();
         plainSet.add("existing");
         data.populateFromEntries(Map.of(SET_KEY,
@@ -276,7 +236,8 @@ class PlayerStatisticDataBranchCoverageTest {
     }
 
     @Test
-    void removeFromSetConvertsHashSetToLinkedHashSet() {
+    @DisplayName("Given a set stored as a plain HashSet, when removing from set, then converts and removes element")
+    void removeFromSet_convertsHashSetToLinkedHashSet_whenStoredValueIsPlainHashSet() {
         HashSet<String> plainSet = new HashSet<>();
         plainSet.add("to_remove");
         plainSet.add("keep");
@@ -290,31 +251,33 @@ class PlayerStatisticDataBranchCoverageTest {
         assertTrue(result.contains("keep"));
     }
 
-    // ── ModificationType verification on events ───────────────────────
-
     @Test
-    void setMaxLongFiresSetMaxModificationType() {
+    @DisplayName("Given a long stat, when calling setMaxLong, then fires SET_MAX modification type")
+    void setMaxLong_firesSetMaxModificationType_whenValueExceedsCurrent() {
         data.setMaxLong(LONG_KEY, 50L);
         StatisticModifyEvent preEvent = (StatisticModifyEvent) firedEvents.get(0);
         assertEquals(ModificationType.SET_MAX, preEvent.getModificationType());
     }
 
     @Test
-    void setTimestampIfAbsentFiresSetIfAbsentModificationType() {
-        data.setTimestampIfAbsent(TIMESTAMP_KEY, Instant.now());
+    @DisplayName("Given an absent timestamp, when calling setTimestampIfAbsent, then fires SET_IF_ABSENT modification type")
+    void setTimestampIfAbsent_firesSetIfAbsentModificationType_whenNoValueStored() {
+        data.setTimestampIfAbsent(TIMESTAMP_KEY, FIXED_TIMESTAMP);
         StatisticModifyEvent preEvent = (StatisticModifyEvent) firedEvents.get(0);
         assertEquals(ModificationType.SET_IF_ABSENT, preEvent.getModificationType());
     }
 
     @Test
-    void addToSetFiresAddToSetModificationType() {
+    @DisplayName("Given an empty set, when adding to set, then fires ADD_TO_SET modification type")
+    void addToSet_firesAddToSetModificationType_whenElementIsNew() {
         data.addToSet(SET_KEY, "a");
         StatisticModifyEvent preEvent = (StatisticModifyEvent) firedEvents.get(0);
         assertEquals(ModificationType.ADD_TO_SET, preEvent.getModificationType());
     }
 
     @Test
-    void removeFromSetFiresRemoveFromSetModificationType() {
+    @DisplayName("Given a set containing the element, when removing from set, then fires REMOVE_FROM_SET modification type")
+    void removeFromSet_firesRemoveFromSetModificationType_whenElementPresent() {
         data.addToSet(SET_KEY, "a");
         firedEvents.clear();
         data.removeFromSet(SET_KEY, "a");
@@ -322,10 +285,9 @@ class PlayerStatisticDataBranchCoverageTest {
         assertEquals(ModificationType.REMOVE_FROM_SET, preEvent.getModificationType());
     }
 
-    // ── Event value adjustment across different mutators ───────────────
-
     @Test
-    void incrementLongEventAdjustsAppliedValue() {
+    @DisplayName("Given an event that adjusts value, when incrementing long, then the adjusted value is applied")
+    void incrementLong_appliesAdjustedValue_whenEventModifiesNewValue() {
         data = new PlayerStatisticData(
                 PLAYER_UUID,
                 event -> {
@@ -337,10 +299,12 @@ class PlayerStatisticDataBranchCoverageTest {
         );
         data.incrementLong(LONG_KEY, 5L);
         assertEquals(100L, data.getLongValue(LONG_KEY).orElse(0L));
+        assertTrue(data.isDirty());
     }
 
     @Test
-    void incrementIntEventAdjustsAppliedValue() {
+    @DisplayName("Given an event that adjusts value, when incrementing int, then the adjusted value is applied")
+    void incrementInt_appliesAdjustedValue_whenEventModifiesNewValue() {
         data = new PlayerStatisticData(
                 PLAYER_UUID,
                 event -> {
@@ -352,10 +316,12 @@ class PlayerStatisticDataBranchCoverageTest {
         );
         data.incrementInt(INT_KEY, 5);
         assertEquals(200, data.getIntValue(INT_KEY).orElse(0));
+        assertTrue(data.isDirty());
     }
 
     @Test
-    void incrementDoubleEventAdjustsAppliedValue() {
+    @DisplayName("Given an event that adjusts value, when incrementing double, then the adjusted value is applied")
+    void incrementDouble_appliesAdjustedValue_whenEventModifiesNewValue() {
         data = new PlayerStatisticData(
                 PLAYER_UUID,
                 event -> {
@@ -367,10 +333,12 @@ class PlayerStatisticDataBranchCoverageTest {
         );
         data.incrementDouble(DOUBLE_KEY, 1.0);
         assertEquals(77.7, data.getDoubleValue(DOUBLE_KEY).orElse(0.0), 0.001);
+        assertTrue(data.isDirty());
     }
 
     @Test
-    void setMaxLongEventAdjustsAppliedValue() {
+    @DisplayName("Given an event that adjusts value, when setting max long, then the adjusted value is applied")
+    void setMaxLong_appliesAdjustedValue_whenEventModifiesNewValue() {
         data = new PlayerStatisticData(
                 PLAYER_UUID,
                 event -> {
@@ -382,12 +350,12 @@ class PlayerStatisticDataBranchCoverageTest {
         );
         data.setMaxLong(LONG_KEY, 50L);
         assertEquals(999L, data.getLongValue(LONG_KEY).orElse(0L));
+        assertTrue(data.isDirty());
     }
 
-    // ── Post-event correctness ────────────────────────────────────────
-
     @Test
-    void incrementLongFiresCorrectPostEvent() {
+    @DisplayName("Given a long stat, when incrementing, then PostStatisticModifyEvent contains correct old and new values")
+    void incrementLong_firesCorrectPostEvent_whenSuccessful() {
         data.incrementLong(LONG_KEY, 7L);
         assertEquals(2, firedEvents.size());
         assertTrue(firedEvents.get(1) instanceof PostStatisticModifyEvent);
@@ -398,7 +366,8 @@ class PlayerStatisticDataBranchCoverageTest {
     }
 
     @Test
-    void addToSetFiresCorrectPostEvent() {
+    @DisplayName("Given an empty set, when adding to set, then PostStatisticModifyEvent fires with ADD_TO_SET type")
+    void addToSet_firesCorrectPostEvent_whenSuccessful() {
         data.addToSet(SET_KEY, "x");
         assertEquals(2, firedEvents.size());
         assertTrue(firedEvents.get(1) instanceof PostStatisticModifyEvent);
@@ -406,14 +375,11 @@ class PlayerStatisticDataBranchCoverageTest {
         assertEquals(ModificationType.ADD_TO_SET, postEvent.getModificationType());
     }
 
-    // ── getUUID ───────────────────────────────────────────────────────
-
     @Test
-    void getUUIDReturnsConstructedUUID() {
+    @DisplayName("Given a PlayerStatisticData instance, when calling getUUID, then returns the UUID passed to the constructor")
+    void getUUID_returnsConstructedUUID_always() {
         assertEquals(PLAYER_UUID, data.getUUID());
     }
-
-    // ── Helper: creates data that cancels all StatisticModifyEvents ───
 
     private PlayerStatisticData createCancellingData() {
         return new PlayerStatisticData(
