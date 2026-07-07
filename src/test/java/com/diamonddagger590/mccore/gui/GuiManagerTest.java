@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Logger;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -199,6 +200,7 @@ class GuiManagerTest {
         guiManager.trackPlayerGui(playerUUID, gui2);
 
         verify(gui1).unregisterListeners();
+        verify(gui2).registerListeners();
         Optional<Gui<CorePlayer>> result = guiManager.getOpenedGui(playerUUID);
         assertTrue(result.isPresent());
         assertEquals(gui2, result.get());
@@ -261,7 +263,7 @@ class GuiManagerTest {
     @Test
     @DisplayName("Given an untracked player, when stopTrackingPlayer, then no exception is thrown")
     void stopTrackingPlayer_doesNothing_whenPlayerNotTracked() {
-        guiManager.stopTrackingPlayer(UUID.randomUUID());
+        assertDoesNotThrow(() -> guiManager.stopTrackingPlayer(UUID.randomUUID()));
     }
 
     @Test
@@ -315,7 +317,7 @@ class GuiManagerTest {
         guiManager.trackPlayerGui(playerUUID, gui);
         when(mockServer.getPlayer(playerUUID)).thenReturn(null);
 
-        guiManager.refreshGui(gui);
+        assertDoesNotThrow(() -> guiManager.refreshGui(gui));
     }
 
     @Test

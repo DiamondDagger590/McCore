@@ -137,9 +137,12 @@ class PlayerSettingDAOTest {
         when(connection.prepareStatement(anyString())).thenReturn(versionStmt);
         when(versionStmt.executeQuery()).thenReturn(versionRs);
         when(versionRs.next()).thenReturn(true);
-        when(versionRs.getInt("version")).thenReturn(1);
+        when(versionRs.getInt("table_version")).thenReturn(1);
 
         PlayerSettingDAO.updateTable(connection);
+
+        verify(connection).prepareStatement(anyString());
+        verify(versionStmt).executeQuery();
     }
 
     @Test
@@ -159,6 +162,8 @@ class PlayerSettingDAOTest {
                 .thenReturn(setVersionStmt);
 
         PlayerSettingDAO.updateTable(connection);
+
+        verify(setVersionStmt).executeUpdate();
     }
 
     @Test

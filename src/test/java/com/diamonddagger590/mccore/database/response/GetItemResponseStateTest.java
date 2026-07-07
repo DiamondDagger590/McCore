@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class GetItemResponseStateTest {
 
@@ -45,5 +46,17 @@ class GetItemResponseStateTest {
         for (GetItemResponseState state : GetItemResponseState.values()) {
             assertNotNull(state);
         }
+    }
+
+    @Test
+    @DisplayName("Given an unknown string, when valueOf, then throws IllegalArgumentException")
+    void valueOf_throwsIllegalArgumentException_whenGivenUnknownString() {
+        assertThrows(IllegalArgumentException.class, () -> GetItemResponseState.valueOf("UNKNOWN"));
+    }
+
+    @Test
+    @DisplayName("Given null, when valueOf, then throws NullPointerException")
+    void valueOf_throwsNullPointerException_whenGivenNull() {
+        assertThrows(NullPointerException.class, () -> GetItemResponseState.valueOf(null));
     }
 }
