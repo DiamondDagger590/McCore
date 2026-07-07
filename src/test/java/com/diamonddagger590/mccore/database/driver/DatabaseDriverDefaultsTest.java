@@ -11,6 +11,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DatabaseDriverDefaultsTest {
@@ -64,10 +65,38 @@ class DatabaseDriverDefaultsTest {
         assertTrue(driver.tryDriver());
     }
 
+    private static class AbstractDriverClassDriver implements DatabaseDriver {
+        @Override
+        public @NotNull String getDatabaseDriverClass() {
+            return "java.lang.Number";
+        }
+
+        @Override
+        public @NotNull String getConnectionUrl(@NotNull Credentials credentials) {
+            return "jdbc:abstract://localhost";
+        }
+
+        @Override
+        public void populateDataSourceCredentials(@NotNull HikariDataSource dataSource, @NotNull Credentials credentials) {
+        }
+
+        @Override
+        public @NotNull DatabaseDriverType getDriverType() {
+            return DatabaseDriverType.SQLITE;
+        }
+    }
+
     @Test
     @DisplayName("Given an invalid driver class, when tryDriver is called, then returns false")
     void tryDriver_returnsFalse_whenDriverClassDoesNotExist() {
         DatabaseDriver driver = new InvalidDriverClassDriver();
+        assertFalse(driver.tryDriver());
+    }
+
+    @Test
+    @DisplayName("Given an abstract driver class, when tryDriver is called, then returns false")
+    void tryDriver_returnsFalse_whenDriverClassCannotBeInstantiated() {
+        DatabaseDriver driver = new AbstractDriverClassDriver();
         assertFalse(driver.tryDriver());
     }
 
@@ -86,6 +115,6 @@ class DatabaseDriverDefaultsTest {
         List<Pair<String, String>> first = driver.getDataSourceProperties();
         List<Pair<String, String>> second = driver.getDataSourceProperties();
         assertEquals(first, second);
-        assertFalse(first == second);
+        assertNotSame(first, second);
     }
 }

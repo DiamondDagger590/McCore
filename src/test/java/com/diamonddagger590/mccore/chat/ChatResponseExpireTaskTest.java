@@ -14,6 +14,8 @@ import org.mockbukkit.mockbukkit.MockBukkit;
 
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -90,12 +92,13 @@ class ChatResponseExpireTaskTest {
     }
 
     @Test
-    @DisplayName("Given a chat response with wait time, when constructing, then max duration is set")
+    @DisplayName("Given a chat response with wait time, when constructing, then max duration equals epoch plus wait time in millis")
     void constructor_setsMaxDuration_fromResponseWaitTime() {
         UUID uuid = UUID.randomUUID();
-        TestChatResponse response = new TestChatResponse(uuid, 60);
+        long waitTimeSeconds = 60;
+        TestChatResponse response = new TestChatResponse(uuid, waitTimeSeconds);
         ChatResponseExpireTask task = new ChatResponseExpireTask(plugin, response);
-        assertTrue(task.getMaxTaskDuration() > 0);
+        assertEquals(waitTimeSeconds * 1000, task.getMaxTaskDuration());
     }
 
     @Test
@@ -118,11 +121,17 @@ class ChatResponseExpireTaskTest {
     }
 
     @Test
-    @DisplayName("Given no pending response, when onTaskExpire is invoked, then no exception is thrown")
+    @DisplayName("Given no pending response, when onTaskExpire is invoked, then no exception is thrown and manager remains empty")
     void onTaskExpire_succeedsGracefully_whenNoPendingResponse() {
         UUID uuid = UUID.randomUUID();
         TestChatResponse response = new TestChatResponse(uuid, 30);
         TestableChatResponseExpireTask task = new TestableChatResponseExpireTask(plugin, response);
-        task.invokeOnTaskExpire();
+
+        ChatResponseManager manager = plugin.registryAccess()
+                .registry(RegistryKey.MANAGER)
+                .manager(ManagerKey.CHAT_RESPONSE);
+
+        assertDoesNotThrow(task::invokeOnTaskExpire);
+        assertFalse(manager.doesChatterHavePendingResponse(uuid));
     }
 }

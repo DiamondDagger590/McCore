@@ -3,6 +3,7 @@ package com.diamonddagger590.mccore.builder.item.impl;
 import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.testing.RegistryResetExtension;
 import com.diamonddagger590.mccore.testing.TestCorePlugin;
+import io.papermc.paper.datacomponent.DataComponentTypes;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.junit.jupiter.api.AfterEach;
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SkullBuilderTest {
 
@@ -110,6 +112,16 @@ class SkullBuilderTest {
     }
 
     @Test
+    @DisplayName("Given a builder with base64 texture, when build is called, then profile data is set on the item")
+    void build_setsProfileData_whenBase64TextureProvided() {
+        ItemStack itemStack = new ItemStack(Material.PLAYER_HEAD);
+        SkullBuilder builder = new SkullBuilder(itemStack);
+        builder.withBase64("dGVzdA==");
+        builder.build();
+        assertTrue(itemStack.hasData(DataComponentTypes.PROFILE));
+    }
+
+    @Test
     @DisplayName("Given a built builder, when build is called, then returns this builder")
     void build_returnsSelf() {
         SkullBuilder builder = createBuilder();
@@ -118,10 +130,11 @@ class SkullBuilderTest {
     }
 
     @Test
-    @DisplayName("Given a built builder, when hideSkullDynamicToolTip is called with no existing tooltip, then succeeds")
-    void hideSkullDynamicToolTip_succeeds_withNoExistingTooltip() {
-        SkullBuilder builder = createBuilder();
+    @DisplayName("Given a built builder, when hideSkullDynamicToolTip is called with no existing tooltip, then tooltip display is set")
+    void hideSkullDynamicToolTip_setsTooltipDisplay_withNoExistingTooltip() {
+        ItemStack itemStack = new ItemStack(Material.PLAYER_HEAD);
+        SkullBuilder builder = new SkullBuilder(itemStack);
         builder.hideSkullDynamicToolTip();
-        assertNotNull(builder);
+        assertTrue(itemStack.hasData(DataComponentTypes.TOOLTIP_DISPLAY));
     }
 }
