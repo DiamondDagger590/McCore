@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
 class CorePlayerEventTest {
@@ -49,14 +48,6 @@ class CorePlayerEventTest {
         TestCorePlayer player = new TestCorePlayer();
         TestCorePlayerEvent event = new TestCorePlayerEvent(player);
         assertSame(player, event.getCorePlayer());
-    }
-
-    @Test
-    @DisplayName("Given a CorePlayerEvent, when getCorePlayer is called, then it is not null")
-    void getCorePlayer_isNotNull_whenConstructedWithValidPlayer() {
-        TestCorePlayer player = new TestCorePlayer();
-        TestCorePlayerEvent event = new TestCorePlayerEvent(player);
-        assertNotNull(event.getCorePlayer());
     }
 
     @Test
