@@ -7,6 +7,7 @@ import java.util.HashSet;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -414,5 +415,39 @@ class ParserTest {
     @DisplayName("Given mixed operators, when evaluating, then applies correct precedence throughout")
     void getValue_appliesCorrectPrecedence_whenOperatorsAreMixed() {
         assertEquals(12.0, new Parser("2+3*4-6/2+1").getValue(), DELTA);
+    }
+
+    @Test
+    @DisplayName("Given trailing extra token after valid expression, when evaluating, then throws ParseError")
+    void getValue_throwsParseError_whenExtraTokenAfterExpression() {
+        assertThrows(ParseError.class, () -> new Parser("2+3)").getValue());
+    }
+
+    @Test
+    @DisplayName("Given unmatched closing parenthesis mid-expression, when evaluating, then throws ParseError")
+    void getValue_throwsParseError_whenUnmatchedClosingParenMidExpression() {
+        assertThrows(ParseError.class, () -> new Parser(")2+3").getValue());
+    }
+
+    @Test
+    @DisplayName("Given function call missing closing bracket, when evaluating, then throws ParseError")
+    void getValue_throwsParseError_whenFunctionCallMissingClosingBracket() {
+        assertThrows(ParseError.class, () -> new Parser("sin(2+3").getValue());
+    }
+
+    @Test
+    @DisplayName("Given expression with spaces, when getInputString called, then returns input with spaces stripped")
+    void getInputString_returnsStrippedInput_whenExpressionContainsSpaces() {
+        Parser parser = new Parser("2 + 3");
+        assertEquals("2+3", parser.getInputString());
+    }
+
+    @Test
+    @DisplayName("Given a parsed expression, when getTree called twice, then returns the same cached instance")
+    void getTree_returnsSameCachedInstance_whenCalledTwice() {
+        Parser parser = new Parser("2+3");
+        ExpressionNode tree1 = parser.getTree();
+        ExpressionNode tree2 = parser.getTree();
+        assertSame(tree1, tree2);
     }
 }
