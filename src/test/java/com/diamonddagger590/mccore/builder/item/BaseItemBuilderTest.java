@@ -3,6 +3,7 @@ package com.diamonddagger590.mccore.builder.item;
 import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.builder.item.impl.ItemBuilder;
 import com.diamonddagger590.mccore.exception.builder.item.InvalidItemBuilderException;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemFlag;
@@ -20,6 +21,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -61,10 +63,15 @@ class BaseItemBuilderTest {
     }
 
     private static ItemStack getItemStack(ItemBuilder builder) {
+        return getField(BaseItemBuilder.class, builder, "itemStack");
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> T getField(Class<?> clazz, Object target, String fieldName) {
         try {
-            Field field = BaseItemBuilder.class.getDeclaredField("itemStack");
+            Field field = clazz.getDeclaredField(fieldName);
             field.setAccessible(true);
-            return (ItemStack) field.get(builder);
+            return (T) field.get(target);
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
@@ -85,23 +92,23 @@ class BaseItemBuilderTest {
     class PlaceholderManagementTests {
 
         @Test
-        @DisplayName("addPlaceholder stores the placeholder so hasPlaceholder returns true")
-        void addPlaceholder_storesPlaceholder() {
+        @DisplayName("Given a key-value pair, when addPlaceholder is called, then hasPlaceholder returns true")
+        void addPlaceholder_storesPlaceholder_whenKeyAdded() {
             ItemBuilder builder = createBuilder(Material.STONE);
             builder.addPlaceholder("key", "value");
             assertTrue(builder.hasPlaceholder("key"));
         }
 
         @Test
-        @DisplayName("hasPlaceholder returns false for missing key")
-        void hasPlaceholder_returnsFalseForMissingKey() {
+        @DisplayName("Given no placeholders registered, when hasPlaceholder is called, then returns false")
+        void hasPlaceholder_returnsFalse_whenKeyNotRegistered() {
             ItemBuilder builder = createBuilder(Material.STONE);
             assertFalse(builder.hasPlaceholder("nonexistent"));
         }
 
         @Test
-        @DisplayName("removePlaceholder removes the stored placeholder")
-        void removePlaceholder_removesPlaceholder() {
+        @DisplayName("Given a registered placeholder, when removePlaceholder is called, then placeholder is removed")
+        void removePlaceholder_removesPlaceholder_whenKeyExists() {
             ItemBuilder builder = createBuilder(Material.STONE);
             builder.addPlaceholder("key", "value");
             builder.removePlaceholder("key");
@@ -109,8 +116,8 @@ class BaseItemBuilderTest {
         }
 
         @Test
-        @DisplayName("setPlaceholders replaces all existing placeholders")
-        void setPlaceholders_replacesAll() {
+        @DisplayName("Given existing placeholders, when setPlaceholders is called with new map, then old placeholders are replaced")
+        void setPlaceholders_replacesAllPlaceholders_whenNewMapProvided() {
             ItemBuilder builder = createBuilder(Material.STONE);
             builder.addPlaceholder("old", "oldValue");
             Map<String, String> newMap = new HashMap<>();
@@ -121,8 +128,8 @@ class BaseItemBuilderTest {
         }
 
         @Test
-        @DisplayName("addPlaceholders merges into existing placeholders")
-        void addPlaceholders_mergesIntoExisting() {
+        @DisplayName("Given existing placeholders, when addPlaceholders is called, then new placeholders are merged")
+        void addPlaceholders_mergesIntoExisting_whenExistingPlaceholdersPresent() {
             ItemBuilder builder = createBuilder(Material.STONE);
             builder.addPlaceholder("existing", "val1");
             Map<String, String> extras = new HashMap<>();
@@ -133,32 +140,32 @@ class BaseItemBuilderTest {
         }
 
         @Test
-        @DisplayName("addPlaceholder returns builder for chaining")
-        void addPlaceholder_returnsSelfForChaining() {
+        @DisplayName("Given a builder, when addPlaceholder is called, then returns builder for chaining")
+        void addPlaceholder_returnsSelf_whenCalled() {
             ItemBuilder builder = createBuilder(Material.STONE);
             ItemBuilder result = builder.addPlaceholder("key", "value");
             assertSame(builder, result);
         }
 
         @Test
-        @DisplayName("removePlaceholder returns builder for chaining")
-        void removePlaceholder_returnsSelfForChaining() {
+        @DisplayName("Given a builder, when removePlaceholder is called, then returns builder for chaining")
+        void removePlaceholder_returnsSelf_whenCalled() {
             ItemBuilder builder = createBuilder(Material.STONE);
             ItemBuilder result = builder.removePlaceholder("missing");
             assertSame(builder, result);
         }
 
         @Test
-        @DisplayName("setPlaceholders returns builder for chaining")
-        void setPlaceholders_returnsSelfForChaining() {
+        @DisplayName("Given a builder, when setPlaceholders is called, then returns builder for chaining")
+        void setPlaceholders_returnsSelf_whenCalled() {
             ItemBuilder builder = createBuilder(Material.STONE);
             ItemBuilder result = builder.setPlaceholders(new HashMap<>());
             assertSame(builder, result);
         }
 
         @Test
-        @DisplayName("addPlaceholders returns builder for chaining")
-        void addPlaceholders_returnsSelfForChaining() {
+        @DisplayName("Given a builder, when addPlaceholders is called, then returns builder for chaining")
+        void addPlaceholders_returnsSelf_whenCalled() {
             ItemBuilder builder = createBuilder(Material.STONE);
             ItemBuilder result = builder.addPlaceholders(new HashMap<>());
             assertSame(builder, result);
@@ -170,25 +177,42 @@ class BaseItemBuilderTest {
     class DisplayNameTests {
 
         @Test
-        @DisplayName("setDisplayName with two args returns builder for chaining")
-        void setDisplayName_twoArgs_returnsSelf() {
+        @DisplayName("Given a builder, when setDisplayName is called with two args, then returns builder and stores name")
+        void setDisplayName_returnsSelfAndStoresName_whenCalledWithTwoArgs() {
             ItemBuilder builder = createBuilder(Material.STONE);
             assertSame(builder, builder.setDisplayName("Test Name", true));
+            String storedName = getField(BaseItemBuilder.class, builder, "displayName");
+            assertEquals("Test Name", storedName);
         }
 
         @Test
-        @DisplayName("setDisplayName single arg returns builder for chaining")
-        void setDisplayName_singleArg_returnsSelf() {
+        @DisplayName("Given a builder, when setDisplayName is called with single arg, then returns builder and stores name")
+        void setDisplayName_returnsSelfAndStoresName_whenCalledWithSingleArg() {
             ItemBuilder builder = createBuilder(Material.STONE);
             assertSame(builder, builder.setDisplayName("Test Name"));
+            String storedName = getField(BaseItemBuilder.class, builder, "displayName");
+            assertEquals("Test Name", storedName);
         }
 
         @Test
-        @DisplayName("setDisplayName with null clears the display name without error")
-        void setDisplayName_withNull_clearsDisplayName() {
+        @DisplayName("Given a builder with a display name, when setDisplayName is called with null, then clears display name")
+        void setDisplayName_clearsDisplayName_whenNullProvided() {
             ItemBuilder builder = createBuilder(Material.STONE);
             builder.setDisplayName("First");
-            assertDoesNotThrow(() -> builder.setDisplayName(null));
+            builder.setDisplayName(null);
+            String storedName = getField(BaseItemBuilder.class, builder, "displayName");
+            assertNull(storedName);
+        }
+
+        @Test
+        @DisplayName("Given a builder, when setDisplayName is called with staticItemName false, then sets staticItemName to false")
+        void setDisplayName_setsStaticItemNameToFalse_whenFalseProvided() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            builder.setDisplayName("Dynamic Name", false);
+            boolean staticItemName = getField(BaseItemBuilder.class, builder, "staticItemName");
+            assertFalse(staticItemName);
+            String storedName = getField(BaseItemBuilder.class, builder, "displayName");
+            assertEquals("Dynamic Name", storedName);
         }
     }
 
@@ -197,66 +221,88 @@ class BaseItemBuilderTest {
     class LoreTests {
 
         @Test
-        @DisplayName("withDisplayLore sets lore list and returns builder")
-        void withDisplayLore_setsLore() {
+        @DisplayName("Given a builder, when withDisplayLore is called, then sets lore list and returns builder")
+        void withDisplayLore_setsLoreList_whenCalled() {
             ItemBuilder builder = createBuilder(Material.STONE);
             List<String> lore = List.of("Line 1", "Line 2");
             assertSame(builder, builder.withDisplayLore(lore));
+            List<String> storedLore = getField(BaseItemBuilder.class, builder, "lore");
+            assertEquals(2, storedLore.size());
+            assertEquals("Line 1", storedLore.get(0));
+            assertEquals("Line 2", storedLore.get(1));
         }
 
         @Test
-        @DisplayName("withDisplayLore throws when loreAsComponent is non-empty")
-        void withDisplayLore_throwsWhenLoreComponentExists() {
+        @DisplayName("Given loreAsComponent is non-empty, when withDisplayLore is called, then throws IllegalStateException")
+        void withDisplayLore_throwsIllegalStateException_whenLoreComponentExists() {
             ItemBuilder builder = createBuilder(Material.STONE);
             setField(BaseItemBuilder.class, builder, "loreAsComponent",
-                    new ArrayList<>(List.of(net.kyori.adventure.text.Component.text("existing"))));
+                    new ArrayList<>(List.of(Component.text("existing"))));
             assertThrows(IllegalStateException.class, () -> builder.withDisplayLore(List.of("test")));
         }
 
         @Test
-        @DisplayName("addDisplayLore with non-empty string adds to lore")
-        void addDisplayLore_addsLine() {
+        @DisplayName("Given a builder, when addDisplayLore is called with non-empty string, then adds line to lore")
+        void addDisplayLore_addsLine_whenNonEmptyStringProvided() {
             ItemBuilder builder = createBuilder(Material.STONE);
             assertSame(builder, builder.addDisplayLore("New Line"));
+            List<String> storedLore = getField(BaseItemBuilder.class, builder, "lore");
+            assertEquals(1, storedLore.size());
+            assertEquals("New Line", storedLore.get(0));
         }
 
         @Test
-        @DisplayName("addDisplayLore with empty string is a no-op and returns builder")
-        void addDisplayLore_emptyStringIsNoOp() {
+        @DisplayName("Given a builder, when addDisplayLore is called with empty string, then lore remains empty")
+        void addDisplayLore_doesNotAddToLore_whenEmptyStringProvided() {
             ItemBuilder builder = createBuilder(Material.STONE);
             assertSame(builder, builder.addDisplayLore(""));
+            List<String> storedLore = getField(BaseItemBuilder.class, builder, "lore");
+            assertTrue(storedLore.isEmpty());
         }
 
         @Test
-        @DisplayName("addDisplayLore with list adds all lines")
-        void addDisplayLore_withList_addsAllLines() {
+        @DisplayName("Given a builder, when addDisplayLore is called with a list, then adds all lines to lore")
+        void addDisplayLore_addsAllLines_whenListProvided() {
             ItemBuilder builder = createBuilder(Material.STONE);
             assertSame(builder, builder.addDisplayLore(List.of("A", "B", "C")));
+            List<String> storedLore = getField(BaseItemBuilder.class, builder, "lore");
+            assertEquals(3, storedLore.size());
+            assertEquals("A", storedLore.get(0));
+            assertEquals("B", storedLore.get(1));
+            assertEquals("C", storedLore.get(2));
         }
 
         @Test
-        @DisplayName("addDisplayLore with empty list is a no-op and returns builder")
-        void addDisplayLore_emptyList_isNoOp() {
+        @DisplayName("Given a builder, when addDisplayLore is called with empty list, then lore remains empty")
+        void addDisplayLore_doesNotAddToLore_whenEmptyListProvided() {
             ItemBuilder builder = createBuilder(Material.STONE);
             assertSame(builder, builder.addDisplayLore(List.of()));
+            List<String> storedLore = getField(BaseItemBuilder.class, builder, "lore");
+            assertTrue(storedLore.isEmpty());
         }
 
         @Test
-        @DisplayName("addDisplayLoreComponent adds a Component to the lore")
-        void addDisplayLoreComponent_addsComponent() {
+        @DisplayName("Given a builder, when addDisplayLoreComponent is called, then adds component to loreAsComponent")
+        void addDisplayLoreComponent_addsComponent_whenComponentProvided() {
             ItemBuilder builder = createBuilder(Material.STONE);
-            assertSame(builder, builder.addDisplayLoreComponent(net.kyori.adventure.text.Component.text("test")));
+            Component component = Component.text("test");
+            assertSame(builder, builder.addDisplayLoreComponent(component));
+            List<Component> storedComponents = getField(BaseItemBuilder.class, builder, "loreAsComponent");
+            assertEquals(1, storedComponents.size());
+            assertEquals(component, storedComponents.get(0));
         }
 
         @Test
-        @DisplayName("addDisplayLoreComponent with list adds all Components")
-        void addDisplayLoreComponent_withList_addsAll() {
+        @DisplayName("Given a builder, when addDisplayLoreComponent is called with list, then adds all components")
+        void addDisplayLoreComponent_addsAllComponents_whenListProvided() {
             ItemBuilder builder = createBuilder(Material.STONE);
-            List<net.kyori.adventure.text.Component> components = List.of(
-                    net.kyori.adventure.text.Component.text("a"),
-                    net.kyori.adventure.text.Component.text("b")
+            List<Component> components = List.of(
+                    Component.text("a"),
+                    Component.text("b")
             );
             assertSame(builder, builder.addDisplayLoreComponent(components));
+            List<Component> storedComponents = getField(BaseItemBuilder.class, builder, "loreAsComponent");
+            assertEquals(2, storedComponents.size());
         }
     }
 
@@ -265,34 +311,28 @@ class BaseItemBuilderTest {
     class TagReplacementTests {
 
         @Test
-        @DisplayName("empty replacements map is a no-op")
-        void applyTagReplacements_emptyMap_isNoOp() {
+        @DisplayName("Given an empty replacements map, when applyTagReplacements is called, then no changes occur")
+        void applyTagReplacements_isNoOp_whenEmptyMapProvided() {
             ItemBuilder builder = createBuilder(Material.STONE);
             builder.setDisplayName("Unchanged");
             assertSame(builder, builder.applyTagReplacements(Map.of()));
+            String storedName = getField(BaseItemBuilder.class, builder, "displayName");
+            assertEquals("Unchanged", storedName);
         }
 
         @Test
-        @DisplayName("replaces tags in display name")
-        void applyTagReplacements_replacesInDisplayName() {
+        @DisplayName("Given a display name with a tag, when applyTagReplacements is called, then tag is replaced")
+        void applyTagReplacements_replacesTagInDisplayName_whenMatchingTagExists() {
             ItemBuilder builder = createBuilder(Material.STONE);
             builder.setDisplayName("<primary>Hello");
             builder.applyTagReplacements(Map.of("<primary>", "<color:#FF0000>"));
-            // After replacement, the internal displayName field should be updated.
-            // We can verify by checking the field via reflection.
-            try {
-                Field displayNameField = BaseItemBuilder.class.getDeclaredField("displayName");
-                displayNameField.setAccessible(true);
-                String displayName = (String) displayNameField.get(builder);
-                assertEquals("<color:#FF0000>Hello", displayName);
-            } catch (ReflectiveOperationException e) {
-                throw new RuntimeException(e);
-            }
+            String storedName = getField(BaseItemBuilder.class, builder, "displayName");
+            assertEquals("<color:#FF0000>Hello", storedName);
         }
 
         @Test
-        @DisplayName("replaces tags in all lore lines")
-        void applyTagReplacements_replacesInLore() {
+        @DisplayName("Given lore lines with tags, when applyTagReplacements is called, then tags are replaced in all lines")
+        void applyTagReplacements_replacesTagsInAllLoreLines_whenMatchingTagsExist() {
             ItemBuilder builder = createBuilder(Material.STONE);
             builder.withDisplayLore(new ArrayList<>(List.of("<primary>Line1", "<secondary>Line2")));
 
@@ -301,28 +341,21 @@ class BaseItemBuilderTest {
                     "<secondary>", "<color:#00FF00>"
             ));
 
-            try {
-                Field loreField = BaseItemBuilder.class.getDeclaredField("lore");
-                loreField.setAccessible(true);
-                @SuppressWarnings("unchecked")
-                List<String> lore = (List<String>) loreField.get(builder);
-                assertEquals("<color:#FF0000>Line1", lore.get(0));
-                assertEquals("<color:#00FF00>Line2", lore.get(1));
-            } catch (ReflectiveOperationException e) {
-                throw new RuntimeException(e);
-            }
+            List<String> storedLore = getField(BaseItemBuilder.class, builder, "lore");
+            assertEquals("<color:#FF0000>Line1", storedLore.get(0));
+            assertEquals("<color:#00FF00>Line2", storedLore.get(1));
         }
 
         @Test
-        @DisplayName("no display name set does not throw when replacements are non-empty")
-        void applyTagReplacements_noDisplayName_doesNotThrow() {
+        @DisplayName("Given no display name set, when applyTagReplacements is called with non-empty map, then does not throw")
+        void applyTagReplacements_doesNotThrow_whenNoDisplayNameSet() {
             ItemBuilder builder = createBuilder(Material.STONE);
             assertDoesNotThrow(() -> builder.applyTagReplacements(Map.of("key", "value")));
         }
 
         @Test
-        @DisplayName("no lore set does not throw when replacements are non-empty")
-        void applyTagReplacements_noLore_doesNotThrow() {
+        @DisplayName("Given no lore set, when applyTagReplacements is called with non-empty map, then does not throw")
+        void applyTagReplacements_doesNotThrow_whenNoLoreSet() {
             ItemBuilder builder = createBuilder(Material.STONE);
             builder.setDisplayName("Name");
             assertDoesNotThrow(() -> builder.applyTagReplacements(Map.of("key", "value")));
@@ -334,206 +367,206 @@ class BaseItemBuilderTest {
     class TypeCheckTests {
 
         @Test
-        @DisplayName("isPlayerHead returns true for PLAYER_HEAD")
-        void isPlayerHead_trueForPlayerHead() {
+        @DisplayName("Given PLAYER_HEAD material, when isPlayerHead is called, then returns true")
+        void isPlayerHead_returnsTrue_whenMaterialIsPlayerHead() {
             assertTrue(createBuilder(Material.PLAYER_HEAD).isPlayerHead());
         }
 
         @Test
-        @DisplayName("isPlayerHead returns false for STONE")
-        void isPlayerHead_falseForStone() {
+        @DisplayName("Given STONE material, when isPlayerHead is called, then returns false")
+        void isPlayerHead_returnsFalse_whenMaterialIsStone() {
             assertFalse(createBuilder(Material.STONE).isPlayerHead());
         }
 
         @Test
-        @DisplayName("isFireworkStar returns true for FIREWORK_STAR")
-        void isFireworkStar_trueForFireworkStar() {
+        @DisplayName("Given FIREWORK_STAR material, when isFireworkStar is called, then returns true")
+        void isFireworkStar_returnsTrue_whenMaterialIsFireworkStar() {
             assertTrue(createBuilder(Material.FIREWORK_STAR).isFireworkStar());
         }
 
         @Test
-        @DisplayName("isFireworkStar returns false for STONE")
-        void isFireworkStar_falseForStone() {
+        @DisplayName("Given STONE material, when isFireworkStar is called, then returns false")
+        void isFireworkStar_returnsFalse_whenMaterialIsStone() {
             assertFalse(createBuilder(Material.STONE).isFireworkStar());
         }
 
         @Test
-        @DisplayName("isTippedArrow returns true for TIPPED_ARROW")
-        void isTippedArrow_trueForTippedArrow() {
+        @DisplayName("Given TIPPED_ARROW material, when isTippedArrow is called, then returns true")
+        void isTippedArrow_returnsTrue_whenMaterialIsTippedArrow() {
             assertTrue(createBuilder(Material.TIPPED_ARROW).isTippedArrow());
         }
 
         @Test
-        @DisplayName("isTippedArrow returns false for STONE")
-        void isTippedArrow_falseForStone() {
+        @DisplayName("Given STONE material, when isTippedArrow is called, then returns false")
+        void isTippedArrow_returnsFalse_whenMaterialIsStone() {
             assertFalse(createBuilder(Material.STONE).isTippedArrow());
         }
 
         @Test
-        @DisplayName("isFirework returns true for FIREWORK_ROCKET")
-        void isFirework_trueForFireworkRocket() {
+        @DisplayName("Given FIREWORK_ROCKET material, when isFirework is called, then returns true")
+        void isFirework_returnsTrue_whenMaterialIsFireworkRocket() {
             assertTrue(createBuilder(Material.FIREWORK_ROCKET).isFirework());
         }
 
         @Test
-        @DisplayName("isFirework returns false for STONE")
-        void isFirework_falseForStone() {
+        @DisplayName("Given STONE material, when isFirework is called, then returns false")
+        void isFirework_returnsFalse_whenMaterialIsStone() {
             assertFalse(createBuilder(Material.STONE).isFirework());
         }
 
         @Test
-        @DisplayName("isSpawner returns true for SPAWNER")
-        void isSpawner_trueForSpawner() {
+        @DisplayName("Given SPAWNER material, when isSpawner is called, then returns true")
+        void isSpawner_returnsTrue_whenMaterialIsSpawner() {
             assertTrue(createBuilder(Material.SPAWNER).isSpawner());
         }
 
         @Test
-        @DisplayName("isSpawner returns false for STONE")
-        void isSpawner_falseForStone() {
+        @DisplayName("Given STONE material, when isSpawner is called, then returns false")
+        void isSpawner_returnsFalse_whenMaterialIsStone() {
             assertFalse(createBuilder(Material.STONE).isSpawner());
         }
 
         @Test
-        @DisplayName("isShield returns true for SHIELD")
-        void isShield_trueForShield() {
+        @DisplayName("Given SHIELD material, when isShield is called, then returns true")
+        void isShield_returnsTrue_whenMaterialIsShield() {
             assertTrue(createBuilder(Material.SHIELD).isShield());
         }
 
         @Test
-        @DisplayName("isShield returns false for STONE")
-        void isShield_falseForStone() {
+        @DisplayName("Given STONE material, when isShield is called, then returns false")
+        void isShield_returnsFalse_whenMaterialIsStone() {
             assertFalse(createBuilder(Material.STONE).isShield());
         }
 
         @Test
-        @DisplayName("isLeatherArmor returns true for LEATHER_HELMET")
-        void isLeatherArmor_trueForLeatherHelmet() {
+        @DisplayName("Given LEATHER_HELMET material, when isLeatherArmor is called, then returns true")
+        void isLeatherArmor_returnsTrue_whenMaterialIsLeatherHelmet() {
             assertTrue(createBuilder(Material.LEATHER_HELMET).isLeatherArmor());
         }
 
         @Test
-        @DisplayName("isLeatherArmor returns true for LEATHER_CHESTPLATE")
-        void isLeatherArmor_trueForLeatherChestplate() {
+        @DisplayName("Given LEATHER_CHESTPLATE material, when isLeatherArmor is called, then returns true")
+        void isLeatherArmor_returnsTrue_whenMaterialIsLeatherChestplate() {
             assertTrue(createBuilder(Material.LEATHER_CHESTPLATE).isLeatherArmor());
         }
 
         @Test
-        @DisplayName("isLeatherArmor returns true for LEATHER_LEGGINGS")
-        void isLeatherArmor_trueForLeatherLeggings() {
+        @DisplayName("Given LEATHER_LEGGINGS material, when isLeatherArmor is called, then returns true")
+        void isLeatherArmor_returnsTrue_whenMaterialIsLeatherLeggings() {
             assertTrue(createBuilder(Material.LEATHER_LEGGINGS).isLeatherArmor());
         }
 
         @Test
-        @DisplayName("isLeatherArmor returns true for LEATHER_BOOTS")
-        void isLeatherArmor_trueForLeatherBoots() {
+        @DisplayName("Given LEATHER_BOOTS material, when isLeatherArmor is called, then returns true")
+        void isLeatherArmor_returnsTrue_whenMaterialIsLeatherBoots() {
             assertTrue(createBuilder(Material.LEATHER_BOOTS).isLeatherArmor());
         }
 
         @Test
-        @DisplayName("isLeatherArmor returns true for LEATHER_HORSE_ARMOR")
-        void isLeatherArmor_trueForLeatherHorseArmor() {
+        @DisplayName("Given LEATHER_HORSE_ARMOR material, when isLeatherArmor is called, then returns true")
+        void isLeatherArmor_returnsTrue_whenMaterialIsLeatherHorseArmor() {
             assertTrue(createBuilder(Material.LEATHER_HORSE_ARMOR).isLeatherArmor());
         }
 
         @Test
-        @DisplayName("isLeatherArmor returns false for IRON_HELMET")
-        void isLeatherArmor_falseForIronHelmet() {
+        @DisplayName("Given IRON_HELMET material, when isLeatherArmor is called, then returns false")
+        void isLeatherArmor_returnsFalse_whenMaterialIsIronHelmet() {
             assertFalse(createBuilder(Material.IRON_HELMET).isLeatherArmor());
         }
 
         @Test
-        @DisplayName("isPotion returns true for POTION")
-        void isPotion_trueForPotion() {
+        @DisplayName("Given POTION material, when isPotion is called, then returns true")
+        void isPotion_returnsTrue_whenMaterialIsPotion() {
             assertTrue(createBuilder(Material.POTION).isPotion());
         }
 
         @Test
-        @DisplayName("isPotion returns true for SPLASH_POTION")
-        void isPotion_trueForSplashPotion() {
+        @DisplayName("Given SPLASH_POTION material, when isPotion is called, then returns true")
+        void isPotion_returnsTrue_whenMaterialIsSplashPotion() {
             assertTrue(createBuilder(Material.SPLASH_POTION).isPotion());
         }
 
         @Test
-        @DisplayName("isPotion returns true for LINGERING_POTION")
-        void isPotion_trueForLingeringPotion() {
+        @DisplayName("Given LINGERING_POTION material, when isPotion is called, then returns true")
+        void isPotion_returnsTrue_whenMaterialIsLingeringPotion() {
             assertTrue(createBuilder(Material.LINGERING_POTION).isPotion());
         }
 
         @Test
-        @DisplayName("isPotion returns false for STONE")
-        void isPotion_falseForStone() {
+        @DisplayName("Given STONE material, when isPotion is called, then returns false")
+        void isPotion_returnsFalse_whenMaterialIsStone() {
             assertFalse(createBuilder(Material.STONE).isPotion());
         }
 
         @Test
-        @DisplayName("isBanner returns true for WHITE_BANNER")
-        void isBanner_trueForWhiteBanner() {
+        @DisplayName("Given WHITE_BANNER material, when isBanner is called, then returns true")
+        void isBanner_returnsTrue_whenMaterialIsWhiteBanner() {
             assertTrue(createBuilder(Material.WHITE_BANNER).isBanner());
         }
 
         @Test
-        @DisplayName("isBanner returns true for RED_WALL_BANNER")
-        void isBanner_trueForRedWallBanner() {
+        @DisplayName("Given RED_WALL_BANNER material, when isBanner is called, then returns true")
+        void isBanner_returnsTrue_whenMaterialIsRedWallBanner() {
             assertTrue(createBuilder(Material.RED_WALL_BANNER).isBanner());
         }
 
         @Test
-        @DisplayName("isBanner returns false for STONE")
-        void isBanner_falseForStone() {
+        @DisplayName("Given STONE material, when isBanner is called, then returns false")
+        void isBanner_returnsFalse_whenMaterialIsStone() {
             assertFalse(createBuilder(Material.STONE).isBanner());
         }
 
         @Test
-        @DisplayName("isEnchantedBook returns true for ENCHANTED_BOOK")
-        void isEnchantedBook_trueForEnchantedBook() {
+        @DisplayName("Given ENCHANTED_BOOK material, when isEnchantedBook is called, then returns true")
+        void isEnchantedBook_returnsTrue_whenMaterialIsEnchantedBook() {
             assertTrue(createBuilder(Material.ENCHANTED_BOOK).isEnchantedBook());
         }
 
         @Test
-        @DisplayName("isEnchantedBook returns false for STONE")
-        void isEnchantedBook_falseForStone() {
+        @DisplayName("Given STONE material, when isEnchantedBook is called, then returns false")
+        void isEnchantedBook_returnsFalse_whenMaterialIsStone() {
             assertFalse(createBuilder(Material.STONE).isEnchantedBook());
         }
 
         @Test
-        @DisplayName("isMap returns true for FILLED_MAP")
-        void isMap_trueForFilledMap() {
+        @DisplayName("Given FILLED_MAP material, when isMap is called, then returns true")
+        void isMap_returnsTrue_whenMaterialIsFilledMap() {
             assertTrue(createBuilder(Material.FILLED_MAP).isMap());
         }
 
         @Test
-        @DisplayName("isMap returns false for STONE")
-        void isMap_falseForStone() {
+        @DisplayName("Given STONE material, when isMap is called, then returns false")
+        void isMap_returnsFalse_whenMaterialIsStone() {
             assertFalse(createBuilder(Material.STONE).isMap());
         }
 
         @Test
-        @DisplayName("isDyeable returns true for TIPPED_ARROW")
-        void isDyeable_trueForTippedArrow() {
+        @DisplayName("Given TIPPED_ARROW material, when isDyeable is called, then returns true")
+        void isDyeable_returnsTrue_whenMaterialIsTippedArrow() {
             assertTrue(createBuilder(Material.TIPPED_ARROW).isDyeable());
         }
 
         @Test
-        @DisplayName("isDyeable returns true for SHIELD")
-        void isDyeable_trueForShield() {
+        @DisplayName("Given SHIELD material, when isDyeable is called, then returns true")
+        void isDyeable_returnsTrue_whenMaterialIsShield() {
             assertTrue(createBuilder(Material.SHIELD).isDyeable());
         }
 
         @Test
-        @DisplayName("isDyeable returns true for LEATHER_BOOTS")
-        void isDyeable_trueForLeatherBoots() {
+        @DisplayName("Given LEATHER_BOOTS material, when isDyeable is called, then returns true")
+        void isDyeable_returnsTrue_whenMaterialIsLeatherBoots() {
             assertTrue(createBuilder(Material.LEATHER_BOOTS).isDyeable());
         }
 
         @Test
-        @DisplayName("isDyeable returns true for FILLED_MAP")
-        void isDyeable_trueForFilledMap() {
+        @DisplayName("Given FILLED_MAP material, when isDyeable is called, then returns true")
+        void isDyeable_returnsTrue_whenMaterialIsFilledMap() {
             assertTrue(createBuilder(Material.FILLED_MAP).isDyeable());
         }
 
         @Test
-        @DisplayName("isDyeable returns false for STONE")
-        void isDyeable_falseForStone() {
+        @DisplayName("Given STONE material, when isDyeable is called, then returns false")
+        void isDyeable_returnsFalse_whenMaterialIsStone() {
             assertFalse(createBuilder(Material.STONE).isDyeable());
         }
     }
@@ -543,8 +576,8 @@ class BaseItemBuilderTest {
     class BuilderConversionTests {
 
         @Test
-        @DisplayName("asFireworkBuilder throws for non-firework item")
-        void asFireworkBuilder_throwsForNonFirework() {
+        @DisplayName("Given non-firework material, when asFireworkBuilder is called, then throws InvalidItemBuilderException")
+        void asFireworkBuilder_throwsInvalidItemBuilderException_whenNotFirework() {
             ItemBuilder builder = createBuilder(Material.STONE);
             InvalidItemBuilderException ex = assertThrows(
                     InvalidItemBuilderException.class,
@@ -554,8 +587,8 @@ class BaseItemBuilderTest {
         }
 
         @Test
-        @DisplayName("asFireworkStarBuilder throws for non-firework-star item")
-        void asFireworkStarBuilder_throwsForNonFireworkStar() {
+        @DisplayName("Given non-firework-star material, when asFireworkStarBuilder is called, then throws InvalidItemBuilderException")
+        void asFireworkStarBuilder_throwsInvalidItemBuilderException_whenNotFireworkStar() {
             ItemBuilder builder = createBuilder(Material.STONE);
             InvalidItemBuilderException ex = assertThrows(
                     InvalidItemBuilderException.class,
@@ -565,15 +598,15 @@ class BaseItemBuilderTest {
         }
 
         @Test
-        @DisplayName("asPatternBuilder throws for non-shield/non-banner item")
-        void asPatternBuilder_throwsForNonShieldOrBanner() {
+        @DisplayName("Given non-shield/non-banner material, when asPatternBuilder is called, then throws InvalidItemBuilderException")
+        void asPatternBuilder_throwsInvalidItemBuilderException_whenNotShieldOrBanner() {
             ItemBuilder builder = createBuilder(Material.STONE);
             assertThrows(InvalidItemBuilderException.class, builder::asPatternBuilder);
         }
 
         @Test
-        @DisplayName("asSkullBuilder throws for non-player-head item")
-        void asSkullBuilder_throwsForNonPlayerHead() {
+        @DisplayName("Given non-player-head material, when asSkullBuilder is called, then throws InvalidItemBuilderException")
+        void asSkullBuilder_throwsInvalidItemBuilderException_whenNotPlayerHead() {
             ItemBuilder builder = createBuilder(Material.STONE);
             InvalidItemBuilderException ex = assertThrows(
                     InvalidItemBuilderException.class,
@@ -583,15 +616,15 @@ class BaseItemBuilderTest {
         }
 
         @Test
-        @DisplayName("asPotionBuilder throws for non-potion item")
-        void asPotionBuilder_throwsForNonPotion() {
+        @DisplayName("Given non-potion material, when asPotionBuilder is called, then throws InvalidItemBuilderException")
+        void asPotionBuilder_throwsInvalidItemBuilderException_whenNotPotion() {
             ItemBuilder builder = createBuilder(Material.STONE);
             assertThrows(InvalidItemBuilderException.class, builder::asPotionBuilder);
         }
 
         @Test
-        @DisplayName("asSpawnerBuilder throws for non-spawner item")
-        void asSpawnerBuilder_throwsForNonSpawner() {
+        @DisplayName("Given non-spawner material, when asSpawnerBuilder is called, then throws InvalidItemBuilderException")
+        void asSpawnerBuilder_throwsInvalidItemBuilderException_whenNotSpawner() {
             ItemBuilder builder = createBuilder(Material.STONE);
             assertThrows(InvalidItemBuilderException.class, builder::asSpawnerBuilder);
         }
@@ -602,27 +635,27 @@ class BaseItemBuilderTest {
     class MiscTests {
 
         @Test
-        @DisplayName("getType returns the Material from the underlying ItemStack")
-        void getType_returnsMaterial() {
+        @DisplayName("Given a builder with DIAMOND_SWORD, when getType is called, then returns DIAMOND_SWORD")
+        void getType_returnsMaterial_whenItemStackHasMaterial() {
             assertEquals(Material.DIAMOND_SWORD, createBuilder(Material.DIAMOND_SWORD).getType());
         }
 
         @Test
-        @DisplayName("getCustomItem returns empty when no custom item is set")
-        void getCustomItem_returnsEmpty() {
+        @DisplayName("Given no custom item set, when getCustomItem is called, then returns empty Optional")
+        void getCustomItem_returnsEmpty_whenNoCustomItemSet() {
             assertTrue(createBuilder(Material.STONE).getCustomItem().isEmpty());
         }
 
         @Test
-        @DisplayName("build returns the builder itself")
-        void build_returnsSelf() {
+        @DisplayName("Given a builder, when build is called, then returns the builder itself")
+        void build_returnsSelf_whenCalled() {
             ItemBuilder builder = createBuilder(Material.STONE);
             assertSame(builder, builder.build());
         }
 
         @Test
-        @DisplayName("setAmount delegates to ItemStack with at least 1")
-        void setAmount_setsAmountOnItemStack() {
+        @DisplayName("Given a positive amount, when setAmount is called, then delegates to ItemStack with that amount")
+        void setAmount_setsAmount_whenPositiveValueProvided() {
             ItemBuilder builder = createBuilder(Material.STONE);
             ItemStack mockItem = getItemStack(builder);
             builder.setAmount(5);
@@ -630,8 +663,8 @@ class BaseItemBuilderTest {
         }
 
         @Test
-        @DisplayName("setAmount with zero sets amount to 1")
-        void setAmount_zeroSetsToOne() {
+        @DisplayName("Given zero amount, when setAmount is called, then sets amount to 1")
+        void setAmount_setsAmountToOne_whenZeroProvided() {
             ItemBuilder builder = createBuilder(Material.STONE);
             ItemStack mockItem = getItemStack(builder);
             builder.setAmount(0);
@@ -639,8 +672,8 @@ class BaseItemBuilderTest {
         }
 
         @Test
-        @DisplayName("setAmount with negative value sets amount to 1")
-        void setAmount_negativeSetsToOne() {
+        @DisplayName("Given negative amount, when setAmount is called, then sets amount to 1")
+        void setAmount_setsAmountToOne_whenNegativeValueProvided() {
             ItemBuilder builder = createBuilder(Material.STONE);
             ItemStack mockItem = getItemStack(builder);
             builder.setAmount(-3);
@@ -648,15 +681,27 @@ class BaseItemBuilderTest {
         }
 
         @Test
-        @DisplayName("addItemFlag with ItemFlag enum returns builder for chaining")
-        void addItemFlag_returnsSelf() {
+        @DisplayName("Given Integer.MAX_VALUE, when setAmount is called, then delegates to ItemStack with that value")
+        void setAmount_setsAmount_whenMaxIntProvided() {
             ItemBuilder builder = createBuilder(Material.STONE);
-            assertSame(builder, builder.addItemFlag(ItemFlag.HIDE_ENCHANTS));
+            ItemStack mockItem = getItemStack(builder);
+            builder.setAmount(Integer.MAX_VALUE);
+            verify(mockItem).setAmount(Integer.MAX_VALUE);
         }
 
         @Test
-        @DisplayName("setItemStack replaces the underlying item and returns builder")
-        void setItemStack_replacesItem() {
+        @DisplayName("Given an ItemFlag, when addItemFlag is called, then flag is added and builder is returned")
+        void addItemFlag_addsFlagAndReturnsSelf_whenFlagProvided() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            assertSame(builder, builder.addItemFlag(ItemFlag.HIDE_ENCHANTS));
+            List<ItemFlag> storedFlags = getField(BaseItemBuilder.class, builder, "itemFlags");
+            assertEquals(1, storedFlags.size());
+            assertEquals(ItemFlag.HIDE_ENCHANTS, storedFlags.get(0));
+        }
+
+        @Test
+        @DisplayName("Given a new ItemStack, when setItemStack is called, then replaces the underlying item")
+        void setItemStack_replacesUnderlyingItem_whenNewItemProvided() {
             ItemBuilder builder = createBuilder(Material.STONE);
             ItemStack newMockItem = mock(ItemStack.class);
             when(newMockItem.getType()).thenReturn(Material.DIAMOND);

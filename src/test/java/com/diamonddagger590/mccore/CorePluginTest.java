@@ -6,6 +6,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Field;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
@@ -21,7 +23,7 @@ class CorePluginTest {
     }
 
     @Test
-    @DisplayName("resolveProfile returns PROD when mccore.testMode is not set")
+    @DisplayName("Given no system property set, when resolveProfile is called, then returns PROD")
     void resolveProfile_returnsProd_whenPropertyNotSet() {
         System.clearProperty(TEST_MODE_PROPERTY);
         CorePlugin plugin = mock(CorePlugin.class, CALLS_REAL_METHODS);
@@ -29,7 +31,7 @@ class CorePluginTest {
     }
 
     @Test
-    @DisplayName("resolveProfile returns PROD when mccore.testMode is 'true'")
+    @DisplayName("Given mccore.testMode is 'true', when resolveProfile is called, then returns PROD")
     void resolveProfile_returnsProd_whenPropertyIsTrue() {
         System.setProperty(TEST_MODE_PROPERTY, "true");
         CorePlugin plugin = mock(CorePlugin.class, CALLS_REAL_METHODS);
@@ -37,7 +39,7 @@ class CorePluginTest {
     }
 
     @Test
-    @DisplayName("resolveProfile returns TEST when mccore.testMode is 'false'")
+    @DisplayName("Given mccore.testMode is 'false', when resolveProfile is called, then returns TEST")
     void resolveProfile_returnsTest_whenPropertyIsFalse() {
         System.setProperty(TEST_MODE_PROPERTY, "false");
         CorePlugin plugin = mock(CorePlugin.class, CALLS_REAL_METHODS);
@@ -45,7 +47,7 @@ class CorePluginTest {
     }
 
     @Test
-    @DisplayName("resolveProfile returns TEST when mccore.testMode is non-boolean string")
+    @DisplayName("Given mccore.testMode is a non-boolean string, when resolveProfile is called, then returns TEST")
     void resolveProfile_returnsTest_whenPropertyIsNonBoolean() {
         System.setProperty(TEST_MODE_PROPERTY, "notABoolean");
         CorePlugin plugin = mock(CorePlugin.class, CALLS_REAL_METHODS);
@@ -53,7 +55,7 @@ class CorePluginTest {
     }
 
     @Test
-    @DisplayName("resolveProfile returns PROD when mccore.testMode is 'TRUE' (case insensitive)")
+    @DisplayName("Given mccore.testMode is 'TRUE' (uppercase), when resolveProfile is called, then returns PROD")
     void resolveProfile_returnsProd_whenPropertyIsTrueUpperCase() {
         System.setProperty(TEST_MODE_PROPERTY, "TRUE");
         CorePlugin plugin = mock(CorePlugin.class, CALLS_REAL_METHODS);
@@ -61,11 +63,10 @@ class CorePluginTest {
     }
 
     @Test
-    @DisplayName("getInstance throws NullPointerException when plugin is not initialized")
+    @DisplayName("Given plugin is not initialized, when getInstance is called, then throws NullPointerException")
     void getInstance_throwsNullPointerException_whenNotInitialized() {
-        // Reset the static instance via reflection
         try {
-            var field = CorePlugin.class.getDeclaredField("instance");
+            Field field = CorePlugin.class.getDeclaredField("instance");
             field.setAccessible(true);
             Object previous = field.get(null);
             field.set(null, null);
@@ -80,8 +81,8 @@ class CorePluginTest {
     }
 
     @Test
-    @DisplayName("getItemPlugin returns NONE by default")
-    void getItemPlugin_returnsNone() {
+    @DisplayName("Given default implementation, when getItemPlugin is called, then returns NONE")
+    void getItemPlugin_returnsNone_whenDefaultImplementation() {
         CorePlugin plugin = mock(CorePlugin.class, CALLS_REAL_METHODS);
         assertEquals(ItemPluginType.NONE, plugin.getItemPlugin());
     }
