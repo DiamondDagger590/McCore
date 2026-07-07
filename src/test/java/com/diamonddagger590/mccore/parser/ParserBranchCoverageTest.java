@@ -4,15 +4,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ParserBranchCoverageTest {
 
     private static final double DELTA = 1e-9;
-
-    // ── getTree: trailing-token error branch (line 118) ────────────────────
 
     @Test
     @DisplayName("Given expression with trailing characters, when getting tree, then throws ParseError")
@@ -26,15 +23,11 @@ class ParserBranchCoverageTest {
         assertThrows(ParseError.class, () -> new Parser("(2+3))").getValue());
     }
 
-    // ── U(): missing open bracket after function (line 410) ────────────────
-
     @Test
     @DisplayName("Given function name without parentheses, when evaluating, then throws ParseError")
     void getValue_throwsParseError_whenFunctionMissingOpenBracket() {
         assertThrows(ParseError.class, () -> new Parser("sin").getValue());
     }
-
-    // ── U(): missing close bracket after function arg (line 417) ───────────
 
     @Test
     @DisplayName("Given function call missing close bracket, when evaluating, then throws ParseError")
@@ -48,8 +41,6 @@ class ParserBranchCoverageTest {
         assertThrows(ParseError.class, () -> new Parser("abs(sin(3)").getValue());
     }
 
-    // ── U(): missing close bracket after grouped expression (line 402) ─────
-
     @Test
     @DisplayName("Given open bracket without close, when evaluating, then throws ParseError")
     void getValue_throwsParseError_whenMissingCloseBracketInGroup() {
@@ -61,8 +52,6 @@ class ParserBranchCoverageTest {
     void getValue_throwsParseError_whenDeeplyNestedMissingCloseBracket() {
         assertThrows(ParseError.class, () -> new Parser("((2+3)*4").getValue());
     }
-
-    // ── parse(): exponential notation edge cases (lines 210-214) ───────────
 
     @Test
     @DisplayName("Given number with uppercase E exponent, when evaluating, then parses correctly")
@@ -93,8 +82,6 @@ class ParserBranchCoverageTest {
     void getValue_parsesDecimalWithExponent_whenCombined() {
         assertEquals(3.14e2, new Parser("3.14e2").getValue(), DELTA);
     }
-
-    // ── FunctionNode: string constructor and unsupported function ──────────
 
     @Test
     @DisplayName("Given unsupported function name, when constructing FunctionNode, then throws IllegalArgumentException")
@@ -147,17 +134,16 @@ class ParserBranchCoverageTest {
         assertEquals("abs(1)", node.toString());
     }
 
-    // ── FunctionNode: clone and structural methods ─────────────────────────
-
     @Test
     @DisplayName("Given a FunctionNode, when cloned, then clone is independent")
     void functionNode_clone_createsIndependentCopy() {
         VariableNode x = new VariableNode("x", false);
-        x.setVariable("x", 5.0);
+        x.setVariable("x", -5.0);
         FunctionNode original = new FunctionNode(x, "abs");
         FunctionNode cloned = (FunctionNode) original.clone();
 
-        assertEquals(original.getValue(), cloned.getValue(), DELTA);
+        assertEquals(5.0, original.getValue(), DELTA);
+        assertEquals(5.0, cloned.getValue(), DELTA);
         x.setVariable("x", -3.0);
         assertEquals(3.0, original.getValue(), DELTA);
         assertEquals(5.0, cloned.getValue(), DELTA);
@@ -210,8 +196,6 @@ class ParserBranchCoverageTest {
         assertEquals(7.0, node.getValue(), DELTA);
     }
 
-    // ── FunctionNode: all function index coverage via Parser ───────────────
-
     @Test
     @DisplayName("Given asinh(1), when evaluating via parser, then returns correct value")
     void getValue_returnsCorrectValue_whenAsinhCalled() {
@@ -259,8 +243,6 @@ class ParserBranchCoverageTest {
         double expected = Sfun.cot(1.0);
         assertEquals(expected, new Parser("cot(1)").getValue(), DELTA);
     }
-
-    // ── ConstantNode structural coverage ───────────────────────────────────
 
     @Test
     @DisplayName("Given a ConstantNode, when getting type, then returns CONSTANT_NODE")
@@ -311,8 +293,6 @@ class ParserBranchCoverageTest {
     void constantNode_toString_returnsNumberString() {
         assertTrue(new ConstantNode(3.14).toString().startsWith("3.14"));
     }
-
-    // ── VariableNode structural coverage ───────────────────────────────────
 
     @Test
     @DisplayName("Given a VariableNode, when getting type, then returns VARIABLE_NODE")

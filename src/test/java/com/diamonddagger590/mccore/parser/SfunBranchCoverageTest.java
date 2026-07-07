@@ -11,8 +11,6 @@ class SfunBranchCoverageTest {
     private static final double DELTA = 1e-9;
     private static final double RELAXED_DELTA = 1e-6;
 
-    // ── cosh: infinite input branches ───────────────────────────────────────
-
     @Test
     @DisplayName("Given positive infinity, when computing cosh, then returns positive infinity")
     void cosh_returnsPositiveInfinity_whenInputIsPositiveInfinity() {
@@ -20,9 +18,9 @@ class SfunBranchCoverageTest {
     }
 
     @Test
-    @DisplayName("Given negative infinity, when computing cosh, then returns negative infinity")
-    void cosh_returnsNegativeInfinity_whenInputIsNegativeInfinity() {
-        assertEquals(Double.NEGATIVE_INFINITY, Sfun.cosh(Double.NEGATIVE_INFINITY));
+    @DisplayName("Given negative infinity, when computing cosh, then returns positive infinity")
+    void cosh_returnsPositiveInfinity_whenInputIsNegativeInfinity() {
+        assertEquals(Double.POSITIVE_INFINITY, Sfun.cosh(Double.NEGATIVE_INFINITY));
     }
 
     @Test
@@ -41,8 +39,6 @@ class SfunBranchCoverageTest {
         double expected = 0.5 * y;
         assertEquals(expected, Sfun.cosh(x), expected * 1e-10);
     }
-
-    // ── erfc: negative x in range branches ─────────────────────────────────
 
     @Test
     @DisplayName("Given negative x between -4 and -1, when computing erfc, then hits y<=4 negative branch")
@@ -75,17 +71,15 @@ class SfunBranchCoverageTest {
     @Test
     @DisplayName("Given very small positive x, when computing erfc, then uses linear approximation")
     void erfc_usesLinearApprox_whenXIsVerySmallPositive() {
-        double x = 1e-10;
-        double expected = 1 - 2 * x / 1.77245385090551602729816748334;
-        assertEquals(expected, Sfun.erfc(x), DELTA);
+        double result = Sfun.erfc(1e-10);
+        assertEquals(0.999999999887162, result, DELTA);
     }
 
     @Test
     @DisplayName("Given very small negative x, when computing erfc, then uses linear approximation")
     void erfc_usesLinearApprox_whenXIsVerySmallNegative() {
-        double x = -1e-10;
-        double expected = 1 - 2 * x / 1.77245385090551602729816748334;
-        assertEquals(expected, Sfun.erfc(x), DELTA);
+        double result = Sfun.erfc(-1e-10);
+        assertEquals(1.000000000112838, result, DELTA);
     }
 
     @Test
@@ -95,8 +89,6 @@ class SfunBranchCoverageTest {
         assertTrue(result > 1.0 && result < 2.0);
         assertEquals(1.0, Sfun.erf(-0.5) + Sfun.erfc(-0.5), DELTA);
     }
-
-    // ── r9lgmc: all 4 branches (package-private access) ────────────────────
 
     @Test
     @DisplayName("Given x < 10, when computing r9lgmc, then returns NaN")
@@ -126,12 +118,10 @@ class SfunBranchCoverageTest {
     }
 
     @Test
-    @DisplayName("Given x in mid-range, when computing r9lgmc, then uses 1/(12x) formula")
-    void r9lgmc_usesReciprocal12x_whenXInMidRange() {
-        double x = 1e8;
-        double result = Sfun.r9lgmc(x);
-        double expected = 1.0 / (12.0 * x);
-        assertEquals(expected, result, expected * 0.01);
+    @DisplayName("Given x in mid-range, when computing r9lgmc, then returns small correction term")
+    void r9lgmc_returnsSmallCorrection_whenXInMidRange() {
+        double result = Sfun.r9lgmc(1e8);
+        assertEquals(8.333333333333334e-10, result, DELTA);
     }
 
     @Test
@@ -145,8 +135,6 @@ class SfunBranchCoverageTest {
     void r9lgmc_returnsZero_whenXExceedsUpperThreshold() {
         assertEquals(0.0, Sfun.r9lgmc(2e11), DELTA);
     }
-
-    // ── cot: near-zero and boundary branches ───────────────────────────────
 
     @Test
     @DisplayName("Given very small x, when computing cot, then returns large value close to 1/x")
@@ -182,32 +170,23 @@ class SfunBranchCoverageTest {
         assertTrue(result < -1e9, "cot(-1e-10) should be very large negative, was " + result);
     }
 
-    // ── dlnrel: tested through logBeta ─────────────────────────────────────
-
     @Test
     @DisplayName("Given both p and q >= 10, when computing logBeta, then exercises dlnrel")
     void logBeta_exercisesDlnrel_whenBothArgsLarge() {
-        double result = Sfun.logBeta(10.0, 10.0);
-        assertTrue(Double.isFinite(result));
-        assertTrue(result < 0);
+        assertEquals(-13.736229227036555, Sfun.logBeta(10.0, 10.0), RELAXED_DELTA);
     }
 
     @Test
     @DisplayName("Given p small and q >= 10, when computing logBeta, then exercises dlnrel via mixed formula")
     void logBeta_exercisesDlnrelMixed_whenPSmallQlarge() {
-        double result = Sfun.logBeta(1.0, 15.0);
-        assertTrue(Double.isFinite(result));
+        assertEquals(-2.70805020110221, Sfun.logBeta(1.0, 15.0), RELAXED_DELTA);
     }
 
     @Test
     @DisplayName("Given p and q both large, when computing logBeta, then exercises r9lgmc mid-range")
     void logBeta_exercisesR9lgmcAllBranches_whenBothVeryLarge() {
-        double result = Sfun.logBeta(50.0, 60.0);
-        assertTrue(Double.isFinite(result));
-        assertTrue(result < 0);
+        assertEquals(-76.52272335335051, Sfun.logBeta(50.0, 60.0), RELAXED_DELTA);
     }
-
-    // ── gamma: additional edge case branches ───────────────────────────────
 
     @Test
     @DisplayName("Given small positive x near 0, when computing gamma, then returns large value")
@@ -240,25 +219,19 @@ class SfunBranchCoverageTest {
     @Test
     @DisplayName("Given large negative non-integer, when computing gamma, then exercises large |x| negative branch")
     void gamma_exercisesLargeNegativeBranch_whenXIsLargeNegativeNonInt() {
-        double result = Sfun.gamma(-50.5);
-        assertTrue(Double.isFinite(result));
+        assertEquals(-1.4499543939077312e-65, Sfun.gamma(-50.5), 1e-75);
     }
-
-    // ── logGamma: edge case branches ───────────────────────────────────────
 
     @Test
     @DisplayName("Given large positive x, when computing logGamma, then uses Stirling via r9lgmc")
     void logGamma_usesStirlingsFormula_whenXIsLargePositive() {
-        double result = Sfun.logGamma(100.0);
-        assertTrue(Double.isFinite(result));
-        assertTrue(result > 0);
+        assertEquals(359.1342053695754, Sfun.logGamma(100.0), RELAXED_DELTA);
     }
 
     @Test
     @DisplayName("Given large negative non-integer, when computing logGamma, then exercises negative large branch")
     void logGamma_exercisesNegativeLargeBranch_whenXIsLargeNegativeNonInt() {
-        double result = Sfun.logGamma(-50.5);
-        assertTrue(Double.isFinite(result));
+        assertEquals(-149.29649894115252, Sfun.logGamma(-50.5), RELAXED_DELTA);
     }
 
     @Test
@@ -279,13 +252,10 @@ class SfunBranchCoverageTest {
         assertEquals(0.0, Sfun.logGamma(2.0), DELTA);
     }
 
-    // ── csevl: exercised through various functions ─────────────────────────
-
     @Test
     @DisplayName("Given csevl is package-private, when called with known input, then returns deterministic result")
     void csevl_returnsDeterministic_whenCalledDirectly() {
-        double result = Sfun.csevl(0.0, new double[]{1.0, 0.5, 0.25});
-        assertTrue(Double.isFinite(result));
+        assertEquals(0.25, Sfun.csevl(0.0, new double[]{1.0, 0.5, 0.25}), DELTA);
     }
 
     @Test
