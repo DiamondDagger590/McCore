@@ -7,6 +7,7 @@ import java.util.HashSet;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -435,19 +436,18 @@ class ParserTest {
     }
 
     @Test
-    @DisplayName("Given expression with getInputString, when called, then returns sanitized input")
-    void getInputString_returnsSanitizedInput_whenCalled() {
+    @DisplayName("Given expression with spaces, when getInputString called, then returns input with spaces stripped")
+    void getInputString_returnsStrippedInput_whenExpressionContainsSpaces() {
         Parser parser = new Parser("2 + 3");
-        String input = parser.getInputString();
-        assertFalse(input.isEmpty());
+        assertEquals("2+3", parser.getInputString());
     }
 
     @Test
-    @DisplayName("Given expression with getTree called twice, when called, then returns cached tree")
-    void getTree_returnsCachedTree_whenCalledTwice() {
+    @DisplayName("Given a parsed expression, when getTree called twice, then returns the same cached instance")
+    void getTree_returnsSameCachedInstance_whenCalledTwice() {
         Parser parser = new Parser("2+3");
         ExpressionNode tree1 = parser.getTree();
         ExpressionNode tree2 = parser.getTree();
-        assertEquals(tree1.getValue(), tree2.getValue(), DELTA);
+        assertSame(tree1, tree2);
     }
 }

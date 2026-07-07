@@ -5,6 +5,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
 class DatabaseTableEventsTest {
@@ -109,5 +110,11 @@ class DatabaseTableEventsTest {
         assertNotNull(created);
         assertNotNull(preUpdate);
         assertNotNull(updated);
+        assertNotSame(preCreate, created);
+        assertNotSame(preCreate, preUpdate);
+        assertNotSame(preCreate, updated);
+        assertNotSame(created, preUpdate);
+        assertNotSame(created, updated);
+        assertNotSame(preUpdate, updated);
     }
 }

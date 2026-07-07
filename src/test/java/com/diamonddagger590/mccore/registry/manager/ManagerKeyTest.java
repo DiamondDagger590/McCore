@@ -12,22 +12,22 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class ManagerKeyTest {
 
     @Test
-    @DisplayName("Given COMMAND key, when managerClass called, then returns CoreCommandManager class")
-    void command_managerClass_returnsCoreCommandManagerClass() {
+    @DisplayName("Given the COMMAND key constant, when managerClass called, then returns CoreCommandManager class")
+    void managerClass_returnsCoreCommandManagerClass_whenKeyIsCommand() {
         assertNotNull(ManagerKey.COMMAND);
         assertEquals(CoreCommandManager.class, ManagerKey.COMMAND.managerClass());
     }
 
     @Test
-    @DisplayName("Given RELOADABLE_CONTENT key, when managerClass called, then returns ReloadableContentManager class")
-    void reloadableContent_managerClass_returnsReloadableContentManagerClass() {
+    @DisplayName("Given the RELOADABLE_CONTENT key constant, when managerClass called, then returns ReloadableContentManager class")
+    void managerClass_returnsReloadableContentManagerClass_whenKeyIsReloadableContent() {
         assertNotNull(ManagerKey.RELOADABLE_CONTENT);
         assertEquals(ReloadableContentManager.class, ManagerKey.RELOADABLE_CONTENT.managerClass());
     }
 
     @Test
-    @DisplayName("Given CHAT_RESPONSE key, when managerClass called, then returns ChatResponseManager class")
-    void chatResponse_managerClass_returnsChatResponseManagerClass() {
+    @DisplayName("Given the CHAT_RESPONSE key constant, when managerClass called, then returns ChatResponseManager class")
+    void managerClass_returnsChatResponseManagerClass_whenKeyIsChatResponse() {
         assertNotNull(ManagerKey.CHAT_RESPONSE);
         assertEquals(ChatResponseManager.class, ManagerKey.CHAT_RESPONSE.managerClass());
     }
