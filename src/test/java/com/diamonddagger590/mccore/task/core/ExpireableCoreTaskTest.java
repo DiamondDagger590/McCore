@@ -259,12 +259,11 @@ class ExpireableCoreTaskTest {
         TestExpireableTask task = new TestExpireableTask(mockPlugin, 0.0, 1.0, 5);
         task.runTask(false);
 
-        // Even after large time advance, should not expire by duration since maxTaskDuration == -1
         advanceClock(Duration.ofDays(365));
         task.run();
 
-        // Should have delay completed and started interval, not expired by duration
         assertTrue(task.hasDelayExpired());
+        assertTrue(task.expireCalls.isEmpty());
     }
 
     static class TestExpireableTask extends ExpireableCoreTask {

@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
@@ -52,8 +53,8 @@ class DelayableCoreTaskTest {
         mockedBukkit = mockStatic(Bukkit.class);
         mockedBukkit.when(Bukkit::getScheduler).thenReturn(mockScheduler);
 
-        when(mockScheduler.runTaskLater(any(), any(Runnable.class), any(Long.class))).thenReturn(mockBukkitTask);
-        when(mockScheduler.runTaskLaterAsynchronously(any(), any(Runnable.class), any(Long.class))).thenReturn(mockBukkitTask);
+        when(mockScheduler.runTaskLater(any(), any(Runnable.class), anyLong())).thenReturn(mockBukkitTask);
+        when(mockScheduler.runTaskLaterAsynchronously(any(), any(Runnable.class), anyLong())).thenReturn(mockBukkitTask);
     }
 
     @AfterEach

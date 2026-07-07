@@ -110,13 +110,20 @@ class CancelableCoreTaskTest {
         TestCancelableTask task = createTask(0.0, 1.0);
         task.runTask(false);
 
-        task.cancelTask();
+        // First tick: delay completes, interval 1 starts
+        task.run();
+        assertTrue(task.hasDelayExpired());
+        assertEquals(1, task.getCurrentInterval());
+        int intervalsBefore = task.intervalCompleteCalls.size();
 
+        // Cancel and advance past frequency
+        task.cancelTask();
         advanceClock(Duration.ofSeconds(10));
         task.run();
 
-        assertFalse(task.hasDelayExpired());
-        assertEquals(0, task.getCurrentInterval());
+        // Interval should NOT have completed — parent logic was skipped
+        assertEquals(intervalsBefore, task.intervalCompleteCalls.size());
+        assertEquals(1, task.getCurrentInterval());
     }
 
     @Test

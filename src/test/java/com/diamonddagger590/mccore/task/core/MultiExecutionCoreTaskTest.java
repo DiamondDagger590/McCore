@@ -18,9 +18,12 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class MultiExecutionCoreTaskTest {
@@ -132,10 +135,11 @@ class MultiExecutionCoreTaskTest {
 
         task.runTask(true);
         assertTrue(task.isTaskRunningAsync());
+        verify(mockScheduler).runTaskAsynchronously(eq(mockPlugin), eq(task));
 
         task.runTask(false);
-        // After sync run, the parent sets taskRunningAsync = false
-        // But MultiExecutionCoreTask resets taskExecuted then calls super
+        assertFalse(task.isTaskRunningAsync());
+        verify(mockScheduler).runTask(eq(mockPlugin), eq(task));
         assertEquals(2, task.getExecutions());
     }
 }
