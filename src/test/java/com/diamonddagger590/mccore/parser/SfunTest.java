@@ -156,6 +156,29 @@ class SfunTest {
     void cosh_returnsNaN_whenInputIsNaN() {
         assertTrue(Double.isNaN(Sfun.cosh(Double.NaN)));
     }
+
+    @Test
+    @DisplayName("Given positive infinity, when computing cosh, then returns infinity")
+    void cosh_returnsInfinity_whenInputIsPositiveInfinity() {
+        double result = Sfun.cosh(Double.POSITIVE_INFINITY);
+        assertEquals(Double.POSITIVE_INFINITY, result);
+    }
+
+    @Test
+    @DisplayName("Given negative infinity, when computing cosh, then returns negative infinity")
+    void cosh_returnsNegativeInfinity_whenInputIsNegativeInfinity() {
+        double result = Sfun.cosh(Double.NEGATIVE_INFINITY);
+        assertEquals(Double.NEGATIVE_INFINITY, result);
+    }
+
+    @Test
+    @DisplayName("Given very large x, when computing cosh, then uses large-value formula")
+    void cosh_returnsCorrectValue_whenXIsVeryLarge() {
+        double x = 40.0;
+        double y = Math.exp(x);
+        double expected = 0.5 * y;
+        assertEquals(expected, Sfun.cosh(x), expected * 1e-10);
+    }
     @Test
     @DisplayName("Given x = 0, when computing sinh, then returns 0")
     void sinh_returnsZero_whenXIsZero() {
@@ -246,6 +269,13 @@ class SfunTest {
         double y = Math.exp(x);
         double expected = (y - 1.0 / y) / (y + 1.0 / y);
         assertEquals(expected, Sfun.tanh(x), DELTA);
+    }
+
+    @Test
+    @DisplayName("Given negative x in medium range, when computing tanh, then returns negative value")
+    void tanh_returnsNegative_whenXIsNegativeMediumRange() {
+        double x = -3.0;
+        assertEquals(-Sfun.tanh(3.0), Sfun.tanh(x), DELTA);
     }
     @Test
     @DisplayName("Given x = pi/4, when computing cot, then returns approximately 1")
@@ -345,6 +375,38 @@ class SfunTest {
     void erfc_returnsCorrectValue_whenXGreaterThanFour() {
         double result = Sfun.erfc(5.0);
         assertTrue(result >= 0.0 && result < 1e-10);
+    }
+
+    @Test
+    @DisplayName("Given negative x between -4 and -1, when computing erfc, then applies 2-ans correction")
+    void erfc_returnsCorrectValue_whenXIsNegativeBetweenOneAndFour() {
+        double result = Sfun.erfc(-2.0);
+        assertTrue(result > 1.0 && result < 2.0);
+        assertEquals(1.0, Sfun.erf(-2.0) + Sfun.erfc(-2.0), DELTA);
+    }
+
+    @Test
+    @DisplayName("Given negative x beyond -4, when computing erfc, then applies 2-ans correction via erfcc series")
+    void erfc_returnsCorrectValue_whenXIsNegativeBeyondFour() {
+        double result = Sfun.erfc(-5.0);
+        assertTrue(result > 1.99);
+        assertEquals(1.0, Sfun.erf(-5.0) + Sfun.erfc(-5.0), DELTA);
+    }
+
+    @Test
+    @DisplayName("Given x between 0 and 1, when computing erfc, then uses erfc series directly")
+    void erfc_returnsCorrectValue_whenXBetweenZeroAndOne() {
+        double result = Sfun.erfc(0.5);
+        assertTrue(result > 0.0 && result < 1.0);
+        assertEquals(1.0, Sfun.erf(0.5) + Sfun.erfc(0.5), DELTA);
+    }
+
+    @Test
+    @DisplayName("Given very small negative x, when computing erfc, then returns value near 1")
+    void erfc_returnsNearOne_whenXIsVerySmallNegative() {
+        double result = Sfun.erfc(-1e-10);
+        assertTrue(result > 1.0);
+        assertEquals(1.0, Sfun.erf(-1e-10) + Sfun.erfc(-1e-10), DELTA);
     }
     @Test
     @DisplayName("Given n = 0, when computing factorial, then returns 1")
