@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -47,8 +48,8 @@ class MutexDAOTest {
     class AttemptCreateTable {
 
         @Test
-        @DisplayName("Given the table already exists, When attemptCreateTable is called, Then it returns false")
-        void returnsFalseWhenTableExists() {
+        @DisplayName("Given the table already exists, when attemptCreateTable is called, then it returns false")
+        void attemptCreateTable_returnsFalse_whenTableExists() {
             when(mockDatabase.tableExists(mockConnection, "player_mutex")).thenReturn(true);
 
             boolean result = MutexDAO.attemptCreateTable(mockConnection, mockDatabase);
@@ -57,8 +58,8 @@ class MutexDAOTest {
         }
 
         @Test
-        @DisplayName("Given the table doesn't exist, When attemptCreateTable is called, Then it creates the table and returns true")
-        void returnsTrueWhenTableCreated() throws SQLException {
+        @DisplayName("Given the table doesn't exist, when attemptCreateTable is called, then it creates the table and returns true")
+        void attemptCreateTable_returnsTrue_whenTableCreatedSuccessfully() throws SQLException {
             when(mockDatabase.tableExists(mockConnection, "player_mutex")).thenReturn(false);
             when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
 
@@ -69,8 +70,8 @@ class MutexDAOTest {
         }
 
         @Test
-        @DisplayName("Given a SQL exception during creation, When attemptCreateTable is called, Then it returns false")
-        void returnsFalseOnSqlException() throws SQLException {
+        @DisplayName("Given a SQL exception during creation, when attemptCreateTable is called, then it returns false")
+        void attemptCreateTable_returnsFalse_whenSqlExceptionOccurs() throws SQLException {
             when(mockDatabase.tableExists(mockConnection, "player_mutex")).thenReturn(false);
             when(mockConnection.prepareStatement(anyString())).thenThrow(new SQLException("Create failed"));
 
@@ -85,9 +86,8 @@ class MutexDAOTest {
     class UpdateTable {
 
         @Test
-        @DisplayName("Given the table is at current version, When updateTable is called, Then no updates are performed")
-        void noUpdateWhenCurrent() throws SQLException {
-            // getLatestVersion for "player_mutex" returns 1 (current version)
+        @DisplayName("Given the table is at current version, when updateTable is called, then no updates are performed")
+        void updateTable_performsNoUpdate_whenVersionIsCurrent() throws SQLException {
             when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
             when(mockStatement.executeQuery()).thenReturn(mockResultSet);
             when(mockResultSet.next()).thenReturn(true, false);
@@ -96,18 +96,17 @@ class MutexDAOTest {
             MutexDAO.updateTable(mockConnection);
 
             verify(mockStatement).setString(1, "player_mutex");
+            verify(mockStatement, never()).executeUpdate();
         }
 
         @Test
-        @DisplayName("Given the table is at version 0, When updateTable is called, Then it updates to version 1")
-        void updatesFromVersion0To1() throws SQLException {
-            // First call: getLatestVersion returns 0 (no version)
+        @DisplayName("Given the table is at version 0, when updateTable is called, then it updates to version 1")
+        void updateTable_updatesToVersion1_whenVersionIsZero() throws SQLException {
             PreparedStatement selectStatement = org.mockito.Mockito.mock(PreparedStatement.class);
             ResultSet selectResultSet = org.mockito.Mockito.mock(ResultSet.class);
             when(selectStatement.executeQuery()).thenReturn(selectResultSet);
             when(selectResultSet.next()).thenReturn(false);
 
-            // Second call: setTableVersion
             PreparedStatement updateStatement = org.mockito.Mockito.mock(PreparedStatement.class);
 
             when(mockConnection.prepareStatement(anyString()))
@@ -127,8 +126,8 @@ class MutexDAOTest {
     class IsUserMutexLocked {
 
         @Test
-        @DisplayName("Given a locked user exists, When isUserMutexLocked is called, Then it returns true")
-        void returnsTrueWhenLocked() throws SQLException {
+        @DisplayName("Given a locked user exists, when isUserMutexLocked is called, then it returns true")
+        void isUserMutexLocked_returnsTrue_whenUserIsLocked() throws SQLException {
             when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
             when(mockStatement.executeQuery()).thenReturn(mockResultSet);
             when(mockResultSet.next()).thenReturn(true, false);
@@ -141,8 +140,8 @@ class MutexDAOTest {
         }
 
         @Test
-        @DisplayName("Given an unlocked user exists, When isUserMutexLocked is called, Then it returns false")
-        void returnsFalseWhenUnlocked() throws SQLException {
+        @DisplayName("Given an unlocked user exists, when isUserMutexLocked is called, then it returns false")
+        void isUserMutexLocked_returnsFalse_whenUserIsUnlocked() throws SQLException {
             when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
             when(mockStatement.executeQuery()).thenReturn(mockResultSet);
             when(mockResultSet.next()).thenReturn(true, false);
@@ -154,8 +153,8 @@ class MutexDAOTest {
         }
 
         @Test
-        @DisplayName("Given no user record exists, When isUserMutexLocked is called, Then it returns false")
-        void returnsFalseWhenNoRecord() throws SQLException {
+        @DisplayName("Given no user record exists, when isUserMutexLocked is called, then it returns false")
+        void isUserMutexLocked_returnsFalse_whenNoRecordExists() throws SQLException {
             when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
             when(mockStatement.executeQuery()).thenReturn(mockResultSet);
             when(mockResultSet.next()).thenReturn(false);
@@ -166,8 +165,8 @@ class MutexDAOTest {
         }
 
         @Test
-        @DisplayName("Given a SQL exception occurs, When isUserMutexLocked is called, Then it returns false")
-        void returnsFalseOnSqlException() throws SQLException {
+        @DisplayName("Given a SQL exception occurs, when isUserMutexLocked is called, then it returns false")
+        void isUserMutexLocked_returnsFalse_whenSqlExceptionOccurs() throws SQLException {
             when(mockConnection.prepareStatement(anyString())).thenThrow(new SQLException("Query failed"));
 
             boolean result = MutexDAO.isUserMutexLocked(mockConnection, TEST_UUID);
@@ -181,8 +180,8 @@ class MutexDAOTest {
     class UpdateUserMutexWithCorePlayer {
 
         @Test
-        @DisplayName("Given a locked CorePlayer, When updateUserMutex is called, Then it returns true")
-        void returnsTrueWhenLocked() throws SQLException {
+        @DisplayName("Given a locked CorePlayer, when updateUserMutex is called, then it returns true")
+        void updateUserMutex_returnsTrue_whenCorePlayerIsLocked() throws SQLException {
             when(mockCorePlayer.getUUID()).thenReturn(TEST_UUID);
             when(mockCorePlayer.isLocked()).thenReturn(true);
             when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
@@ -196,8 +195,8 @@ class MutexDAOTest {
         }
 
         @Test
-        @DisplayName("Given an unlocked CorePlayer, When updateUserMutex is called, Then it returns false")
-        void returnsFalseWhenUnlocked() throws SQLException {
+        @DisplayName("Given an unlocked CorePlayer, when updateUserMutex is called, then it returns false")
+        void updateUserMutex_returnsFalse_whenCorePlayerIsUnlocked() throws SQLException {
             when(mockCorePlayer.getUUID()).thenReturn(TEST_UUID);
             when(mockCorePlayer.isLocked()).thenReturn(false);
             when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
@@ -209,8 +208,8 @@ class MutexDAOTest {
         }
 
         @Test
-        @DisplayName("Given a SQL exception occurs, When updateUserMutex with CorePlayer is called, Then it returns false")
-        void returnsFalseOnSqlException() throws SQLException {
+        @DisplayName("Given a SQL exception occurs, when updateUserMutex with CorePlayer is called, then it returns false")
+        void updateUserMutex_returnsFalse_whenSqlExceptionOccurs() throws SQLException {
             when(mockConnection.prepareStatement(anyString())).thenThrow(new SQLException("Update failed"));
 
             boolean result = MutexDAO.updateUserMutex(mockConnection, mockCorePlayer);
@@ -224,8 +223,8 @@ class MutexDAOTest {
     class UpdateUserMutexWithUUID {
 
         @Test
-        @DisplayName("Given a UUID and locked=true, When updateUserMutex is called, Then it returns true")
-        void returnsTrueWhenLocking() throws SQLException {
+        @DisplayName("Given a UUID and locked=true, when updateUserMutex is called, then it returns true")
+        void updateUserMutex_returnsTrue_whenLockingWithUuid() throws SQLException {
             when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
 
             boolean result = MutexDAO.updateUserMutex(mockConnection, TEST_UUID, true);
@@ -237,8 +236,8 @@ class MutexDAOTest {
         }
 
         @Test
-        @DisplayName("Given a UUID and locked=false, When updateUserMutex is called, Then it returns false")
-        void returnsFalseWhenUnlocking() throws SQLException {
+        @DisplayName("Given a UUID and locked=false, when updateUserMutex is called, then it returns false")
+        void updateUserMutex_returnsFalse_whenUnlockingWithUuid() throws SQLException {
             when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
 
             boolean result = MutexDAO.updateUserMutex(mockConnection, TEST_UUID, false);
@@ -248,8 +247,8 @@ class MutexDAOTest {
         }
 
         @Test
-        @DisplayName("Given a SQL exception occurs, When updateUserMutex with UUID is called, Then it returns false")
-        void returnsFalseOnSqlException() throws SQLException {
+        @DisplayName("Given a SQL exception occurs, when updateUserMutex with UUID is called, then it returns false")
+        void updateUserMutex_returnsFalse_whenSqlExceptionOccursWithUuid() throws SQLException {
             when(mockConnection.prepareStatement(anyString())).thenThrow(new SQLException("Update failed"));
 
             boolean result = MutexDAO.updateUserMutex(mockConnection, TEST_UUID, true);

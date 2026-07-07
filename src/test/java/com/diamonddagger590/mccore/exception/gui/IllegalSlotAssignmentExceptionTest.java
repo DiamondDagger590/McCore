@@ -24,22 +24,22 @@ class IllegalSlotAssignmentExceptionTest {
     private Slot<?> mockSlot;
 
     @Test
-    @DisplayName("Given a gui and slot, When constructing IllegalSlotAssignmentException, Then getGui() returns the gui")
-    void getGuiReturnsGui() {
+    @DisplayName("Given a gui and slot, when constructing IllegalSlotAssignmentException, then getGui() returns the gui")
+    void getGui_returnsGui_whenConstructed() {
         var exception = new IllegalSlotAssignmentException(mockGui, mockSlot);
         assertEquals(mockGui, exception.getGui());
     }
 
     @Test
-    @DisplayName("Given a gui and slot, When constructing IllegalSlotAssignmentException, Then getSlot() returns the slot")
-    void getSlotReturnsSlot() {
+    @DisplayName("Given a gui and slot, when constructing IllegalSlotAssignmentException, then getSlot() returns the slot")
+    void getSlot_returnsSlot_whenConstructed() {
         var exception = new IllegalSlotAssignmentException(mockGui, mockSlot);
         assertEquals(mockSlot, exception.getSlot());
     }
 
     @Test
-    @DisplayName("Given an IllegalSlotAssignmentException, When calling getMessage(), Then it contains GUI and slot details")
-    void getMessageContainsDetails() {
+    @DisplayName("Given an IllegalSlotAssignmentException, when calling getMessage(), then it contains GUI and slot details")
+    void getMessage_containsGuiAndSlotDetails_whenCalled() {
         when(mockGui.toString()).thenReturn("TestGui");
         when(mockSlot.toString()).thenReturn("TestSlot");
 
@@ -53,22 +53,22 @@ class IllegalSlotAssignmentExceptionTest {
     }
 
     @Test
-    @DisplayName("Given an IllegalSlotAssignmentException, When checking inheritance, Then it extends RuntimeException")
-    void extendsRuntimeException() {
+    @DisplayName("Given an IllegalSlotAssignmentException, when checking inheritance, then it extends RuntimeException")
+    void constructor_createsRuntimeException_whenInstantiated() {
         var exception = new IllegalSlotAssignmentException(mockGui, mockSlot);
         assertTrue(exception instanceof RuntimeException);
     }
 
     @Test
-    @DisplayName("Given an IllegalSlotAssignmentException, When calling getCause(), Then it returns null (no cause set)")
-    void noCauseSet() {
+    @DisplayName("Given an IllegalSlotAssignmentException, when calling getCause(), then it returns null (no cause set)")
+    void getCause_returnsNull_whenNoCauseProvided() {
         var exception = new IllegalSlotAssignmentException(mockGui, mockSlot);
         assertNull(exception.getCause());
     }
 
     @Test
-    @DisplayName("Given an IllegalSlotAssignmentException, When getMessage() is called, Then it has the expected format")
-    void messageFormat() {
+    @DisplayName("Given an IllegalSlotAssignmentException, when getMessage() is called, then it has the expected format")
+    void getMessage_matchesExpectedFormat_whenGuiAndSlotHaveToStrings() {
         when(mockGui.toString()).thenReturn("MyGui@abc");
         when(mockSlot.toString()).thenReturn("MySlot@def");
 

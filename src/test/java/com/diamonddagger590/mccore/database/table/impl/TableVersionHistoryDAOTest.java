@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -40,8 +41,8 @@ class TableVersionHistoryDAOTest {
     class GetLatestVersion {
 
         @Test
-        @DisplayName("Given a table with version 3 stored, When getLatestVersion is called, Then it returns 3")
-        void returnsStoredVersion() throws SQLException {
+        @DisplayName("Given a table with version 3 stored, when getLatestVersion is called, then it returns 3")
+        void getLatestVersion_returnsStoredVersion_whenTableHasVersion() throws SQLException {
             when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
             when(mockStatement.executeQuery()).thenReturn(mockResultSet);
             when(mockResultSet.next()).thenReturn(true, false);
@@ -54,8 +55,8 @@ class TableVersionHistoryDAOTest {
         }
 
         @Test
-        @DisplayName("Given a table with no version stored, When getLatestVersion is called, Then it returns 0")
-        void returnsZeroForMissingTable() throws SQLException {
+        @DisplayName("Given a table with no version stored, when getLatestVersion is called, then it returns 0")
+        void getLatestVersion_returnsZero_whenTableHasNoVersion() throws SQLException {
             when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
             when(mockStatement.executeQuery()).thenReturn(mockResultSet);
             when(mockResultSet.next()).thenReturn(false);
@@ -66,8 +67,8 @@ class TableVersionHistoryDAOTest {
         }
 
         @Test
-        @DisplayName("Given a SQL exception occurs, When getLatestVersion is called, Then it returns 0")
-        void returnsZeroOnSqlException() throws SQLException {
+        @DisplayName("Given a SQL exception occurs, when getLatestVersion is called, then it returns 0")
+        void getLatestVersion_returnsZero_whenSqlExceptionOccurs() throws SQLException {
             when(mockConnection.prepareStatement(anyString())).thenThrow(new SQLException("Connection failed"));
 
             int version = TableVersionHistoryDAO.getLatestVersion(mockConnection, "test_table");
@@ -76,8 +77,8 @@ class TableVersionHistoryDAOTest {
         }
 
         @Test
-        @DisplayName("Given multiple rows returned, When getLatestVersion is called, Then it returns the last row's version")
-        void returnsLastRowVersion() throws SQLException {
+        @DisplayName("Given multiple rows returned, when getLatestVersion is called, then it returns the last row's version")
+        void getLatestVersion_returnsLastRowVersion_whenMultipleRowsExist() throws SQLException {
             when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
             when(mockStatement.executeQuery()).thenReturn(mockResultSet);
             when(mockResultSet.next()).thenReturn(true, true, false);
@@ -94,8 +95,8 @@ class TableVersionHistoryDAOTest {
     class SetTableVersion {
 
         @Test
-        @DisplayName("Given a valid connection, When setTableVersion is called, Then it returns true")
-        void returnsTrueOnSuccess() throws SQLException {
+        @DisplayName("Given a valid connection, when setTableVersion is called, then it returns true")
+        void setTableVersion_returnsTrue_whenUpdateSucceeds() throws SQLException {
             when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
 
             boolean result = TableVersionHistoryDAO.setTableVersion(mockConnection, "test_table", 2);
@@ -107,8 +108,8 @@ class TableVersionHistoryDAOTest {
         }
 
         @Test
-        @DisplayName("Given a SQL exception occurs, When setTableVersion is called, Then it returns false")
-        void returnsFalseOnSqlException() throws SQLException {
+        @DisplayName("Given a SQL exception occurs, when setTableVersion is called, then it returns false")
+        void setTableVersion_returnsFalse_whenPrepareStatementFails() throws SQLException {
             when(mockConnection.prepareStatement(anyString())).thenThrow(new SQLException("Write failed"));
 
             boolean result = TableVersionHistoryDAO.setTableVersion(mockConnection, "test_table", 1);
@@ -117,8 +118,8 @@ class TableVersionHistoryDAOTest {
         }
 
         @Test
-        @DisplayName("Given a statement execution failure, When setTableVersion is called, Then it returns false")
-        void returnsFalseOnExecuteFailure() throws SQLException {
+        @DisplayName("Given a statement execution failure, when setTableVersion is called, then it returns false")
+        void setTableVersion_returnsFalse_whenExecuteUpdateFails() throws SQLException {
             when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
             when(mockStatement.executeUpdate()).thenThrow(new SQLException("Execute failed"));
 
@@ -133,8 +134,8 @@ class TableVersionHistoryDAOTest {
     class AttemptCreateTable {
 
         @Test
-        @DisplayName("Given the table already exists, When attemptCreateTable is called, Then it returns false")
-        void returnsFalseWhenTableExists() {
+        @DisplayName("Given the table already exists, when attemptCreateTable is called, then it returns false")
+        void attemptCreateTable_returnsFalse_whenTableExists() {
             when(mockDatabase.tableExists(mockConnection, "table_history")).thenReturn(true);
 
             boolean result = TableVersionHistoryDAO.attemptCreateTable(mockConnection, mockDatabase);
@@ -143,8 +144,8 @@ class TableVersionHistoryDAOTest {
         }
 
         @Test
-        @DisplayName("Given the table doesn't exist, When attemptCreateTable is called, Then it creates the table and returns true")
-        void returnsTrueWhenTableCreated() throws SQLException {
+        @DisplayName("Given the table doesn't exist, when attemptCreateTable is called, then it creates the table and returns true")
+        void attemptCreateTable_returnsTrue_whenTableCreatedSuccessfully() throws SQLException {
             when(mockDatabase.tableExists(mockConnection, "table_history")).thenReturn(false);
             when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
 
@@ -155,8 +156,8 @@ class TableVersionHistoryDAOTest {
         }
 
         @Test
-        @DisplayName("Given a SQL exception during creation, When attemptCreateTable is called, Then it returns false")
-        void returnsFalseOnSqlException() throws SQLException {
+        @DisplayName("Given a SQL exception during creation, when attemptCreateTable is called, then it returns false")
+        void attemptCreateTable_returnsFalse_whenSqlExceptionOccurs() throws SQLException {
             when(mockDatabase.tableExists(mockConnection, "table_history")).thenReturn(false);
             when(mockConnection.prepareStatement(anyString())).thenThrow(new SQLException("Create failed"));
 
@@ -171,8 +172,8 @@ class TableVersionHistoryDAOTest {
     class UpdateTable {
 
         @Test
-        @DisplayName("Given the table is at current version, When updateTable is called, Then no updates are performed")
-        void noUpdateWhenCurrent() throws SQLException {
+        @DisplayName("Given the table is at current version, when updateTable is called, then no updates are performed")
+        void updateTable_performsNoUpdate_whenVersionIsCurrent() throws SQLException {
             when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
             when(mockStatement.executeQuery()).thenReturn(mockResultSet);
             when(mockResultSet.next()).thenReturn(true, false);
@@ -180,20 +181,18 @@ class TableVersionHistoryDAOTest {
 
             TableVersionHistoryDAO.updateTable(mockConnection);
 
-            // getLatestVersion is called but no setTableVersion since version is already current
             verify(mockStatement).setString(1, "table_history");
+            verify(mockStatement, never()).executeUpdate();
         }
 
         @Test
-        @DisplayName("Given the table is at version 0, When updateTable is called, Then it updates to version 1")
-        void updatesFromVersion0To1() throws SQLException {
-            // First call: getLatestVersion returns 0
+        @DisplayName("Given the table is at version 0, when updateTable is called, then it updates to version 1")
+        void updateTable_updatesToVersion1_whenVersionIsZero() throws SQLException {
             PreparedStatement selectStatement = org.mockito.Mockito.mock(PreparedStatement.class);
             ResultSet selectResultSet = org.mockito.Mockito.mock(ResultSet.class);
             when(selectStatement.executeQuery()).thenReturn(selectResultSet);
             when(selectResultSet.next()).thenReturn(false);
 
-            // Second call: setTableVersion
             PreparedStatement updateStatement = org.mockito.Mockito.mock(PreparedStatement.class);
 
             when(mockConnection.prepareStatement(anyString()))
@@ -208,8 +207,8 @@ class TableVersionHistoryDAOTest {
         }
 
         @Test
-        @DisplayName("Given the table is above current version, When updateTable is called, Then no updates are performed")
-        void noUpdateWhenAboveCurrent() throws SQLException {
+        @DisplayName("Given the table is above current version, when updateTable is called, then no updates are performed")
+        void updateTable_performsNoUpdate_whenVersionIsAboveCurrent() throws SQLException {
             when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
             when(mockStatement.executeQuery()).thenReturn(mockResultSet);
             when(mockResultSet.next()).thenReturn(true, false);
@@ -218,6 +217,7 @@ class TableVersionHistoryDAOTest {
             TableVersionHistoryDAO.updateTable(mockConnection);
 
             verify(mockStatement).setString(1, "table_history");
+            verify(mockStatement, never()).executeUpdate();
         }
     }
 }
