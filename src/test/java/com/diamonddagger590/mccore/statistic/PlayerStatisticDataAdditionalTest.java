@@ -76,15 +76,11 @@ class PlayerStatisticDataAdditionalTest {
         RegistryResetExtension.resetRegistry();
     }
 
-    // --- getUUID ---
-
     @Test
     @DisplayName("Given a PlayerStatisticData, when calling getUUID, then returns the UUID passed to constructor")
     void getUUID_returnsConstructorUUID() {
         assertEquals(PLAYER_UUID, data.getUUID());
     }
-
-    // --- getValue (raw Object accessor) ---
 
     @Test
     @DisplayName("Given no stored value and a registered stat, when calling getValue, then returns the default value")
@@ -116,12 +112,10 @@ class PlayerStatisticDataAdditionalTest {
     @Test
     @DisplayName("Given a timestamp stat with stored value, when calling getValue, then returns the Instant")
     void getValue_returnsInstant_whenTimestampStatStored() {
-        Instant now = Instant.now();
-        data.setValue(TIMESTAMP_KEY, now);
-        assertEquals(now, data.getValue(TIMESTAMP_KEY).get());
+        Instant fixedInstant = Instant.ofEpochSecond(1_700_000_000L);
+        data.setValue(TIMESTAMP_KEY, fixedInstant);
+        assertEquals(fixedInstant, data.getValue(TIMESTAMP_KEY).get());
     }
-
-    // --- bulkIncrementLong ---
 
     @Test
     @DisplayName("Given a long stat, when calling bulkIncrementLong, then it delegates to incrementLong")
@@ -149,7 +143,22 @@ class PlayerStatisticDataAdditionalTest {
         assertTrue(firedEvents.get(1) instanceof PostStatisticModifyEvent);
     }
 
-    // --- getOrCreateSet with plain HashSet (non-LinkedHashSet) ---
+    @Test
+    @DisplayName("Given a cancelling dispatcher, when calling bulkIncrementLong, then value does not change")
+    void bulkIncrementLong_doesNotChange_whenCancelled() {
+        data = new PlayerStatisticData(
+                PLAYER_UUID,
+                event -> {
+                    if (event instanceof StatisticModifyEvent sme) {
+                        sme.setCancelled(true);
+                    }
+                },
+                id -> mockPlayer
+        );
+        data.bulkIncrementLong(LONG_KEY, 100L);
+        assertEquals(0L, data.getLongValue(LONG_KEY).orElse(0L));
+        assertFalse(data.isDirty());
+    }
 
     @Test
     @DisplayName("Given a set stat populated with a plain HashSet via entries, when adding to the set, then works correctly")
@@ -173,7 +182,36 @@ class PlayerStatisticDataAdditionalTest {
         assertFalse(data.getSetValue(SET_KEY).get().contains("target"));
     }
 
-    // --- Increment cancellation ---
+    @Test
+    @DisplayName("Given a set at max capacity, when adding a new element, then the oldest element is evicted")
+    void addToSet_evictsOldest_whenAtMaxCapacity() {
+        data.addToSet(SET_KEY, "first");
+        data.addToSet(SET_KEY, "second");
+        data.addToSet(SET_KEY, "third");
+
+        assertEquals(3, data.getSetValue(SET_KEY).get().size());
+
+        data.addToSet(SET_KEY, "fourth");
+
+        Set<String> result = data.getSetValue(SET_KEY).get();
+        assertEquals(3, result.size());
+        assertFalse(result.contains("first"));
+        assertTrue(result.contains("second"));
+        assertTrue(result.contains("third"));
+        assertTrue(result.contains("fourth"));
+    }
+
+    @Test
+    @DisplayName("Given a timestamp already set, when calling setTimestampIfAbsent, then value does not change")
+    void setTimestampIfAbsent_doesNotOverwrite_whenValueAlreadyPresent() {
+        Instant first = Instant.ofEpochSecond(1_000_000L);
+        Instant second = Instant.ofEpochSecond(2_000_000L);
+        data.setTimestampIfAbsent(TIMESTAMP_KEY, first);
+        data.setTimestampIfAbsent(TIMESTAMP_KEY, second);
+
+        assertTrue(data.getTimestampValue(TIMESTAMP_KEY).isPresent());
+        assertEquals(first, data.getTimestampValue(TIMESTAMP_KEY).get());
+    }
 
     @Test
     @DisplayName("Given a cancelling event dispatcher, when incrementing int, then value does not change")
@@ -226,8 +264,6 @@ class PlayerStatisticDataAdditionalTest {
         assertFalse(data.isDirty());
     }
 
-    // --- setMax cancellation ---
-
     @Test
     @DisplayName("Given a cancelling dispatcher, when setting max long, then value does not change")
     void setMaxLong_doesNotChange_whenCancelled() {
@@ -276,10 +312,8 @@ class PlayerStatisticDataAdditionalTest {
         assertEquals(0.0, data.getDoubleValue(DOUBLE_KEY).orElse(0.0), 0.001);
     }
 
-    // --- setTimestampIfAbsent cancellation ---
-
     @Test
-    @DisplayName("Given a cancelling dispatcher, when setting timestamp if absent, then value does not change")
+    @DisplayName("Given a cancelling dispatcher, when setting timestamp if absent, then value remains at default")
     void setTimestampIfAbsent_doesNotChange_whenCancelled() {
         data = new PlayerStatisticData(
                 PLAYER_UUID,
@@ -290,11 +324,11 @@ class PlayerStatisticDataAdditionalTest {
                 },
                 id -> mockPlayer
         );
-        data.setTimestampIfAbsent(TIMESTAMP_KEY, Instant.now());
-        assertEquals(Instant.EPOCH, data.getTimestampValue(TIMESTAMP_KEY).orElse(Instant.EPOCH));
+        Instant fixedInstant = Instant.ofEpochSecond(1_700_000_000L);
+        data.setTimestampIfAbsent(TIMESTAMP_KEY, fixedInstant);
+        assertTrue(data.getTimestampValue(TIMESTAMP_KEY).isPresent());
+        assertEquals(Instant.EPOCH, data.getTimestampValue(TIMESTAMP_KEY).get());
     }
-
-    // --- addToSet cancellation ---
 
     @Test
     @DisplayName("Given a cancelling dispatcher, when adding to set, then returns false and set is unchanged")
@@ -311,8 +345,6 @@ class PlayerStatisticDataAdditionalTest {
         assertFalse(data.addToSet(SET_KEY, "value"));
         assertTrue(data.getSetValue(SET_KEY).get().isEmpty());
     }
-
-    // --- removeFromSet cancellation ---
 
     @Test
     @DisplayName("Given a set with an element and a cancelling dispatcher, when removing, then element remains")
@@ -332,21 +364,17 @@ class PlayerStatisticDataAdditionalTest {
         assertTrue(data.getSetValue(SET_KEY).get().contains("keep_me"));
     }
 
-    // --- getModifiedEntries with null value ---
-
     @Test
-    @DisplayName("Given a dirty key whose value was cleared, when getting modified entries, then that key is skipped")
-    void getModifiedEntries_skipsKey_whenValueIsNull() {
+    @DisplayName("Given a dirty key with a null value after repopulation, when getting modified entries, then that key is excluded")
+    void getModifiedEntries_excludesKey_whenValueIsNullAfterRepopulation() {
         data.setValue(INT_KEY, 42);
         assertTrue(data.isDirty());
-        data.populateFromEntries(Map.of());
-        data.setValue(INT_KEY, 99);
-        Map<NamespacedKey, StatisticEntry> modified = data.getModifiedEntries();
-        assertTrue(modified.containsKey(INT_KEY));
-        assertEquals(99, modified.get(INT_KEY).getAsInt());
-    }
 
-    // --- Increment throws for unregistered key ---
+        data.populateFromEntries(Map.of());
+
+        Map<NamespacedKey, StatisticEntry> modified = data.getModifiedEntries();
+        assertTrue(modified.isEmpty());
+    }
 
     @Test
     @DisplayName("Given an unregistered key, when incrementing long, then throws StatisticNotRegisteredException")
@@ -394,7 +422,7 @@ class PlayerStatisticDataAdditionalTest {
     @DisplayName("Given an unregistered key, when setting timestamp if absent, then throws StatisticNotRegisteredException")
     void setTimestampIfAbsent_throws_forUnregisteredKey() {
         assertThrows(StatisticNotRegisteredException.class,
-                () -> data.setTimestampIfAbsent(key("test", "nonexistent"), Instant.now()));
+                () -> data.setTimestampIfAbsent(key("test", "nonexistent"), Instant.ofEpochSecond(1_000L)));
     }
 
     @Test
@@ -410,8 +438,6 @@ class PlayerStatisticDataAdditionalTest {
         assertThrows(StatisticNotRegisteredException.class,
                 () -> data.removeFromSet(key("test", "nonexistent"), "value"));
     }
-
-    // --- Test helper ---
 
     private static class TestCorePlayer extends CorePlayer {
 

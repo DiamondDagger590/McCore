@@ -79,4 +79,40 @@ class ReloadableParserTest {
 
         assertEquals(42.0, reloadableParser.getContent().getValue(), 0.001);
     }
+
+    @Test
+    @DisplayName("Given a YAML with zero, when constructing ReloadableParser, then returns zero")
+    void constructor_handlesZeroEquation() throws IOException {
+        YamlDocument yaml = createYamlDocument("equation: '0'");
+        ReloadableParser reloadableParser = new ReloadableParser(yaml, EQUATION_ROUTE);
+
+        assertEquals(0.0, reloadableParser.getContent().getValue(), 0.001);
+    }
+
+    @Test
+    @DisplayName("Given a YAML with a negative expression, when constructing ReloadableParser, then returns negative value")
+    void constructor_handlesNegativeExpression() throws IOException {
+        YamlDocument yaml = createYamlDocument("equation: '-5 + 2'");
+        ReloadableParser reloadableParser = new ReloadableParser(yaml, EQUATION_ROUTE);
+
+        assertEquals(-3.0, reloadableParser.getContent().getValue(), 0.001);
+    }
+
+    @Test
+    @DisplayName("Given a YAML with a large number, when constructing ReloadableParser, then evaluates correctly")
+    void constructor_handlesLargeNumber() throws IOException {
+        YamlDocument yaml = createYamlDocument("equation: '999999 * 999999'");
+        ReloadableParser reloadableParser = new ReloadableParser(yaml, EQUATION_ROUTE);
+
+        assertEquals(999999.0 * 999999.0, reloadableParser.getContent().getValue(), 1.0);
+    }
+
+    @Test
+    @DisplayName("Given a YAML with a decimal expression, when constructing ReloadableParser, then evaluates correctly")
+    void constructor_handlesDecimalExpression() throws IOException {
+        YamlDocument yaml = createYamlDocument("equation: '0.1 + 0.2'");
+        ReloadableParser reloadableParser = new ReloadableParser(yaml, EQUATION_ROUTE);
+
+        assertEquals(0.3, reloadableParser.getContent().getValue(), 0.001);
+    }
 }

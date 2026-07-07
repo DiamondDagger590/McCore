@@ -1,9 +1,6 @@
 package com.diamonddagger590.mccore.util.filter;
 
 import com.diamonddagger590.mccore.player.CorePlayer;
-import com.diamonddagger590.mccore.testing.RegistryResetExtension;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,18 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ChainPlayerContextFilterTest {
 
     private static final UUID PLAYER_UUID = UUID.randomUUID();
-    private TestCorePlayer testPlayer;
-
-    @BeforeEach
-    void setUp() {
-        RegistryResetExtension.setupRegistry();
-        testPlayer = new TestCorePlayer(PLAYER_UUID);
-    }
-
-    @AfterEach
-    void tearDown() {
-        RegistryResetExtension.resetRegistry();
-    }
+    private final TestCorePlayer testPlayer = new TestCorePlayer(PLAYER_UUID);
 
     @Test
     @DisplayName("Given a single filter, when filtering, then applies that filter correctly")
@@ -61,19 +47,28 @@ class ChainPlayerContextFilterTest {
     }
 
     @Test
-    @DisplayName("Given two filters in reverse order, when filtering, then order matters")
+    @DisplayName("Given limit-then-even vs even-then-limit, when filtering, then order produces different results")
     void filter_orderMatters_forFilterChain() {
-        PlayerContextFilter<Integer, TestCorePlayer> greaterThanThree = (player, list) ->
-                list.stream().filter(i -> i > 3).collect(Collectors.toList());
+        PlayerContextFilter<Integer, TestCorePlayer> limitToThree = (player, list) ->
+                list.stream().limit(3).collect(Collectors.toList());
         PlayerContextFilter<Integer, TestCorePlayer> evenOnly = (player, list) ->
                 list.stream().filter(i -> i % 2 == 0).collect(Collectors.toList());
 
         @SuppressWarnings("unchecked")
-        ChainPlayerContextFilter<Integer, TestCorePlayer> chain =
-                new ChainPlayerContextFilter<>(greaterThanThree, evenOnly);
+        ChainPlayerContextFilter<Integer, TestCorePlayer> limitThenEven =
+                new ChainPlayerContextFilter<>(limitToThree, evenOnly);
 
-        Collection<Integer> result = chain.filter(testPlayer, List.of(1, 2, 3, 4, 5, 6, 7, 8));
-        assertEquals(List.of(4, 6, 8), new ArrayList<>(result));
+        @SuppressWarnings("unchecked")
+        ChainPlayerContextFilter<Integer, TestCorePlayer> evenThenLimit =
+                new ChainPlayerContextFilter<>(evenOnly, limitToThree);
+
+        List<Integer> input = List.of(1, 2, 3, 4, 5, 6, 7, 8);
+
+        Collection<Integer> limitFirst = limitThenEven.filter(testPlayer, input);
+        Collection<Integer> evenFirst = evenThenLimit.filter(testPlayer, input);
+
+        assertEquals(List.of(2), new ArrayList<>(limitFirst));
+        assertEquals(List.of(2, 4, 6), new ArrayList<>(evenFirst));
     }
 
     @Test

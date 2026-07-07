@@ -7,6 +7,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ItemPluginTypeTest {
@@ -80,6 +81,12 @@ class ItemPluginTypeTest {
     @DisplayName("Given an unrecognized name, when calling fromName, then returns NONE as fallback")
     void fromName_returnsNone_forUnrecognizedName(String name) {
         assertEquals(ItemPluginType.NONE, ItemPluginType.fromName(name));
+    }
+
+    @Test
+    @DisplayName("Given null input, when calling fromName, then throws NullPointerException")
+    void fromName_throwsNullPointerException_forNullInput() {
+        assertThrows(NullPointerException.class, () -> ItemPluginType.fromName(null));
     }
 
     @Test
