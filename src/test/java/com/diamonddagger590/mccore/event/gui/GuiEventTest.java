@@ -7,6 +7,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +15,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -83,31 +83,20 @@ class GuiEventTest {
     // --- CoreGuiOpenEvent ---
 
     @Test
-    @DisplayName("Given UUID, Gui, and NamespacedKey, when CoreGuiOpenEvent constructed, then getPlayerUUID returns the UUID")
+    @DisplayName("Given UUID and NamespacedKey, when CoreGuiOpenEvent constructed, then getPlayerUUID returns the UUID")
     void coreGuiOpenEvent_getPlayerUUID_returnsProvidedUUID() {
         UUID uuid = UUID.randomUUID();
-        Gui<?> gui = createStubGui();
         NamespacedKey key = NamespacedKey.fromString("test:my_gui");
-        CoreGuiOpenEvent event = new CoreGuiOpenEvent(uuid, gui, key);
+        CoreGuiOpenEvent event = new CoreGuiOpenEvent(uuid, Optional.of(key));
         assertEquals(uuid, event.getPlayerUUID());
-    }
-
-    @Test
-    @DisplayName("Given UUID and Gui, when CoreGuiOpenEvent constructed, then getGui returns the same Gui instance")
-    void coreGuiOpenEvent_getGui_returnsSameInstance() {
-        UUID uuid = UUID.randomUUID();
-        Gui<?> gui = createStubGui();
-        CoreGuiOpenEvent event = new CoreGuiOpenEvent(uuid, gui, null);
-        assertSame(gui, event.getGui());
     }
 
     @Test
     @DisplayName("Given a non-null NamespacedKey, when getGuiKey called, then returns Optional containing the key")
     void coreGuiOpenEvent_getGuiKey_returnsOptionalWithKey_whenKeyProvided() {
         UUID uuid = UUID.randomUUID();
-        Gui<?> gui = createStubGui();
         NamespacedKey key = NamespacedKey.fromString("test:settings_gui");
-        CoreGuiOpenEvent event = new CoreGuiOpenEvent(uuid, gui, key);
+        CoreGuiOpenEvent event = new CoreGuiOpenEvent(uuid, Optional.of(key));
 
         Optional<NamespacedKey> result = event.getGuiKey();
         assertTrue(result.isPresent());
@@ -115,11 +104,10 @@ class GuiEventTest {
     }
 
     @Test
-    @DisplayName("Given null NamespacedKey, when getGuiKey called, then returns empty Optional")
-    void coreGuiOpenEvent_getGuiKey_returnsEmptyOptional_whenKeyIsNull() {
+    @DisplayName("Given empty NamespacedKey, when getGuiKey called, then returns empty Optional")
+    void coreGuiOpenEvent_getGuiKey_returnsEmptyOptional_whenKeyIsEmpty() {
         UUID uuid = UUID.randomUUID();
-        Gui<?> gui = createStubGui();
-        CoreGuiOpenEvent event = new CoreGuiOpenEvent(uuid, gui, null);
+        CoreGuiOpenEvent event = new CoreGuiOpenEvent(uuid, Optional.empty());
 
         Optional<NamespacedKey> result = event.getGuiKey();
         assertTrue(result.isEmpty());
@@ -128,7 +116,7 @@ class GuiEventTest {
     @Test
     @DisplayName("Given a CoreGuiOpenEvent, when getHandlers called, then matches static handler list")
     void coreGuiOpenEvent_getHandlers_matchesStaticHandlerList() {
-        CoreGuiOpenEvent event = new CoreGuiOpenEvent(UUID.randomUUID(), createStubGui(), null);
+        CoreGuiOpenEvent event = new CoreGuiOpenEvent(UUID.randomUUID(), Optional.empty());
         assertSame(CoreGuiOpenEvent.getHandlerList(), event.getHandlers());
     }
 
