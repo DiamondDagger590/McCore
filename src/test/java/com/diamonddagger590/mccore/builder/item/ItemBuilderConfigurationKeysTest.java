@@ -1,15 +1,49 @@
 package com.diamonddagger590.mccore.builder.item;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ItemBuilderConfigurationKeysTest {
 
+    private static final String[] ALL_KEYS = {
+            ItemBuilderConfigurationKeys.MATERIAL,
+            ItemBuilderConfigurationKeys.DATA,
+            ItemBuilderConfigurationKeys.NAME,
+            ItemBuilderConfigurationKeys.LORE_ROUTE,
+            ItemBuilderConfigurationKeys.AMOUNT,
+            ItemBuilderConfigurationKeys.MAX_STACK_SIZE,
+            ItemBuilderConfigurationKeys.ENCHANTMENTS,
+            ItemBuilderConfigurationKeys.CUSTOM_MODEL_DATA,
+            ItemBuilderConfigurationKeys.CUSTOM_ITEM,
+            ItemBuilderConfigurationKeys.HIDE_TOOLTIP,
+            ItemBuilderConfigurationKeys.UNBREAKABLE_ITEM,
+            ItemBuilderConfigurationKeys.ITEM_FLAGS,
+            ItemBuilderConfigurationKeys.GLOWING,
+            ItemBuilderConfigurationKeys.PLAYER,
+            ItemBuilderConfigurationKeys.DAMAGE,
+            ItemBuilderConfigurationKeys.SKULL,
+            ItemBuilderConfigurationKeys.RGB,
+            ItemBuilderConfigurationKeys.COLOR,
+            ItemBuilderConfigurationKeys.MOB_TYPE,
+            ItemBuilderConfigurationKeys.TRIM_PATTERN,
+            ItemBuilderConfigurationKeys.TRIM_MATERIAL,
+            ItemBuilderConfigurationKeys.POTION_HEADER,
+            ItemBuilderConfigurationKeys.POTION_DURATION,
+            ItemBuilderConfigurationKeys.POTION_LEVEL,
+            ItemBuilderConfigurationKeys.POTION_ICON,
+            ItemBuilderConfigurationKeys.POTION_AMBIENT,
+            ItemBuilderConfigurationKeys.POTION_PARTICLES,
+            ItemBuilderConfigurationKeys.PATTERN_HEADER,
+    };
+
     @Test
-    void topLevelKeysAreSimplePaths() {
+    @DisplayName("Given top-level configuration keys, when accessed, then they return simple unprefixed paths")
+    void topLevelKeys_returnSimplePaths_whenAccessed() {
         assertEquals("material", ItemBuilderConfigurationKeys.MATERIAL);
         assertEquals("data", ItemBuilderConfigurationKeys.DATA);
         assertEquals("name", ItemBuilderConfigurationKeys.NAME);
@@ -25,7 +59,8 @@ class ItemBuilderConfigurationKeysTest {
     }
 
     @Test
-    void settingsKeysAreNestedUnderSettings() {
+    @DisplayName("Given settings-level configuration keys, when accessed, then they are nested under 'settings' prefix")
+    void settingsKeys_nestedUnderSettings_whenAccessed() {
         assertEquals("settings.glowing", ItemBuilderConfigurationKeys.GLOWING);
         assertEquals("settings.player", ItemBuilderConfigurationKeys.PLAYER);
         assertEquals("settings.damage", ItemBuilderConfigurationKeys.DAMAGE);
@@ -35,23 +70,27 @@ class ItemBuilderConfigurationKeysTest {
     }
 
     @Test
-    void mobKeysAreNestedUnderSettingsMob() {
+    @DisplayName("Given mob configuration key, when accessed, then it is nested under 'settings.mob' prefix")
+    void mobTypeKey_nestedUnderSettingsMob_whenAccessed() {
         assertEquals("settings.mob.type", ItemBuilderConfigurationKeys.MOB_TYPE);
     }
 
     @Test
-    void trimKeysAreNestedUnderSettingsTrim() {
+    @DisplayName("Given trim configuration keys, when accessed, then they are nested under 'settings.trim' prefix")
+    void trimKeys_nestedUnderSettingsTrim_whenAccessed() {
         assertEquals("settings.trim.pattern", ItemBuilderConfigurationKeys.TRIM_PATTERN);
         assertEquals("settings.trim.material", ItemBuilderConfigurationKeys.TRIM_MATERIAL);
     }
 
     @Test
-    void potionHeaderIsNestedUnderSettings() {
+    @DisplayName("Given potion header key, when accessed, then it is nested under 'settings' prefix")
+    void potionHeader_nestedUnderSettings_whenAccessed() {
         assertEquals("settings.potions", ItemBuilderConfigurationKeys.POTION_HEADER);
     }
 
     @Test
-    void potionKeysAreRelativePaths() {
+    @DisplayName("Given potion detail keys, when accessed, then they return relative paths for composition with potion header")
+    void potionKeys_returnRelativePaths_whenAccessed() {
         assertEquals("duration", ItemBuilderConfigurationKeys.POTION_DURATION);
         assertEquals("level", ItemBuilderConfigurationKeys.POTION_LEVEL);
         assertEquals("style.icon", ItemBuilderConfigurationKeys.POTION_ICON);
@@ -60,60 +99,40 @@ class ItemBuilderConfigurationKeysTest {
     }
 
     @Test
-    void patternHeaderIsNestedUnderSettings() {
+    @DisplayName("Given pattern header key, when accessed, then it is nested under 'settings' prefix")
+    void patternHeader_nestedUnderSettings_whenAccessed() {
         assertEquals("settings.patterns", ItemBuilderConfigurationKeys.PATTERN_HEADER);
     }
 
     @Test
-    void allKeysAreNonNullAndNonEmpty() {
-        String[] allKeys = {
-                ItemBuilderConfigurationKeys.MATERIAL,
-                ItemBuilderConfigurationKeys.DATA,
-                ItemBuilderConfigurationKeys.NAME,
-                ItemBuilderConfigurationKeys.LORE_ROUTE,
-                ItemBuilderConfigurationKeys.AMOUNT,
-                ItemBuilderConfigurationKeys.MAX_STACK_SIZE,
-                ItemBuilderConfigurationKeys.ENCHANTMENTS,
-                ItemBuilderConfigurationKeys.CUSTOM_MODEL_DATA,
-                ItemBuilderConfigurationKeys.CUSTOM_ITEM,
-                ItemBuilderConfigurationKeys.HIDE_TOOLTIP,
-                ItemBuilderConfigurationKeys.UNBREAKABLE_ITEM,
-                ItemBuilderConfigurationKeys.ITEM_FLAGS,
-                ItemBuilderConfigurationKeys.GLOWING,
-                ItemBuilderConfigurationKeys.PLAYER,
-                ItemBuilderConfigurationKeys.DAMAGE,
-                ItemBuilderConfigurationKeys.SKULL,
-                ItemBuilderConfigurationKeys.RGB,
-                ItemBuilderConfigurationKeys.COLOR,
-                ItemBuilderConfigurationKeys.MOB_TYPE,
-                ItemBuilderConfigurationKeys.TRIM_PATTERN,
-                ItemBuilderConfigurationKeys.TRIM_MATERIAL,
-                ItemBuilderConfigurationKeys.POTION_HEADER,
-                ItemBuilderConfigurationKeys.POTION_DURATION,
-                ItemBuilderConfigurationKeys.POTION_LEVEL,
-                ItemBuilderConfigurationKeys.POTION_ICON,
-                ItemBuilderConfigurationKeys.POTION_AMBIENT,
-                ItemBuilderConfigurationKeys.POTION_PARTICLES,
-                ItemBuilderConfigurationKeys.PATTERN_HEADER,
-        };
-        for (String key : allKeys) {
+    @DisplayName("Given all configuration keys, when checked, then none are null or empty")
+    void allKeys_areNonNullAndNonEmpty_whenChecked() {
+        for (String key : ALL_KEYS) {
             assertNotNull(key);
             assertFalse(key.isEmpty());
         }
     }
 
     @Test
-    void nestedKeysUseDotSeparator() {
-        for (String key : new String[]{
-                ItemBuilderConfigurationKeys.GLOWING,
-                ItemBuilderConfigurationKeys.MOB_TYPE,
-                ItemBuilderConfigurationKeys.TRIM_PATTERN,
-                ItemBuilderConfigurationKeys.POTION_HEADER,
-                ItemBuilderConfigurationKeys.PATTERN_HEADER,
-        }) {
+    @DisplayName("Given all configuration keys, when checked for format, then all use dot notation without leading or trailing dots")
+    void allKeys_useDotNotationCorrectly_whenChecked() {
+        for (String key : ALL_KEYS) {
             assertEquals(-1, key.indexOf('/'), "Keys should use dot notation, not slashes: " + key);
             assertFalse(key.startsWith("."), "Keys should not start with dot: " + key);
             assertFalse(key.endsWith("."), "Keys should not end with dot: " + key);
+        }
+    }
+
+    @Test
+    @DisplayName("Given nested configuration keys containing dots, when checked, then each segment between dots is non-empty")
+    void nestedKeys_haveNonEmptySegments_whenContainingDots() {
+        for (String key : ALL_KEYS) {
+            if (key.contains(".")) {
+                String[] segments = key.split("\\.");
+                for (String segment : segments) {
+                    assertTrue(segment.length() > 0, "Empty segment in key: " + key);
+                }
+            }
         }
     }
 }
