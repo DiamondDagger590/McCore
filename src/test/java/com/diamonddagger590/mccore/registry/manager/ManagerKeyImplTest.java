@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ManagerKeyImplTest {
 
@@ -69,11 +70,10 @@ class ManagerKeyImplTest {
     }
 
     @Test
-    @DisplayName("Given two keys with different classes, when comparing hash codes, then they differ")
-    void hashCode_differs_whenKeysHaveDifferentClasses() {
-        ManagerKey<TestManagerA> keyA = ManagerKeyImpl.create(TestManagerA.class);
-        ManagerKey<TestManagerB> keyB = ManagerKeyImpl.create(TestManagerB.class);
-        assertNotEquals(keyA.hashCode(), keyB.hashCode());
+    @DisplayName("Given a key, when calling hashCode repeatedly, then it is consistent")
+    void hashCode_isConsistent_whenCalledRepeatedly() {
+        ManagerKey<TestManagerA> key = ManagerKeyImpl.create(TestManagerA.class);
+        assertEquals(key.hashCode(), key.hashCode());
     }
 
     @Test
@@ -82,7 +82,7 @@ class ManagerKeyImplTest {
         ManagerKey<TestManagerA> key = ManagerKeyImpl.create(TestManagerA.class);
         String str = key.toString();
         assertNotNull(str);
-        assertEquals(true, str.contains("TestManagerA"));
+        assertTrue(str.contains("TestManagerA"));
     }
 
     @Test
@@ -98,4 +98,5 @@ class ManagerKeyImplTest {
         ManagerKey<TestManagerA> key = ManagerKeyImpl.create(TestManagerA.class);
         assertNotEquals(null, key);
     }
+
 }

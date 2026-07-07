@@ -142,4 +142,5 @@ class CoreGuiOpenEventTest {
         assertEquals(uuid1, event1.getPlayerUUID());
         assertEquals(uuid2, event2.getPlayerUUID());
     }
+
 }

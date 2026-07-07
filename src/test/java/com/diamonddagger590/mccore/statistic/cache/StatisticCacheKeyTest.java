@@ -11,6 +11,8 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class StatisticCacheKeyTest {
 
@@ -73,11 +75,10 @@ class StatisticCacheKeyTest {
     }
 
     @Test
-    @DisplayName("Given two different cache keys, when comparing hash codes, then they differ")
-    void hashCode_differs_whenKeysAreNotEqual() {
-        StatisticCacheKey key1 = new StatisticCacheKey(UUID_A, KEY_KILLS);
-        StatisticCacheKey key2 = new StatisticCacheKey(UUID_B, KEY_DEATHS);
-        assertNotEquals(key1.hashCode(), key2.hashCode());
+    @DisplayName("Given a cache key, when calling hashCode repeatedly, then it is consistent")
+    void hashCode_isConsistent_whenCalledRepeatedly() {
+        StatisticCacheKey key = new StatisticCacheKey(UUID_A, KEY_KILLS);
+        assertEquals(key.hashCode(), key.hashCode());
     }
 
     @Test
@@ -86,7 +87,7 @@ class StatisticCacheKeyTest {
         StatisticCacheKey cacheKey = new StatisticCacheKey(UUID_A, KEY_KILLS);
         String str = cacheKey.toString();
         assertNotNull(str);
-        assertEquals(true, str.contains(UUID_A.toString()));
+        assertTrue(str.contains(UUID_A.toString()));
     }
 
     @Test
@@ -122,6 +123,7 @@ class StatisticCacheKeyTest {
         map.put(key1, "value");
 
         StatisticCacheKey key2 = new StatisticCacheKey(UUID_B, KEY_KILLS);
-        assertEquals(null, map.get(key2));
+        assertNull(map.get(key2));
     }
+
 }

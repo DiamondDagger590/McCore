@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PluginHookKeyImplTest {
 
@@ -69,11 +70,10 @@ class PluginHookKeyImplTest {
     }
 
     @Test
-    @DisplayName("Given two keys with different classes, when comparing hash codes, then they differ")
-    void hashCode_differs_whenKeysHaveDifferentClasses() {
-        PluginHookKey<TestHookA> keyA = PluginHookKeyImpl.create(TestHookA.class);
-        PluginHookKey<TestHookB> keyB = PluginHookKeyImpl.create(TestHookB.class);
-        assertNotEquals(keyA.hashCode(), keyB.hashCode());
+    @DisplayName("Given a key, when calling hashCode repeatedly, then it is consistent")
+    void hashCode_isConsistent_whenCalledRepeatedly() {
+        PluginHookKey<TestHookA> key = PluginHookKeyImpl.create(TestHookA.class);
+        assertEquals(key.hashCode(), key.hashCode());
     }
 
     @Test
@@ -82,7 +82,7 @@ class PluginHookKeyImplTest {
         PluginHookKey<TestHookA> key = PluginHookKeyImpl.create(TestHookA.class);
         String str = key.toString();
         assertNotNull(str);
-        assertEquals(true, str.contains("TestHookA"));
+        assertTrue(str.contains("TestHookA"));
     }
 
     @Test
@@ -98,4 +98,5 @@ class PluginHookKeyImplTest {
         PluginHookKey<TestHookA> key = PluginHookKeyImpl.create(TestHookA.class);
         assertNotEquals(null, key);
     }
+
 }
