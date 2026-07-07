@@ -155,6 +155,20 @@ class TransactionTest {
     }
 
     @Test
+    @DisplayName("Given a list passed to two-arg constructor, when mutating the original list, then transaction internal state is affected")
+    void constructor_doesNotDefensivelyCopy_whenListPassedDirectly() {
+        PreparedStatement stmt1 = mockStatement("stmt1");
+        List<PreparedStatement> original = new ArrayList<>(List.of(stmt1));
+        TestTransaction tx = new TestTransaction(mockConnection(), original);
+
+        PreparedStatement stmt2 = mockStatement("stmt2");
+        original.add(stmt2);
+
+        assertEquals(2, tx.getPreparedStatements().size());
+        assertSame(stmt2, tx.getPreparedStatements().get(1));
+    }
+
+    @Test
     @DisplayName("Given a transaction, when getting connection, then returns same connection passed to constructor")
     void getConnection_returnsSameInstance_whenCalled() {
         Connection conn = mockConnection();
