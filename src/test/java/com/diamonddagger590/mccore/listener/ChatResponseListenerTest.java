@@ -6,7 +6,6 @@ import com.diamonddagger590.mccore.chat.ChatResponseManager;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
 import com.diamonddagger590.mccore.registry.RegistryKey;
 import com.diamonddagger590.mccore.registry.manager.ManagerKey;
-import com.diamonddagger590.mccore.registry.manager.ManagerKeyImpl;
 import com.diamonddagger590.mccore.testing.RegistryResetExtension;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerChatEvent;
@@ -15,15 +14,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
@@ -96,14 +95,14 @@ class ChatResponseListenerTest {
     }
 
     @Test
-    @DisplayName("Given a pending response, when chat event fires, then onResponse is called before removePendingResponse")
-    void onChat_callsOnResponseBeforeRemove_whenPendingResponseExists() {
+    @DisplayName("Given a pending response, when chat event fires, then onResponse is called before remove and cancel")
+    void onChat_callsOnResponseBeforeRemoveAndCancel_whenPendingResponseExists() {
         ChatResponse mockResponse = mock(ChatResponse.class);
         when(mockChatResponseManager.getPendingResponse(playerUUID)).thenReturn(Optional.of(mockResponse));
 
         listener.onChat(mockEvent);
 
-        var inOrder = org.mockito.Mockito.inOrder(mockResponse, mockChatResponseManager, mockEvent);
+        InOrder inOrder = Mockito.inOrder(mockResponse, mockChatResponseManager, mockEvent);
         inOrder.verify(mockResponse).onResponse(mockEvent);
         inOrder.verify(mockChatResponseManager).removePendingResponse(mockResponse);
         inOrder.verify(mockEvent).setCancelled(true);

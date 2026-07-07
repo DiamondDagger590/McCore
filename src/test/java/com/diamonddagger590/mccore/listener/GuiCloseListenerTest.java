@@ -19,12 +19,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -64,7 +65,7 @@ class GuiCloseListenerTest {
 
         corePluginStatic = mockStatic(CorePlugin.class);
         corePluginStatic.when(CorePlugin::getInstance).thenReturn(mockPlugin);
-        org.mockito.Mockito.lenient().when(mockPlugin.registryAccess()).thenReturn(RegistryAccess.registryAccess());
+        Mockito.lenient().when(mockPlugin.registryAccess()).thenReturn(RegistryAccess.registryAccess());
     }
 
     @AfterEach
@@ -126,8 +127,8 @@ class GuiCloseListenerTest {
     }
 
     @Test
-    @DisplayName("Given a ClosableGui with matching inventory, when closing, then calls onClose and stops tracking")
-    void handleGuiClose_callsOnClose_whenGuiIsClosable() {
+    @DisplayName("Given a ClosableGui with matching inventory, when closing, then stops tracking before calling onClose")
+    void handleGuiClose_stopsTrackingAndCallsOnClose_whenClosableGuiAndInventoryMatches() {
         TestClosableGui mockClosableGui = mock(TestClosableGui.class);
         when(mockEvent.getPlayer()).thenReturn(mockPlayer);
         when(mockEvent.getInventory()).thenReturn(mockInventory);
@@ -136,13 +137,14 @@ class GuiCloseListenerTest {
 
         listener.handleGuiClose(mockEvent);
 
-        verify(mockGuiManager).stopTrackingPlayer(mockPlayer);
-        verify(mockClosableGui).onClose(mockEvent);
+        InOrder inOrder = Mockito.inOrder(mockGuiManager, mockClosableGui);
+        inOrder.verify(mockGuiManager).stopTrackingPlayer(mockPlayer);
+        inOrder.verify(mockClosableGui).onClose(mockEvent);
     }
 
     @Test
     @DisplayName("Given a ClosableGui with different inventory, when closing, then calls onClose but does not stop tracking")
-    void handleGuiClose_callsOnClose_whenClosableGuiButDifferentInventory() {
+    void handleGuiClose_callsOnCloseOnly_whenClosableGuiButDifferentInventory() {
         TestClosableGui mockClosableGui = mock(TestClosableGui.class);
         Inventory differentInventory = mock(Inventory.class);
         when(mockEvent.getPlayer()).thenReturn(mockPlayer);
@@ -157,8 +159,8 @@ class GuiCloseListenerTest {
     }
 
     @Test
-    @DisplayName("Given a non-ClosableGui with matching inventory, when closing, then stops tracking but does not call onClose")
-    void handleGuiClose_doesNotCallOnClose_whenGuiIsNotClosable() {
+    @DisplayName("Given a non-ClosableGui with matching inventory, when closing, then stops tracking without calling onClose")
+    void handleGuiClose_stopsTrackingOnly_whenGuiIsNotClosable() {
         Gui<CorePlayer> mockGui = mock(Gui.class);
         when(mockEvent.getPlayer()).thenReturn(mockPlayer);
         when(mockEvent.getInventory()).thenReturn(mockInventory);
