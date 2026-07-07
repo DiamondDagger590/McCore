@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -65,11 +66,9 @@ class StatisticModifyEventTest {
         return new SimpleStatistic(key("set"), StatisticType.SET_STRING, new LinkedHashSet<String>(), "Set", "Set stat");
     }
 
-    // ── Constructor & Getters ─────────────────────────────────────────
-
     @Test
     @DisplayName("Given valid arguments, when constructing, then all getters return expected values")
-    void constructor_setsAllFields() {
+    void constructor_setsAllFields_whenValidArguments() {
         CorePlayer player = testPlayer();
         Statistic stat = intStat();
         NamespacedKey statKey = key("int");
@@ -86,7 +85,7 @@ class StatisticModifyEventTest {
 
     @Test
     @DisplayName("Given a new event, when checking cancelled, then defaults to false")
-    void isCancelled_defaultsFalse() {
+    void isCancelled_defaultsFalse_whenNewlyConstructed() {
         StatisticModifyEvent event = new StatisticModifyEvent(
                 testPlayer(), key("int"), intStat(), 0, 1, ModificationType.INCREMENT);
         assertFalse(event.isCancelled());
@@ -94,7 +93,7 @@ class StatisticModifyEventTest {
 
     @Test
     @DisplayName("Given an event, when setting cancelled to true, then isCancelled returns true")
-    void setCancelled_togglesCancelledState() {
+    void setCancelled_togglesCancelledState_whenCalledWithTrueAndFalse() {
         StatisticModifyEvent event = new StatisticModifyEvent(
                 testPlayer(), key("int"), intStat(), 0, 1, ModificationType.INCREMENT);
         event.setCancelled(true);
@@ -103,11 +102,9 @@ class StatisticModifyEventTest {
         assertFalse(event.isCancelled());
     }
 
-    // ── setNewValue ───────────────────────────────────────────────────
-
     @Test
     @DisplayName("Given an INT event, when setting new value to a valid Integer, then value updates")
-    void setNewValue_acceptsValidInteger() {
+    void setNewValue_acceptsValidInteger_whenIntType() {
         StatisticModifyEvent event = new StatisticModifyEvent(
                 testPlayer(), key("int"), intStat(), 0, 1, ModificationType.SET);
         event.setNewValue(99);
@@ -116,123 +113,133 @@ class StatisticModifyEventTest {
 
     @Test
     @DisplayName("Given an INT event, when setting new value to a String, then throws IllegalArgumentException")
-    void setNewValue_rejectsIncompatibleType() {
+    void setNewValue_rejectsIncompatibleType_whenIntEventGivenString() {
         StatisticModifyEvent event = new StatisticModifyEvent(
                 testPlayer(), key("int"), intStat(), 0, 1, ModificationType.SET);
         assertThrows(IllegalArgumentException.class, () -> event.setNewValue("not an int"));
     }
 
-    // ── validateValueType via constructor ─────────────────────────────
-
     @Test
     @DisplayName("Given INT type, when constructing with Integer value, then succeeds")
-    void validateValueType_acceptsInteger_forIntType() {
-        new StatisticModifyEvent(testPlayer(), key("int"), intStat(), 0, 42, ModificationType.SET);
+    void validateValueType_acceptsInteger_whenIntType() {
+        assertDoesNotThrow(() ->
+                new StatisticModifyEvent(testPlayer(), key("int"), intStat(), 0, 42, ModificationType.SET));
     }
 
     @Test
     @DisplayName("Given INT type, when constructing with Long value, then throws IllegalArgumentException")
-    void validateValueType_rejectsLong_forIntType() {
+    void validateValueType_rejectsLong_whenIntType() {
         assertThrows(IllegalArgumentException.class,
                 () -> new StatisticModifyEvent(testPlayer(), key("int"), intStat(), 0, 42L, ModificationType.SET));
     }
 
     @Test
     @DisplayName("Given LONG type, when constructing with Long value, then succeeds")
-    void validateValueType_acceptsLong_forLongType() {
-        new StatisticModifyEvent(testPlayer(), key("long"), longStat(), 0L, 100L, ModificationType.SET);
+    void validateValueType_acceptsLong_whenLongType() {
+        assertDoesNotThrow(() ->
+                new StatisticModifyEvent(testPlayer(), key("long"), longStat(), 0L, 100L, ModificationType.SET));
     }
 
     @Test
     @DisplayName("Given LONG type, when constructing with Integer value, then throws IllegalArgumentException")
-    void validateValueType_rejectsInteger_forLongType() {
+    void validateValueType_rejectsInteger_whenLongType() {
         assertThrows(IllegalArgumentException.class,
                 () -> new StatisticModifyEvent(testPlayer(), key("long"), longStat(), 0L, 100, ModificationType.SET));
     }
 
     @Test
     @DisplayName("Given DOUBLE type, when constructing with Double value, then succeeds")
-    void validateValueType_acceptsDouble_forDoubleType() {
-        new StatisticModifyEvent(testPlayer(), key("double"), doubleStat(), 0.0, 3.14, ModificationType.SET);
+    void validateValueType_acceptsDouble_whenDoubleType() {
+        assertDoesNotThrow(() ->
+                new StatisticModifyEvent(testPlayer(), key("double"), doubleStat(), 0.0, 3.14, ModificationType.SET));
     }
 
     @Test
     @DisplayName("Given DOUBLE type, when constructing with Float value, then throws IllegalArgumentException")
-    void validateValueType_rejectsFloat_forDoubleType() {
+    void validateValueType_rejectsFloat_whenDoubleType() {
         assertThrows(IllegalArgumentException.class,
                 () -> new StatisticModifyEvent(testPlayer(), key("double"), doubleStat(), 0.0, 3.14f, ModificationType.SET));
     }
 
     @Test
     @DisplayName("Given STRING type, when constructing with String value, then succeeds")
-    void validateValueType_acceptsString_forStringType() {
-        new StatisticModifyEvent(testPlayer(), key("string"), stringStat(), "", "hello", ModificationType.SET);
+    void validateValueType_acceptsString_whenStringType() {
+        assertDoesNotThrow(() ->
+                new StatisticModifyEvent(testPlayer(), key("string"), stringStat(), "", "hello", ModificationType.SET));
     }
 
     @Test
     @DisplayName("Given STRING type, when constructing with Integer value, then throws IllegalArgumentException")
-    void validateValueType_rejectsInteger_forStringType() {
+    void validateValueType_rejectsInteger_whenStringType() {
         assertThrows(IllegalArgumentException.class,
                 () -> new StatisticModifyEvent(testPlayer(), key("string"), stringStat(), "", 42, ModificationType.SET));
     }
 
     @Test
     @DisplayName("Given TIMESTAMP type, when constructing with Instant value, then succeeds")
-    void validateValueType_acceptsInstant_forTimestampType() {
-        new StatisticModifyEvent(testPlayer(), key("timestamp"), timestampStat(), Instant.EPOCH, Instant.now(), ModificationType.SET);
+    void validateValueType_acceptsInstant_whenTimestampType() {
+        Instant fixedInstant = Instant.parse("2024-06-15T12:00:00Z");
+        assertDoesNotThrow(() ->
+                new StatisticModifyEvent(testPlayer(), key("timestamp"), timestampStat(), Instant.EPOCH, fixedInstant, ModificationType.SET));
     }
 
     @Test
     @DisplayName("Given TIMESTAMP type, when constructing with Long value, then throws IllegalArgumentException")
-    void validateValueType_rejectsLong_forTimestampType() {
+    void validateValueType_rejectsLong_whenTimestampType() {
         assertThrows(IllegalArgumentException.class,
                 () -> new StatisticModifyEvent(testPlayer(), key("timestamp"), timestampStat(), Instant.EPOCH, 123L, ModificationType.SET));
     }
 
     @Test
     @DisplayName("Given SET_STRING type, when constructing with Set<String> value, then succeeds")
-    void validateValueType_acceptsSetString_forSetStringType() {
-        new StatisticModifyEvent(testPlayer(), key("set"), setStringStat(),
-                new LinkedHashSet<>(), Set.of("a", "b"), ModificationType.SET);
+    void validateValueType_acceptsSetString_whenSetStringType() {
+        assertDoesNotThrow(() ->
+                new StatisticModifyEvent(testPlayer(), key("set"), setStringStat(),
+                        new LinkedHashSet<>(), Set.of("a", "b"), ModificationType.SET));
     }
 
     @Test
     @DisplayName("Given SET_STRING type, when constructing with empty Set, then succeeds")
-    void validateValueType_acceptsEmptySet_forSetStringType() {
-        new StatisticModifyEvent(testPlayer(), key("set"), setStringStat(),
-                new LinkedHashSet<>(), Set.of(), ModificationType.SET);
+    void validateValueType_acceptsEmptySet_whenSetStringType() {
+        assertDoesNotThrow(() ->
+                new StatisticModifyEvent(testPlayer(), key("set"), setStringStat(),
+                        new LinkedHashSet<>(), Set.of(), ModificationType.SET));
     }
 
     @Test
     @DisplayName("Given SET_STRING type, when constructing with String value, then throws IllegalArgumentException")
-    void validateValueType_rejectsString_forSetStringType() {
+    void validateValueType_rejectsString_whenSetStringType() {
         assertThrows(IllegalArgumentException.class,
                 () -> new StatisticModifyEvent(testPlayer(), key("set"), setStringStat(),
                         new LinkedHashSet<>(), "not a set", ModificationType.SET));
     }
 
-    // ── Handler list ──────────────────────────────────────────────────
+    @SuppressWarnings("unchecked")
+    @Test
+    @DisplayName("Given SET_STRING type, when constructing with Set containing non-String elements, then throws IllegalArgumentException")
+    void validateValueType_rejectsNonStringSet_whenSetStringType() {
+        Set rawSet = Set.of(1, 2, 3);
+        assertThrows(IllegalArgumentException.class,
+                () -> new StatisticModifyEvent(testPlayer(), key("set"), setStringStat(),
+                        new LinkedHashSet<>(), rawSet, ModificationType.SET));
+    }
 
     @Test
     @DisplayName("Given an event, when getting handler list, then returns non-null handler list")
-    void getHandlers_returnsNonNull() {
+    void getHandlers_matchesStaticList_whenCalled() {
         StatisticModifyEvent event = new StatisticModifyEvent(
                 testPlayer(), key("int"), intStat(), 0, 1, ModificationType.SET);
         assertSame(StatisticModifyEvent.getHandlerList(), event.getHandlers());
     }
 
-    // ── Exception message content ─────────────────────────────────────
-
     @Test
     @DisplayName("Given type mismatch, when constructing, then exception message contains type and class info")
-    void validateValueType_exceptionMessage_containsTypeInfo() {
+    void validateValueType_exceptionContainsTypeInfo_whenTypeMismatch() {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> new StatisticModifyEvent(testPlayer(), key("int"), intStat(), 0, "bad", ModificationType.SET));
         assertTrue(ex.getMessage().contains("INT"));
         assertTrue(ex.getMessage().contains("String"));
     }
-
-    // ── All ModificationType values ───────────────────────────────────
 
     static Stream<Arguments> allModificationTypes() {
         return Stream.of(ModificationType.values()).map(Arguments::of);
@@ -241,7 +248,7 @@ class StatisticModifyEventTest {
     @ParameterizedTest
     @MethodSource("allModificationTypes")
     @DisplayName("Given each ModificationType, when constructing event, then getModificationType returns it")
-    void constructor_acceptsAllModificationTypes(ModificationType type) {
+    void constructor_preservesModificationType_whenAnyTypeProvided(ModificationType type) {
         StatisticModifyEvent event = new StatisticModifyEvent(
                 testPlayer(), key("int"), intStat(), 0, 1, type);
         assertEquals(type, event.getModificationType());

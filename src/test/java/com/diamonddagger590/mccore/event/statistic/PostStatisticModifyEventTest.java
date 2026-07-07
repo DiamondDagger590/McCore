@@ -38,7 +38,7 @@ class PostStatisticModifyEventTest {
 
     @Test
     @DisplayName("Given valid arguments, when constructing, then getCorePlayer returns the player")
-    void getCorePlayer_returnsExpectedPlayer() {
+    void getCorePlayer_returnsExpectedPlayer_whenConstructed() {
         CorePlayer player = testPlayer();
         PostStatisticModifyEvent event = new PostStatisticModifyEvent(
                 player, key("int"), intStat(), 0, 42, ModificationType.SET);
@@ -47,7 +47,7 @@ class PostStatisticModifyEventTest {
 
     @Test
     @DisplayName("Given valid arguments, when constructing, then getStatisticKey returns the key")
-    void getStatisticKey_returnsExpectedKey() {
+    void getStatisticKey_returnsExpectedKey_whenConstructed() {
         NamespacedKey statKey = key("int");
         PostStatisticModifyEvent event = new PostStatisticModifyEvent(
                 testPlayer(), statKey, intStat(), 0, 42, ModificationType.SET);
@@ -56,7 +56,7 @@ class PostStatisticModifyEventTest {
 
     @Test
     @DisplayName("Given valid arguments, when constructing, then getStatistic returns the statistic definition")
-    void getStatistic_returnsExpectedStatistic() {
+    void getStatistic_returnsExpectedStatistic_whenConstructed() {
         Statistic stat = intStat();
         PostStatisticModifyEvent event = new PostStatisticModifyEvent(
                 testPlayer(), key("int"), stat, 0, 42, ModificationType.SET);
@@ -65,7 +65,7 @@ class PostStatisticModifyEventTest {
 
     @Test
     @DisplayName("Given valid arguments, when constructing, then getOldValue returns the old value")
-    void getOldValue_returnsExpectedOldValue() {
+    void getOldValue_returnsExpectedOldValue_whenConstructed() {
         PostStatisticModifyEvent event = new PostStatisticModifyEvent(
                 testPlayer(), key("int"), intStat(), 10, 42, ModificationType.SET);
         assertEquals(10, event.getOldValue());
@@ -73,7 +73,7 @@ class PostStatisticModifyEventTest {
 
     @Test
     @DisplayName("Given valid arguments, when constructing, then getNewValue returns the new value")
-    void getNewValue_returnsExpectedNewValue() {
+    void getNewValue_returnsExpectedNewValue_whenConstructed() {
         PostStatisticModifyEvent event = new PostStatisticModifyEvent(
                 testPlayer(), key("int"), intStat(), 0, 42, ModificationType.SET);
         assertEquals(42, event.getNewValue());
@@ -81,7 +81,7 @@ class PostStatisticModifyEventTest {
 
     @Test
     @DisplayName("Given valid arguments, when constructing, then getModificationType returns the type")
-    void getModificationType_returnsExpectedType() {
+    void getModificationType_returnsExpectedType_whenConstructed() {
         PostStatisticModifyEvent event = new PostStatisticModifyEvent(
                 testPlayer(), key("int"), intStat(), 0, 42, ModificationType.INCREMENT);
         assertEquals(ModificationType.INCREMENT, event.getModificationType());
@@ -89,7 +89,7 @@ class PostStatisticModifyEventTest {
 
     @Test
     @DisplayName("Given an event, when getting handler list, then static and instance lists match")
-    void getHandlers_matchesStaticHandlerList() {
+    void getHandlers_matchesStaticHandlerList_whenCalled() {
         PostStatisticModifyEvent event = new PostStatisticModifyEvent(
                 testPlayer(), key("int"), intStat(), 0, 42, ModificationType.SET);
         assertSame(PostStatisticModifyEvent.getHandlerList(), event.getHandlers());
@@ -97,7 +97,7 @@ class PostStatisticModifyEventTest {
 
     @Test
     @DisplayName("Given different modification types, when constructing events, then each returns correct type")
-    void constructor_preservesAllModificationTypes() {
+    void constructor_preservesAllModificationTypes_whenEachTypeUsed() {
         for (ModificationType type : ModificationType.values()) {
             PostStatisticModifyEvent event = new PostStatisticModifyEvent(
                     testPlayer(), key("int"), intStat(), 0, 1, type);
@@ -107,7 +107,7 @@ class PostStatisticModifyEventTest {
 
     @Test
     @DisplayName("Given Instant values, when constructing TIMESTAMP event, then values are preserved")
-    void constructor_preservesInstantValues() {
+    void constructor_preservesInstantValues_whenTimestampType() {
         Instant oldVal = Instant.parse("2024-01-01T00:00:00Z");
         Instant newVal = Instant.parse("2024-06-15T12:30:00Z");
         Statistic stat = new SimpleStatistic(key("ts"), StatisticType.TIMESTAMP, Instant.EPOCH, "TS", "Timestamp");

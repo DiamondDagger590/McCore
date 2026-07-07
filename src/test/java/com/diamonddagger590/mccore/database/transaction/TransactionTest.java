@@ -10,6 +10,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TransactionTest {
@@ -58,11 +59,9 @@ class TransactionTest {
         ) instanceof PreparedStatement ps ? ps : null;
     }
 
-    // ── Constructor ───────────────────────────────────────────────────
-
     @Test
     @DisplayName("Given a connection, when constructing with single-arg constructor, then getPreparedStatements is empty")
-    void constructor_singleArg_startsWithEmptyStatements() {
+    void constructor_startsWithEmptyStatements_whenSingleArgUsed() {
         Connection conn = mockConnection();
         TestTransaction tx = new TestTransaction(conn);
         assertTrue(tx.getPreparedStatements().isEmpty());
@@ -71,7 +70,7 @@ class TransactionTest {
 
     @Test
     @DisplayName("Given a connection and statement list, when constructing, then getPreparedStatements contains them")
-    void constructor_twoArg_populatesStatements() {
+    void constructor_populatesStatements_whenTwoArgUsed() {
         Connection conn = mockConnection();
         PreparedStatement stmt1 = mockStatement("stmt1");
         PreparedStatement stmt2 = mockStatement("stmt2");
@@ -83,11 +82,9 @@ class TransactionTest {
         assertSame(stmt2, tx.getPreparedStatements().get(1));
     }
 
-    // ── add ───────────────────────────────────────────────────────────
-
     @Test
     @DisplayName("Given an empty transaction, when adding a statement, then getPreparedStatements contains it")
-    void add_appendsStatement() {
+    void add_appendsStatement_whenStatementProvided() {
         TestTransaction tx = new TestTransaction(mockConnection());
         PreparedStatement stmt = mockStatement("stmt");
         tx.add(stmt);
@@ -97,7 +94,7 @@ class TransactionTest {
 
     @Test
     @DisplayName("Given a transaction with statements, when adding more, then all are present in order")
-    void add_preservesOrder() {
+    void add_preservesOrder_whenMultipleStatementsAdded() {
         TestTransaction tx = new TestTransaction(mockConnection());
         PreparedStatement first = mockStatement("first");
         PreparedStatement second = mockStatement("second");
@@ -113,11 +110,9 @@ class TransactionTest {
         assertSame(third, result.get(2));
     }
 
-    // ── addAll ────────────────────────────────────────────────────────
-
     @Test
     @DisplayName("Given an empty transaction, when addAll with multiple statements, then all are present")
-    void addAll_appendsAllStatements() {
+    void addAll_appendsAllStatements_whenMultipleProvided() {
         TestTransaction tx = new TestTransaction(mockConnection());
         PreparedStatement stmt1 = mockStatement("stmt1");
         PreparedStatement stmt2 = mockStatement("stmt2");
@@ -130,7 +125,7 @@ class TransactionTest {
 
     @Test
     @DisplayName("Given a transaction with existing statements, when addAll, then new statements are appended")
-    void addAll_appendsToExisting() {
+    void addAll_appendsToExisting_whenStatementsAlreadyPresent() {
         PreparedStatement existing = mockStatement("existing");
         TestTransaction tx = new TestTransaction(mockConnection(), new ArrayList<>(List.of(existing)));
         PreparedStatement added = mockStatement("added");
@@ -143,43 +138,33 @@ class TransactionTest {
 
     @Test
     @DisplayName("Given a transaction, when addAll with empty list, then no statements are added")
-    void addAll_emptyList_noChange() {
+    void addAll_doesNotChange_whenEmptyListProvided() {
         TestTransaction tx = new TestTransaction(mockConnection());
         tx.addAll(List.of());
         assertTrue(tx.getPreparedStatements().isEmpty());
     }
 
-    // ── getPreparedStatements immutability ─────────────────────────────
-
     @Test
-    @DisplayName("Given a transaction, when modifying returned list, then internal list is unchanged")
-    void getPreparedStatements_returnsImmutableCopy() {
+    @DisplayName("Given a transaction with statements, when modifying returned list, then throws UnsupportedOperationException")
+    void getPreparedStatements_throwsOnMutation_whenReturnedListModified() {
         TestTransaction tx = new TestTransaction(mockConnection());
         tx.add(mockStatement("stmt"));
         List<PreparedStatement> returned = tx.getPreparedStatements();
-        try {
-            returned.add(mockStatement("extra"));
-        } catch (UnsupportedOperationException ignored) {
-            // ImmutableList throws on mutation — expected behavior
-        }
+        assertThrows(UnsupportedOperationException.class, () -> returned.add(mockStatement("extra")));
         assertEquals(1, tx.getPreparedStatements().size());
     }
 
-    // ── getConnection ─────────────────────────────────────────────────
-
     @Test
     @DisplayName("Given a transaction, when getting connection, then returns same connection passed to constructor")
-    void getConnection_returnsSameInstance() {
+    void getConnection_returnsSameInstance_whenCalled() {
         Connection conn = mockConnection();
         TestTransaction tx = new TestTransaction(conn);
         assertSame(conn, tx.getConnection());
     }
 
-    // ── executeTransaction ────────────────────────────────────────────
-
     @Test
     @DisplayName("Given a test transaction, when executeTransaction is called, then it runs")
-    void executeTransaction_delegatesToSubclass() {
+    void executeTransaction_delegatesToSubclass_whenCalled() {
         TestTransaction tx = new TestTransaction(mockConnection());
         tx.executeTransaction();
         assertTrue(tx.wasExecuted());

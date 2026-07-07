@@ -8,7 +8,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -30,7 +29,7 @@ class RegistryAccessTest {
 
     @Test
     @DisplayName("Given registryAccess called multiple times, when comparing references, then returns same singleton instance")
-    void registryAccess_returnsSameSingleton() {
+    void registryAccess_returnsSameSingleton_whenCalledMultipleTimes() {
         RegistryAccess first = RegistryAccess.registryAccess();
         RegistryAccess second = RegistryAccess.registryAccess();
         assertNotNull(first);
@@ -102,8 +101,15 @@ class RegistryAccessTest {
     }
 
     @Test
+    @DisplayName("Given only ManagerRegistry registered, when checking PluginHookRegistry registered, then returns false")
+    void registered_returnsFalse_whenDifferentTypeChecked() {
+        RegistryAccess.registryAccess().register(new ManagerRegistry());
+        assertFalse(RegistryAccess.registryAccess().registered(new PluginHookRegistry()));
+    }
+
+    @Test
     @DisplayName("Given an exception message for duplicate registration, when thrown, then message contains class name")
-    void register_exceptionMessage_containsClassName() {
+    void register_exceptionMessage_containsClassName_whenDuplicate() {
         RegistryAccess.registryAccess().register(new ManagerRegistry());
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> RegistryAccess.registryAccess().register(new ManagerRegistry()));
