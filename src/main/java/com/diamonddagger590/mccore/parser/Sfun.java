@@ -183,7 +183,7 @@ public class Sfun {
             ans = Double.NaN;
         }
         else if (Double.isInfinite(x)) {
-            ans = x;
+            ans = Double.POSITIVE_INFINITY;
         }
         else if (y < 94906265.62) {
             // 94906265.62 = 1.0/Math.sqrt(EPSILON_SMALL)
