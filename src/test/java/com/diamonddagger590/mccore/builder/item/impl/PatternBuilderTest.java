@@ -61,11 +61,18 @@ class PatternBuilderTest {
     }
 
     @Test
-    @DisplayName("Given a PatternBuilder, when addPattern is called with invalid pattern string, then returns builder without adding")
-    void addPattern_withInvalidPatternString_returnsWithoutAdding() {
-        PatternBuilder builder = new PatternBuilder(new ItemStack(Material.WHITE_BANNER));
+    @DisplayName("Given a PatternBuilder, when addPattern is called with invalid pattern string, then no pattern is added")
+    void addPattern_withInvalidPatternString_noPatternAdded() {
+        ItemStack itemStack = new ItemStack(Material.WHITE_BANNER);
+        PatternBuilder builder = new PatternBuilder(itemStack);
+
         PatternBuilder result = builder.addPattern("nonexistent_pattern", "red");
         assertSame(builder, result);
+
+        result.build();
+        BannerPatternLayers layers = itemStack.getData(DataComponentTypes.BANNER_PATTERNS);
+        assertNotNull(layers);
+        assertEquals(0, layers.patterns().size());
     }
 
     @Test

@@ -66,12 +66,20 @@ class FireworkBuilderTest {
     }
 
     @Test
-    @DisplayName("Given a FireworkBuilder, when addEffect with null colors, then does not add colors")
-    void addEffect_withNullColors_doesNotThrow() {
-        FireworkBuilder builder = new FireworkBuilder(new ItemStack(Material.FIREWORK_ROCKET));
-        FireworkBuilder result = builder.addEffect(false, false, FireworkEffect.Type.BALL, null, null);
+    @DisplayName("Given a FireworkBuilder, when addEffect with null colors, then effect is added without colors")
+    void addEffect_withNullColors_addsEffectWithoutColors() {
+        ItemStack itemStack = new ItemStack(Material.FIREWORK_ROCKET);
+        FireworkBuilder builder = new FireworkBuilder(itemStack);
 
-        assertSame(builder, result);
+        builder.addEffect(false, false, FireworkEffect.Type.BALL, null, null).build();
+
+        Fireworks fireworks = itemStack.getData(DataComponentTypes.FIREWORKS);
+        assertNotNull(fireworks);
+        assertEquals(1, fireworks.effects().size());
+        FireworkEffect effect = fireworks.effects().get(0);
+        assertEquals(FireworkEffect.Type.BALL, effect.getType());
+        assertTrue(effect.getColors().isEmpty());
+        assertTrue(effect.getFadeColors().isEmpty());
     }
 
     @Test

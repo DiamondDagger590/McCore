@@ -4,6 +4,7 @@ import com.diamonddagger590.mccore.CorePlugin;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.PotionContents;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
@@ -141,14 +142,21 @@ class PotionBuilderTest {
     }
 
     @Test
-    @DisplayName("Given a PotionBuilder for lingering potion, when build is called, then data is set correctly")
-    void build_lingeringPotion_setsDataCorrectly() {
+    @DisplayName("Given a PotionBuilder for lingering potion, when build is called, then effect data is set correctly")
+    void build_lingeringPotion_setsEffectDataCorrectly() {
         ItemStack itemStack = new ItemStack(Material.LINGERING_POTION);
         PotionBuilder builder = new PotionBuilder(itemStack);
 
         builder.withPotionEffect(PotionEffectType.SLOWNESS, 400, 1).build();
 
         assertTrue(itemStack.hasData(DataComponentTypes.POTION_CONTENTS));
+        PotionContents contents = itemStack.getData(DataComponentTypes.POTION_CONTENTS);
+        assertNotNull(contents);
+        List<PotionEffect> effects = contents.customEffects();
+        assertEquals(1, effects.size());
+        assertEquals(PotionEffectType.SLOWNESS, effects.get(0).getType());
+        assertEquals(400, effects.get(0).getDuration());
+        assertEquals(1, effects.get(0).getAmplifier());
     }
 
     @Test
@@ -168,16 +176,21 @@ class PotionBuilderTest {
     }
 
     @Test
-    @DisplayName("Given a PotionBuilder, when setColor is called with a named color, then returns same builder")
-    void setColor_namedColor_returnsSameBuilder() {
-        PotionBuilder builder = new PotionBuilder(new ItemStack(Material.POTION));
-        PotionBuilder result = builder.setColor("RED");
-        assertSame(builder, result);
+    @DisplayName("Given a PotionBuilder, when setColor is called with a named color, then built item has custom color")
+    void setColor_namedColor_setsCustomColor() {
+        ItemStack itemStack = new ItemStack(Material.POTION);
+        PotionBuilder builder = new PotionBuilder(itemStack);
+
+        builder.setColor("RED").build();
+
+        PotionContents contents = itemStack.getData(DataComponentTypes.POTION_CONTENTS);
+        assertNotNull(contents);
+        assertNotNull(contents.customColor());
     }
 
     @Test
-    @DisplayName("Given a PotionBuilder, when setColor is called with RGB, then built item has custom color")
-    void setColor_rgb_setsCustomColor() {
+    @DisplayName("Given a PotionBuilder, when setColor is called with unrecognized value, then built item uses white as fallback")
+    void setColor_unrecognizedValue_fallsBackToWhite() {
         ItemStack itemStack = new ItemStack(Material.POTION);
         PotionBuilder builder = new PotionBuilder(itemStack);
 
@@ -185,6 +198,9 @@ class PotionBuilderTest {
 
         PotionContents contents = itemStack.getData(DataComponentTypes.POTION_CONTENTS);
         assertNotNull(contents);
+        Color color = contents.customColor();
+        assertNotNull(color);
+        assertEquals(Color.WHITE, color);
     }
 
     @Test
