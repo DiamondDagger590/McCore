@@ -70,6 +70,9 @@ dependencies {
     testImplementation("org.mockito:mockito-junit-jupiter:$mockitoVersion")
     testFixturesApi("org.mockito:mockito-core:$mockitoVersion")
 
+    val sqliteVersion = "3.49.1.0"
+    testImplementation("org.xerial:sqlite-jdbc:$sqliteVersion")
+
     val paperVersion = "1.21.11-R0.1-SNAPSHOT"
     compileOnlyApi("io.papermc.paper:paper-api:$paperVersion")
     testImplementation("io.papermc.paper:paper-api:$paperVersion")
