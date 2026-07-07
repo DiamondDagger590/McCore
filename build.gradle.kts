@@ -68,6 +68,7 @@ dependencies {
     val mockitoVersion = "5.14.2"
     testImplementation("org.mockito:mockito-core:$mockitoVersion")
     testImplementation("org.mockito:mockito-junit-jupiter:$mockitoVersion")
+    testFixturesApi("org.mockito:mockito-core:$mockitoVersion")
 
     val paperVersion = "1.21.11-R0.1-SNAPSHOT"
     compileOnlyApi("io.papermc.paper:paper-api:$paperVersion")
