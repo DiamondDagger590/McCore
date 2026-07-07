@@ -530,6 +530,24 @@ class MethodsTest {
         assertEquals(180.0, Math.abs(result.getYaw()), 0.01);
     }
 
+    @Test
+    @DisplayName("Given target to the left (negative X), when calculating lookAt, then yaw reflects leftward direction")
+    void lookAt_setsYaw_whenTargetIsOnNegativeX() {
+        org.bukkit.Location origin = new org.bukkit.Location(null, 0, 0, 0);
+        org.bukkit.Location target = new org.bukkit.Location(null, -10, 0, 0);
+        org.bukkit.Location result = Methods.lookAt(origin, target);
+        assertEquals(270.0, Math.abs(result.getYaw()), 0.01);
+    }
+
+    @Test
+    @DisplayName("Given target above the origin, when calculating lookAt, then pitch is negative")
+    void lookAt_setsNegativePitch_whenTargetIsAbove() {
+        org.bukkit.Location origin = new org.bukkit.Location(null, 0, 0, 0);
+        org.bukkit.Location target = new org.bukkit.Location(null, 10, 10, 0);
+        org.bukkit.Location result = Methods.lookAt(origin, target);
+        assertTrue(result.getPitch() < 0, "Pitch should be negative when looking up");
+    }
+
     // ── getMinecraftKey ─────────────────────────────────────────────────────
 
     @SuppressWarnings("deprecation")
