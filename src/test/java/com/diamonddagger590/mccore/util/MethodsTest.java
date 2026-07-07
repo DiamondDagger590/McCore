@@ -549,8 +549,6 @@ class MethodsTest {
         assertEquals("stone", key.getKey());
     }
 
-    // ── serializeLocation ──────────────────────────────────────────────────
-
     @Test
     @DisplayName("Given a location with a world, when serializing, then returns semicolon-delimited string")
     void serializeLocation_returnsDelimitedString_whenGivenValidLocation() {
@@ -577,8 +575,6 @@ class MethodsTest {
         assertTrue(serialized.startsWith("0.0;0.0;0.0;"));
         assertTrue(serialized.endsWith(worldUuid.toString()));
     }
-
-    // ── deserializeLocation ────────────────────────────────────────────────
 
     @Test
     @DisplayName("Given a valid serialized location with existing world, when deserializing, then returns location")
@@ -625,7 +621,18 @@ class MethodsTest {
         assertThrows(IllegalArgumentException.class, () -> Methods.deserializeLocation("10;20;30;world;extra"));
     }
 
-    // ── lookAt additional coverage ─────────────────────────────────────────
+    @Test
+    @DisplayName("Given a serialized location from serializeLocation, when deserializing, then throws NumberFormatException because serializeLocation uses doubles but deserializeLocation uses Integer.parseInt")
+    void deserializeLocation_throwsNumberFormatException_whenSerializedBySerializeLocation() {
+        World mockWorld = mock(World.class);
+        UUID worldUuid = UUID.randomUUID();
+        when(mockWorld.getUID()).thenReturn(worldUuid);
+
+        Location location = new Location(mockWorld, 100, 64, -200);
+        String serialized = Methods.serializeLocation(location);
+
+        assertThrows(NumberFormatException.class, () -> Methods.deserializeLocation(serialized));
+    }
 
     @Test
     @DisplayName("Given target with negative dx, when calculating lookAt, then yaw is set correctly")
@@ -654,8 +661,6 @@ class MethodsTest {
         Location result = Methods.lookAt(origin, target);
         assertTrue(result.getPitch() < 0, "Pitch should be negative when looking up");
     }
-
-    // ── toRoutePath additional coverage ─────────────────────────────────────
 
     @Test
     @DisplayName("Given no path elements, when creating route path, then returns empty string")

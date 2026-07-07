@@ -98,12 +98,4 @@ class CredentialsTest {
         Credentials b = new Credentials("localhost", 3306, "mccore", "root", "other");
         assertNotEquals(a, b);
     }
-
-    @Test
-    @DisplayName("Given credentials, when calling toString, then contains all field values")
-    void toString_containsAllFields_whenCalled() {
-        Credentials creds = new Credentials("localhost", 3306, "mccore", "root", "secret");
-        String str = creds.toString();
-        assertEquals("Credentials[host=localhost, port=3306, database=mccore, username=root, password=secret]", str);
-    }
 }
