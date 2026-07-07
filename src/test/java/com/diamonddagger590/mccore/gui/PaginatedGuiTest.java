@@ -16,6 +16,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -251,7 +252,6 @@ class PaginatedGuiTest {
         @DisplayName("Given inventory is not built, when refreshGUI, then builds and paints twice (build + refresh)")
         void buildsAndPaints_whenInventoryIsNull() {
             TestPaginatedGui gui = new TestPaginatedGui(player, mockInventory, 3);
-            gui.inventory = null;
 
             gui.refreshGUI();
 
@@ -303,7 +303,7 @@ class PaginatedGuiTest {
         void previousPageSlot_isNotNull() {
             TestPaginatedGui gui = new TestPaginatedGui(player, mockInventory, 3);
 
-            assertSame(gui.getPreviousPageSlot(), gui.getPreviousPageSlot());
+            assertNotNull(gui.getPreviousPageSlot());
         }
 
         @Test
@@ -311,7 +311,7 @@ class PaginatedGuiTest {
         void nextPageSlot_isNotNull() {
             TestPaginatedGui gui = new TestPaginatedGui(player, mockInventory, 3);
 
-            assertSame(gui.getNextPageSlot(), gui.getNextPageSlot());
+            assertNotNull(gui.getNextPageSlot());
         }
     }
 }

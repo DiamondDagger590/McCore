@@ -73,7 +73,7 @@ class PlayerStatisticDAOTest {
 
         @Test
         @DisplayName("Given table already exists, when attemptCreateTable, then returns false")
-        void returnsFlase_whenTableExists() {
+        void returnsFalse_whenTableExists() {
             when(database.tableExists(eq(connection), anyString())).thenReturn(true);
 
             boolean result = PlayerStatisticDAO.attemptCreateTable(connection, database);
@@ -537,9 +537,11 @@ class PlayerStatisticDAOTest {
         private final UUID playerUUID = UUID.randomUUID();
 
         @Test
-        @DisplayName("Given multiple entries, when savePlayerStatistics, then returns list of prepared statements")
+        @DisplayName("Given multiple entries, when savePlayerStatistics, then returns distinct prepared statement per entry")
         void returnsListOfStatements() throws SQLException {
-            when(connection.prepareStatement(anyString())).thenReturn(statement);
+            PreparedStatement statement1 = mock(PreparedStatement.class);
+            PreparedStatement statement2 = mock(PreparedStatement.class);
+            when(connection.prepareStatement(anyString())).thenReturn(statement1, statement2);
             NamespacedKey key1 = NamespacedKey.fromString("test:stat1");
             NamespacedKey key2 = NamespacedKey.fromString("test:stat2");
             Map<NamespacedKey, StatisticEntry> entries = Map.of(
@@ -550,6 +552,9 @@ class PlayerStatisticDAOTest {
             List<PreparedStatement> result = PlayerStatisticDAO.savePlayerStatistics(connection, playerUUID, entries);
 
             assertEquals(2, result.size());
+            assertTrue(result.contains(statement1));
+            assertTrue(result.contains(statement2));
+            verify(connection, org.mockito.Mockito.times(2)).prepareStatement(anyString());
         }
 
         @Test

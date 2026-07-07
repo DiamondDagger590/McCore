@@ -237,8 +237,17 @@ class BaseGuiTest {
 
         @Test
         @DisplayName("Given a slot was registered, when removeSlot, then getSlot returns default")
-        void getSlotReturnsDefault_afterRemoval() {
+        void getSlotReturnsDefault_afterRemoval() throws Exception {
             gui.getInventory();
+            Slot<TestCorePlayer> customSlot = new RestrictedSlot(new HashSet<>());
+            java.lang.reflect.Field slotsField = BaseGui.class.getDeclaredField("slots");
+            slotsField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            java.util.Map<Integer, Slot<TestCorePlayer>> slots =
+                    (java.util.Map<Integer, Slot<TestCorePlayer>>) slotsField.get(gui);
+            slots.put(0, customSlot);
+            assertSame(customSlot, gui.getSlot(0));
+
             gui.removeSlot(0);
 
             assertSame(gui.DEFAULT_SLOT, gui.getSlot(0));
