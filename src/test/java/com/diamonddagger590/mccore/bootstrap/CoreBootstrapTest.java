@@ -16,11 +16,13 @@ import org.bukkit.plugin.PluginManager;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
 import java.util.logging.Logger;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -62,20 +64,23 @@ class CoreBootstrapTest {
     }
 
     @Test
-    void constructor_setsPlugin() {
+    @DisplayName("Given a plugin, when constructing bootstrap, then plugin is set")
+    void constructor_setsPlugin_whenPluginProvided() {
         TestBootstrap bootstrap = new TestBootstrap(mockPlugin);
         assertSame(mockPlugin, bootstrap.getPlugin());
     }
 
     @Test
-    void getPlugin_returnsSameInstance() {
+    @DisplayName("Given a constructed bootstrap, when getPlugin is called multiple times, then returns same instance")
+    void getPlugin_returnsSameInstance_whenCalledMultipleTimes() {
         TestBootstrap bootstrap = new TestBootstrap(mockPlugin);
         assertSame(mockPlugin, bootstrap.getPlugin());
         assertSame(bootstrap.getPlugin(), bootstrap.getPlugin());
     }
 
     @Test
-    void start_testProfile_registersManagerRegistry() {
+    @DisplayName("Given test profile, when start is called, then manager registry is registered")
+    void start_registersManagerRegistry_whenTestProfile() {
         TestBootstrap bootstrap = new TestBootstrap(mockPlugin);
         bootstrap.start(StartupProfile.TEST);
 
@@ -84,7 +89,8 @@ class CoreBootstrapTest {
     }
 
     @Test
-    void start_testProfile_registersPluginHookRegistry() {
+    @DisplayName("Given test profile, when start is called, then plugin hook registry is registered")
+    void start_registersPluginHookRegistry_whenTestProfile() {
         TestBootstrap bootstrap = new TestBootstrap(mockPlugin);
         bootstrap.start(StartupProfile.TEST);
 
@@ -92,7 +98,8 @@ class CoreBootstrapTest {
     }
 
     @Test
-    void start_testProfile_registersPlayerSettingRegistry() {
+    @DisplayName("Given test profile, when start is called, then player setting registry is registered")
+    void start_registersPlayerSettingRegistry_whenTestProfile() {
         TestBootstrap bootstrap = new TestBootstrap(mockPlugin);
         bootstrap.start(StartupProfile.TEST);
 
@@ -100,7 +107,8 @@ class CoreBootstrapTest {
     }
 
     @Test
-    void start_testProfile_registersStatisticRegistry() {
+    @DisplayName("Given test profile, when start is called, then statistic registry is registered")
+    void start_registersStatisticRegistry_whenTestProfile() {
         TestBootstrap bootstrap = new TestBootstrap(mockPlugin);
         bootstrap.start(StartupProfile.TEST);
 
@@ -108,7 +116,8 @@ class CoreBootstrapTest {
     }
 
     @Test
-    void start_testProfile_registersReloadableContentManager() {
+    @DisplayName("Given test profile, when start is called, then reloadable content manager is registered")
+    void start_registersReloadableContentManager_whenTestProfile() {
         TestBootstrap bootstrap = new TestBootstrap(mockPlugin);
         bootstrap.start(StartupProfile.TEST);
 
@@ -117,7 +126,8 @@ class CoreBootstrapTest {
     }
 
     @Test
-    void start_testProfile_registersChatResponseManager() {
+    @DisplayName("Given test profile, when start is called, then chat response manager is registered")
+    void start_registersChatResponseManager_whenTestProfile() {
         TestBootstrap bootstrap = new TestBootstrap(mockPlugin);
         bootstrap.start(StartupProfile.TEST);
 
@@ -126,7 +136,8 @@ class CoreBootstrapTest {
     }
 
     @Test
-    void start_testProfile_doesNotRegisterDriverRegistry() {
+    @DisplayName("Given test profile, when start is called, then driver registry is not registered")
+    void start_doesNotRegisterDriverRegistry_whenTestProfile() {
         TestBootstrap bootstrap = new TestBootstrap(mockPlugin);
         bootstrap.start(StartupProfile.TEST);
 
@@ -134,7 +145,8 @@ class CoreBootstrapTest {
     }
 
     @Test
-    void start_testProfile_registersThreeListeners() {
+    @DisplayName("Given test profile, when start is called, then three listeners are registered")
+    void start_registersThreeListeners_whenTestProfile() {
         TestBootstrap bootstrap = new TestBootstrap(mockPlugin);
         bootstrap.start(StartupProfile.TEST);
 
@@ -142,7 +154,8 @@ class CoreBootstrapTest {
     }
 
     @Test
-    void start_testProfile_checksPluginHooks() {
+    @DisplayName("Given test profile, when start is called, then plugin hooks are checked")
+    void start_checksPluginHooks_whenTestProfile() {
         TestBootstrap bootstrap = new TestBootstrap(mockPlugin);
         bootstrap.start(StartupProfile.TEST);
 
@@ -150,7 +163,8 @@ class CoreBootstrapTest {
     }
 
     @Test
-    void start_prodProfile_registersDriverRegistry() {
+    @DisplayName("Given prod profile, when start is called, then driver registry is registered")
+    void start_registersDriverRegistry_whenProdProfile() {
         TestBootstrap bootstrap = new TestBootstrap(mockPlugin);
         try {
             bootstrap.start(StartupProfile.PROD);
@@ -162,7 +176,8 @@ class CoreBootstrapTest {
     }
 
     @Test
-    void start_prodProfile_registersAllCoreRegistries() {
+    @DisplayName("Given prod profile, when start is called, then all core registries are registered")
+    void start_registersAllCoreRegistries_whenProdProfile() {
         TestBootstrap bootstrap = new TestBootstrap(mockPlugin);
         try {
             bootstrap.start(StartupProfile.PROD);
@@ -178,7 +193,8 @@ class CoreBootstrapTest {
     }
 
     @Test
-    void stop_withDatabaseManager_shutsDownDatabase() {
+    @DisplayName("Given a registered database manager, when stop is called with prod profile, then database is shut down")
+    void stop_shutsDownDatabase_whenDatabaseManagerRegistered() {
         RegistryResetExtension.setupRegistry();
 
         Database mockDatabase = mock(Database.class);
@@ -193,15 +209,17 @@ class CoreBootstrapTest {
     }
 
     @Test
-    void stop_withoutDatabaseManager_noException() {
+    @DisplayName("Given no database manager registered, when stop is called with prod profile, then no exception is thrown")
+    void stop_doesNotThrow_whenNoDatabaseManagerRegistered() {
         RegistryResetExtension.setupRegistry();
 
         TestBootstrap bootstrap = new TestBootstrap(mockPlugin);
-        bootstrap.stop(StartupProfile.PROD);
+        assertDoesNotThrow(() -> bootstrap.stop(StartupProfile.PROD));
     }
 
     @Test
-    void stop_testProfile_withDatabaseManager_shutsDownDatabase() {
+    @DisplayName("Given a registered database manager, when stop is called with test profile, then database is shut down")
+    void stop_shutsDownDatabase_whenTestProfileAndDatabaseManagerRegistered() {
         RegistryResetExtension.setupRegistry();
 
         Database mockDatabase = mock(Database.class);
@@ -216,14 +234,16 @@ class CoreBootstrapTest {
     }
 
     @Test
-    void getTimeProvider_returnsNonNull() {
+    @DisplayName("Given a constructed bootstrap, when getTimeProvider is called, then returns non-null provider")
+    void getTimeProvider_returnsNonNull_whenCalled() {
         TestBootstrap bootstrap = new TestBootstrap(mockPlugin);
         TimeProvider timeProvider = bootstrap.getTimeProvider();
         assertNotNull(timeProvider);
     }
 
     @Test
-    void getTimeProvider_returnsWorkingProvider() {
+    @DisplayName("Given a constructed bootstrap, when calling now on the time provider, then returns current time")
+    void getTimeProvider_returnsCurrentTime_whenNowCalled() {
         TestBootstrap bootstrap = new TestBootstrap(mockPlugin);
         TimeProvider timeProvider = bootstrap.getTimeProvider();
         assertNotNull(timeProvider.now());

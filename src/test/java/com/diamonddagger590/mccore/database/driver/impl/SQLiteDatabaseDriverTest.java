@@ -83,9 +83,9 @@ class SQLiteDatabaseDriverTest {
     }
 
     @Test
-    @DisplayName("Given a SQLiteDatabaseDriver, when tryDriver called, then returns false when JDBC driver is not on classpath")
-    void tryDriver_returnsFalse_whenDriverNotOnClasspath() {
-        assertFalse(driver.tryDriver());
+    @DisplayName("Given a SQLiteDatabaseDriver, when tryDriver called, then returns true when JDBC driver is on classpath")
+    void tryDriver_returnsTrue_whenDriverIsOnClasspath() {
+        assertTrue(driver.tryDriver());
     }
 
     @Test

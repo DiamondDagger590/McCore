@@ -13,6 +13,7 @@ import com.diamonddagger590.mccore.testing.RegistryResetExtension;
 import com.zaxxer.hikari.HikariDataSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
@@ -52,69 +53,80 @@ class DatabaseTest {
     }
 
     @Test
-    void constructor_setsFields() {
+    @DisplayName("Given a new Database, when constructed with a driver type, then fields are set correctly")
+    void constructor_setsFieldsCorrectly_whenCreatedWithDriverType() {
         assertNotNull(database);
         assertEquals(DatabaseDriverType.SQLITE, database.getDatabaseDriverType());
         assertSame(mockPlugin, database.getPlugin());
     }
 
     @Test
-    void getDatabaseDriverType_returnsCorrectType() {
+    @DisplayName("Given a constructed Database, when getting driver type, then returns the configured type")
+    void getDatabaseDriverType_returnsConfiguredType_whenCalled() {
         assertEquals(DatabaseDriverType.SQLITE, database.getDatabaseDriverType());
     }
 
     @Test
-    void getDatabaseExecutorService_returnsNonNull() {
+    @DisplayName("Given a constructed Database, when getting executor service, then returns non-null executor")
+    void getDatabaseExecutorService_returnsNonNull_whenCalled() {
         ThreadPoolExecutor executor = database.getDatabaseExecutorService();
         assertNotNull(executor);
     }
 
     @Test
-    void getDatabaseExecutorService_hasExpectedPoolConfig() {
+    @DisplayName("Given a constructed Database, when getting executor service, then pool config matches expected values")
+    void getDatabaseExecutorService_hasExpectedPoolConfig_whenCalled() {
         ThreadPoolExecutor executor = database.getDatabaseExecutorService();
         assertEquals(1, executor.getCorePoolSize());
         assertEquals(8, executor.getMaximumPoolSize());
     }
 
     @Test
-    void getPlugin_returnsSamePlugin() {
+    @DisplayName("Given a constructed Database, when getting plugin, then returns the same plugin instance")
+    void getPlugin_returnsSameInstance_whenCalled() {
         assertSame(mockPlugin, database.getPlugin());
     }
 
     @Test
-    void getDataSource_returnsNonNull() {
+    @DisplayName("Given a constructed Database, when getting data source, then returns non-null data source")
+    void getDataSource_returnsNonNull_whenCalled() {
         HikariDataSource ds = database.getDataSource();
         assertNotNull(ds);
     }
 
     @Test
-    void getDataSource_returnsSameInstance() {
+    @DisplayName("Given a constructed Database, when getting data source multiple times, then returns the same instance")
+    void getDataSource_returnsSameInstance_whenCalledMultipleTimes() {
         HikariDataSource ds1 = database.getDataSource();
         HikariDataSource ds2 = database.getDataSource();
         assertSame(ds1, ds2);
     }
 
     @Test
-    void blockMainThreadOnStart_defaultsToTrue() {
+    @DisplayName("Given a Database with default implementation, when checking blockMainThreadOnStart, then returns true")
+    void blockMainThreadOnStart_returnsTrue_whenUsingDefaultImplementation() {
         assertTrue(database.blockMainThreadOnStart());
     }
 
     @Test
-    void addCreateTableFunction_addsFunction() {
+    @DisplayName("Given a Database, when adding a create table function, then the function is contained in the list")
+    void addCreateTableFunction_containsFunction_whenFunctionAdded() {
         CreateTableFunction func = mock(CreateTableFunction.class);
         database.addCreateTableFunction(func);
         assertTrue(database.getCreateTableFunctionsForTest().contains(func));
     }
 
     @Test
-    void addUpdateTableFunction_addsFunction() {
+    @DisplayName("Given a Database, when adding an update table function, then the function is contained in the list")
+    void addUpdateTableFunction_containsFunction_whenFunctionAdded() {
         UpdateTableFunction func = mock(UpdateTableFunction.class);
         database.addUpdateTableFunction(func);
         assertTrue(database.getUpdateTableFunctionsForTest().contains(func));
     }
 
     @Test
-    void addCreateTableFunction_multipleAdds() {
+    @DisplayName("Given a Database, when adding multiple create table functions, then all functions are contained in the list")
+    void addCreateTableFunction_containsAllFunctions_whenMultipleFunctionsAdded() {
         CreateTableFunction func1 = mock(CreateTableFunction.class);
         CreateTableFunction func2 = mock(CreateTableFunction.class);
         database.addCreateTableFunction(func1);
@@ -123,7 +135,8 @@ class DatabaseTest {
     }
 
     @Test
-    void addUpdateTableFunction_multipleAdds() {
+    @DisplayName("Given a Database, when adding multiple update table functions, then all functions are contained in the list")
+    void addUpdateTableFunction_containsAllFunctions_whenMultipleFunctionsAdded() {
         UpdateTableFunction func1 = mock(UpdateTableFunction.class);
         UpdateTableFunction func2 = mock(UpdateTableFunction.class);
         database.addUpdateTableFunction(func1);
@@ -132,17 +145,20 @@ class DatabaseTest {
     }
 
     @Test
-    void addCreateTableFunction_initiallyEmpty() {
+    @DisplayName("Given a newly constructed Database, when checking create table functions, then the list is empty")
+    void getCreateTableFunctions_returnsEmptyList_whenNoFunctionsAdded() {
         assertTrue(database.getCreateTableFunctionsForTest().isEmpty());
     }
 
     @Test
-    void addUpdateTableFunction_initiallyEmpty() {
+    @DisplayName("Given a newly constructed Database, when checking update table functions, then the list is empty")
+    void getUpdateTableFunctions_returnsEmptyList_whenNoFunctionsAdded() {
         assertTrue(database.getUpdateTableFunctionsForTest().isEmpty());
     }
 
     @Test
-    void shutdown_closesDataSource() {
+    @DisplayName("Given an active Database, when shutdown is called, then the data source is closed")
+    void shutdown_closesDataSource_whenCalled() {
         HikariDataSource ds = database.getDataSource();
         assertFalse(ds.isClosed());
         database.shutdown();
@@ -150,7 +166,8 @@ class DatabaseTest {
     }
 
     @Test
-    void shutdown_shutsDownExecutor() {
+    @DisplayName("Given an active Database, when shutdown is called, then the executor service is shut down")
+    void shutdown_shutsDownExecutor_whenCalled() {
         ThreadPoolExecutor executor = database.getDatabaseExecutorService();
         assertFalse(executor.isShutdown());
         database.shutdown();
@@ -158,7 +175,8 @@ class DatabaseTest {
     }
 
     @Test
-    void shutdown_alreadyClosedDataSource_noException() {
+    @DisplayName("Given a Database with an already closed data source, when shutdown is called, then no exception is thrown")
+    void shutdown_doesNotThrow_whenDataSourceAlreadyClosed() {
         database.getDataSource().close();
         database.shutdown();
         assertTrue(database.getDataSource().isClosed());
@@ -166,7 +184,8 @@ class DatabaseTest {
     }
 
     @Test
-    void getDriver_whenRegistered_returnsDriver() {
+    @DisplayName("Given a registered driver, when getting the driver, then returns the registered driver instance")
+    void getDriver_returnsRegisteredDriver_whenDriverIsRegistered() {
         RegistryResetExtension.setupRegistry();
         try {
             DriverRegistry driverRegistry = new DriverRegistry();
@@ -187,7 +206,8 @@ class DatabaseTest {
     }
 
     @Test
-    void getDriver_whenNotRegistered_throwsException() {
+    @DisplayName("Given no registered driver, when getting the driver, then throws IllegalArgumentException")
+    void getDriver_throwsIllegalArgumentException_whenDriverNotRegistered() {
         RegistryResetExtension.setupRegistry();
         try {
             DriverRegistry driverRegistry = new DriverRegistry();
@@ -203,12 +223,15 @@ class DatabaseTest {
     }
 
     @Test
-    void getConnection_failure_throwsRuntimeException() {
-        assertThrows(RuntimeException.class, () -> database.getConnection());
+    @DisplayName("Given an unconfigured data source, when getting a connection, then throws IllegalArgumentException requiring jdbcUrl")
+    void getConnection_throwsIllegalArgumentException_whenDataSourceNotConfigured() {
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> database.getConnection());
+        assertTrue(ex.getMessage().contains("jdbcUrl is required"));
     }
 
     @Test
-    void tableExists_whenTablePresent_returnsTrue() throws SQLException {
+    @DisplayName("Given a table that exists in the database, when checking tableExists, then returns true")
+    void tableExists_returnsTrue_whenTableIsPresent() throws SQLException {
         Connection mockConnection = mock(Connection.class);
         DatabaseMetaData mockMetaData = mock(DatabaseMetaData.class);
         ResultSet mockResultSet = mock(ResultSet.class);
@@ -222,7 +245,8 @@ class DatabaseTest {
     }
 
     @Test
-    void tableExists_whenTableAbsent_returnsFalse() throws SQLException {
+    @DisplayName("Given a table that does not exist in the database, when checking tableExists, then returns false")
+    void tableExists_returnsFalse_whenTableIsAbsent() throws SQLException {
         Connection mockConnection = mock(Connection.class);
         DatabaseMetaData mockMetaData = mock(DatabaseMetaData.class);
         ResultSet mockResultSet = mock(ResultSet.class);
@@ -235,7 +259,8 @@ class DatabaseTest {
     }
 
     @Test
-    void tableExists_caseInsensitiveMatch() throws SQLException {
+    @DisplayName("Given a table with different casing, when checking tableExists, then returns true via case-insensitive match")
+    void tableExists_returnsTrue_whenTableNameDiffersByCase() throws SQLException {
         Connection mockConnection = mock(Connection.class);
         DatabaseMetaData mockMetaData = mock(DatabaseMetaData.class);
         ResultSet mockResultSet = mock(ResultSet.class);
@@ -249,7 +274,8 @@ class DatabaseTest {
     }
 
     @Test
-    void tableExists_multipleTablesInDb_findsCorrectOne() throws SQLException {
+    @DisplayName("Given multiple tables in the database, when checking tableExists for an existing table, then returns true")
+    void tableExists_returnsTrue_whenTargetTableExistsAmongMultiple() throws SQLException {
         Connection mockConnection = mock(Connection.class);
         DatabaseMetaData mockMetaData = mock(DatabaseMetaData.class);
         ResultSet mockResultSet = mock(ResultSet.class);
@@ -263,7 +289,8 @@ class DatabaseTest {
     }
 
     @Test
-    void tableExists_multipleTablesInDb_missingReturnsFalse() throws SQLException {
+    @DisplayName("Given multiple tables in the database, when checking tableExists for a missing table, then returns false")
+    void tableExists_returnsFalse_whenTargetTableMissingAmongMultiple() throws SQLException {
         Connection mockConnection = mock(Connection.class);
         DatabaseMetaData mockMetaData = mock(DatabaseMetaData.class);
         ResultSet mockResultSet = mock(ResultSet.class);
@@ -277,7 +304,8 @@ class DatabaseTest {
     }
 
     @Test
-    void tableExists_metaDataThrowsException_returnsFalse() throws SQLException {
+    @DisplayName("Given metadata that throws SQLException, when checking tableExists, then returns false")
+    void tableExists_returnsFalse_whenMetaDataThrowsSQLException() throws SQLException {
         Connection mockConnection = mock(Connection.class);
         when(mockConnection.getMetaData()).thenThrow(new SQLException("meta error"));
 
@@ -285,7 +313,8 @@ class DatabaseTest {
     }
 
     @Test
-    void tableExists_resultSetThrowsException_returnsFalse() throws SQLException {
+    @DisplayName("Given a result set that throws SQLException, when checking tableExists, then returns false")
+    void tableExists_returnsFalse_whenResultSetThrowsSQLException() throws SQLException {
         Connection mockConnection = mock(Connection.class);
         DatabaseMetaData mockMetaData = mock(DatabaseMetaData.class);
         ResultSet mockResultSet = mock(ResultSet.class);
@@ -298,7 +327,8 @@ class DatabaseTest {
     }
 
     @Test
-    void initializeDatabase_callsDriverMethods() {
+    @DisplayName("Given a registered driver, when initializing the database, then driver methods are invoked")
+    void initializeDatabase_invokesDriverMethods_whenDriverIsRegistered() {
         RegistryResetExtension.setupRegistry();
         try {
             DriverRegistry driverRegistry = new DriverRegistry();
@@ -331,7 +361,8 @@ class DatabaseTest {
     }
 
     @Test
-    void initializeDatabase_setsConnectionDetails() {
+    @DisplayName("Given a registered driver, when initializing the database, then data source is configured with connection details")
+    void initializeDatabase_configuresDataSourceWithConnectionDetails_whenDriverIsRegistered() {
         RegistryResetExtension.setupRegistry();
         try {
             DriverRegistry driverRegistry = new DriverRegistry();

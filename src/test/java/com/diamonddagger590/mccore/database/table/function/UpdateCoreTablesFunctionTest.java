@@ -5,13 +5,13 @@ import com.diamonddagger590.mccore.database.Database;
 import com.diamonddagger590.mccore.database.function.UpdateTableFunction;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -51,20 +51,23 @@ class UpdateCoreTablesFunctionTest {
     }
 
     @Test
-    void getUpdateCoreTablesFunction_returnsNonNull() {
+    @DisplayName("Given no prior invocation, when getting the update core tables function, then returns a non-null instance")
+    void getUpdateCoreTablesFunction_returnsNonNull_whenCalled() {
         UpdateTableFunction function = UpdateCoreTablesFunction.getUpdateCoreTablesFunction();
         assertNotNull(function);
     }
 
     @Test
-    void getUpdateCoreTablesFunction_returnsSameInstance() {
+    @DisplayName("Given the function has already been retrieved, when getting the update core tables function again, then returns the same instance")
+    void getUpdateCoreTablesFunction_returnsSameInstance_whenCalledMultipleTimes() {
         UpdateTableFunction func1 = UpdateCoreTablesFunction.getUpdateCoreTablesFunction();
         UpdateTableFunction func2 = UpdateCoreTablesFunction.getUpdateCoreTablesFunction();
         assertSame(func1, func2);
     }
 
     @Test
-    void updateTables_completesSuccessfully() throws Exception {
+    @DisplayName("Given a valid database with mocked connection, when updating tables, then completes successfully without exception")
+    void updateTables_completesSuccessfully_whenDatabaseIsValid() throws Exception {
         Database mockDatabase = mock(Database.class);
         Connection mockConnection = mock(Connection.class);
         PreparedStatement mockStatement = mock(PreparedStatement.class);
@@ -85,28 +88,5 @@ class UpdateCoreTablesFunctionTest {
         result.get(5, TimeUnit.SECONDS);
         assertTrue(result.isDone());
         assertFalse(result.isCompletedExceptionally());
-    }
-
-    @Test
-    void updateTables_returnsFuture() {
-        Database mockDatabase = mock(Database.class);
-        Connection mockConnection = mock(Connection.class);
-        PreparedStatement mockStatement = mock(PreparedStatement.class);
-        ResultSet mockResultSet = mock(ResultSet.class);
-
-        try {
-            when(mockConnection.prepareStatement(any(String.class))).thenReturn(mockStatement);
-            when(mockStatement.executeQuery()).thenReturn(mockResultSet);
-            when(mockResultSet.next()).thenReturn(false);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
-        when(mockDatabase.getDatabaseExecutorService()).thenReturn(executor);
-        when(mockDatabase.getConnection()).thenReturn(mockConnection);
-
-        UpdateTableFunction function = UpdateCoreTablesFunction.getUpdateCoreTablesFunction();
-        CompletableFuture<Void> result = function.updateTables(mockDatabase);
-        assertNotNull(result);
     }
 }

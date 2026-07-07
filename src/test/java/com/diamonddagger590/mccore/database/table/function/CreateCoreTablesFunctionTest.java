@@ -5,6 +5,7 @@ import com.diamonddagger590.mccore.database.Database;
 import com.diamonddagger590.mccore.database.function.CreateTableFunction;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
@@ -49,20 +50,23 @@ class CreateCoreTablesFunctionTest {
     }
 
     @Test
-    void getCreateCoreTablesFunction_returnsNonNull() {
+    @DisplayName("Given a call to getCreateCoreTablesFunction, when invoked, then returns a non-null function")
+    void getCreateCoreTablesFunction_returnsNonNull_whenInvoked() {
         CreateTableFunction function = CreateCoreTablesFunction.getCreateCoreTablesFunction();
         assertNotNull(function);
     }
 
     @Test
-    void getCreateCoreTablesFunction_returnsSameInstance() {
+    @DisplayName("Given multiple calls to getCreateCoreTablesFunction, when invoked, then returns the same instance")
+    void getCreateCoreTablesFunction_returnsSameInstance_whenCalledMultipleTimes() {
         CreateTableFunction func1 = CreateCoreTablesFunction.getCreateCoreTablesFunction();
         CreateTableFunction func2 = CreateCoreTablesFunction.getCreateCoreTablesFunction();
         assertSame(func1, func2);
     }
 
     @Test
-    void createTables_whenTablesExist_completesSuccessfully() throws Exception {
+    @DisplayName("Given tables already exist, when createTables is called, then completes successfully")
+    void createTables_completesSuccessfully_whenTablesExist() throws Exception {
         Database mockDatabase = mock(Database.class);
         Connection mockConnection = mock(Connection.class);
 
@@ -78,19 +82,5 @@ class CreateCoreTablesFunctionTest {
         result.get(5, TimeUnit.SECONDS);
         assertTrue(result.isDone());
         assertFalse(result.isCompletedExceptionally());
-    }
-
-    @Test
-    void createTables_returnsFuture() {
-        Database mockDatabase = mock(Database.class);
-        Connection mockConnection = mock(Connection.class);
-
-        when(mockDatabase.getDatabaseExecutorService()).thenReturn(executor);
-        when(mockDatabase.getConnection()).thenReturn(mockConnection);
-        when(mockDatabase.tableExists(eq(mockConnection), any(String.class))).thenReturn(true);
-
-        CreateTableFunction function = CreateCoreTablesFunction.getCreateCoreTablesFunction();
-        CompletableFuture<Void> result = function.createTables(mockDatabase);
-        assertNotNull(result);
     }
 }
