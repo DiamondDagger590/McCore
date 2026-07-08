@@ -21,12 +21,15 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -707,6 +710,559 @@ class BaseItemBuilderTest {
             when(newMockItem.getType()).thenReturn(Material.DIAMOND);
             assertSame(builder, builder.setItemStack(newMockItem));
             assertEquals(Material.DIAMOND, builder.getType());
+        }
+    }
+
+    @Nested
+    @DisplayName("Enchantment Glint")
+    class EnchantGlintTests {
+
+        @Test
+        @DisplayName("Given glint enabled without existing data, when setEnchantGlint true, then sets data on item")
+        void setEnchantGlint_setsData_whenEnablingWithoutExistingData() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE)).thenReturn(false);
+
+            assertSame(builder, builder.setEnchantGlint(true));
+
+            verify(mockItem).setData(io.papermc.paper.datacomponent.DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, true);
+        }
+
+        @Test
+        @DisplayName("Given glint already enabled, when setEnchantGlint true, then does not set data again")
+        void setEnchantGlint_doesNotSetData_whenAlreadyEnabled() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE)).thenReturn(true);
+
+            builder.setEnchantGlint(true);
+
+            verify(mockItem, never()).setData(io.papermc.paper.datacomponent.DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, true);
+        }
+
+        @Test
+        @DisplayName("Given glint enabled, when setEnchantGlint false, then removes data")
+        void setEnchantGlint_removesData_whenDisablingWithExistingData() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE)).thenReturn(true);
+
+            builder.setEnchantGlint(false);
+
+            verify(mockItem).unsetData(io.papermc.paper.datacomponent.DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE);
+        }
+
+        @Test
+        @DisplayName("Given glint not set, when setEnchantGlint false, then does nothing")
+        void setEnchantGlint_doesNothing_whenDisablingWithNoExistingData() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE)).thenReturn(false);
+
+            builder.setEnchantGlint(false);
+
+            verify(mockItem, never()).unsetData(io.papermc.paper.datacomponent.DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE);
+        }
+
+        @Test
+        @DisplayName("Given glint set, when removeEnchantGlint, then removes data")
+        void removeEnchantGlint_removesData_whenGlintExists() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE)).thenReturn(true);
+
+            assertSame(builder, builder.removeEnchantGlint());
+
+            verify(mockItem).unsetData(io.papermc.paper.datacomponent.DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE);
+        }
+
+        @Test
+        @DisplayName("Given glint not set, when removeEnchantGlint, then does nothing")
+        void removeEnchantGlint_doesNothing_whenGlintNotSet() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE)).thenReturn(false);
+
+            builder.removeEnchantGlint();
+
+            verify(mockItem, never()).unsetData(io.papermc.paper.datacomponent.DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE);
+        }
+    }
+
+    @Nested
+    @DisplayName("Unbreakable")
+    class UnbreakableTests {
+
+        @Test
+        @DisplayName("Given item is not unbreakable, when setUnbreakable true, then sets data")
+        void setUnbreakable_setsData_whenEnablingOnBreakableItem() {
+            ItemBuilder builder = createBuilder(Material.DIAMOND_SWORD);
+            ItemStack mockItem = getItemStack(builder);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.UNBREAKABLE)).thenReturn(false);
+
+            assertSame(builder, builder.setUnbreakable(true));
+
+            verify(mockItem).setData(io.papermc.paper.datacomponent.DataComponentTypes.UNBREAKABLE);
+        }
+
+        @Test
+        @DisplayName("Given item is already unbreakable, when setUnbreakable true, then does not set again")
+        void setUnbreakable_doesNotSetAgain_whenAlreadyUnbreakable() {
+            ItemBuilder builder = createBuilder(Material.DIAMOND_SWORD);
+            ItemStack mockItem = getItemStack(builder);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.UNBREAKABLE)).thenReturn(true);
+
+            builder.setUnbreakable(true);
+
+            verify(mockItem, never()).setData(io.papermc.paper.datacomponent.DataComponentTypes.UNBREAKABLE);
+        }
+
+        @Test
+        @DisplayName("Given item is unbreakable, when setUnbreakable false, then removes data")
+        void setUnbreakable_removesData_whenDisablingUnbreakableItem() {
+            ItemBuilder builder = createBuilder(Material.DIAMOND_SWORD);
+            ItemStack mockItem = getItemStack(builder);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.UNBREAKABLE)).thenReturn(true);
+
+            builder.setUnbreakable(false);
+
+            verify(mockItem).unsetData(io.papermc.paper.datacomponent.DataComponentTypes.UNBREAKABLE);
+        }
+
+        @Test
+        @DisplayName("Given item is breakable, when setUnbreakable false, then does nothing")
+        void setUnbreakable_doesNothing_whenAlreadyBreakable() {
+            ItemBuilder builder = createBuilder(Material.DIAMOND_SWORD);
+            ItemStack mockItem = getItemStack(builder);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.UNBREAKABLE)).thenReturn(false);
+
+            builder.setUnbreakable(false);
+
+            verify(mockItem, never()).unsetData(io.papermc.paper.datacomponent.DataComponentTypes.UNBREAKABLE);
+        }
+    }
+
+    @Nested
+    @DisplayName("Max Stack Size")
+    class MaxStackSizeTests {
+
+        @Test
+        @DisplayName("Given a positive value, when setMaxStackSize, then sets data on item")
+        void setMaxStackSize_setsData_whenPositiveValue() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+
+            assertSame(builder, builder.setMaxStackSize(16));
+
+            verify(mockItem).setData(io.papermc.paper.datacomponent.DataComponentTypes.MAX_STACK_SIZE, 16);
+        }
+
+        @Test
+        @DisplayName("Given zero value, when setMaxStackSize, then clamps to 1")
+        void setMaxStackSize_clampsToOne_whenZero() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+
+            builder.setMaxStackSize(0);
+
+            verify(mockItem).setData(io.papermc.paper.datacomponent.DataComponentTypes.MAX_STACK_SIZE, 1);
+        }
+
+        @Test
+        @DisplayName("Given negative value, when setMaxStackSize, then clamps to 1")
+        void setMaxStackSize_clampsToOne_whenNegative() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+
+            builder.setMaxStackSize(-5);
+
+            verify(mockItem).setData(io.papermc.paper.datacomponent.DataComponentTypes.MAX_STACK_SIZE, 1);
+        }
+    }
+
+    @Nested
+    @DisplayName("withBase64")
+    class WithBase64Tests {
+
+        @Test
+        @DisplayName("Given empty string, when withBase64, then does not change item and returns builder")
+        void withBase64_doesNothing_whenEmptyString() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack originalItem = getItemStack(builder);
+
+            assertSame(builder, builder.withBase64(""));
+
+            assertSame(originalItem, getItemStack(builder));
+        }
+    }
+
+    @Nested
+    @DisplayName("Tooltip Management")
+    class TooltipTests {
+
+        @Test
+        @DisplayName("Given no tooltip data, when hideToolTip, then sets tooltip data and returns builder")
+        void hideToolTip_setsData_whenNoExistingTooltip() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.TOOLTIP_DISPLAY)).thenReturn(false);
+
+            assertSame(builder, builder.hideToolTip());
+
+            verify(mockItem).setData(
+                    org.mockito.ArgumentMatchers.eq(io.papermc.paper.datacomponent.DataComponentTypes.TOOLTIP_DISPLAY),
+                    org.mockito.ArgumentMatchers.any(io.papermc.paper.datacomponent.item.TooltipDisplay.class)
+            );
+        }
+
+        @Test
+        @DisplayName("Given tooltip already hidden, when hideToolTip, then does not set data again")
+        void hideToolTip_doesNothing_whenTooltipAlreadyHidden() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.TOOLTIP_DISPLAY)).thenReturn(true);
+
+            builder.hideToolTip();
+
+            verify(mockItem, never()).setData(
+                    org.mockito.ArgumentMatchers.eq(io.papermc.paper.datacomponent.DataComponentTypes.TOOLTIP_DISPLAY),
+                    org.mockito.ArgumentMatchers.any(io.papermc.paper.datacomponent.item.TooltipDisplay.class)
+            );
+        }
+
+        @Test
+        @DisplayName("Given tooltip hidden, when showToolTip, then removes tooltip data and returns builder")
+        void showToolTip_removesData_whenTooltipIsHidden() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.TOOLTIP_DISPLAY)).thenReturn(true);
+
+            assertSame(builder, builder.showToolTip());
+
+            verify(mockItem).unsetData(io.papermc.paper.datacomponent.DataComponentTypes.TOOLTIP_DISPLAY);
+        }
+
+        @Test
+        @DisplayName("Given tooltip not hidden, when showToolTip, then does nothing")
+        void showToolTip_doesNothing_whenTooltipNotHidden() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.TOOLTIP_DISPLAY)).thenReturn(false);
+
+            builder.showToolTip();
+
+            verify(mockItem, never()).unsetData(io.papermc.paper.datacomponent.DataComponentTypes.TOOLTIP_DISPLAY);
+        }
+    }
+
+    @Nested
+    @DisplayName("Item Flags by String")
+    class ItemFlagsByStringTests {
+
+        @Test
+        @DisplayName("Given a valid flag string, when addItemFlag with string, then adds the flag")
+        void addItemFlag_addsFlag_whenValidString() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+
+            assertSame(builder, builder.addItemFlag("HIDE_ENCHANTS"));
+
+            List<ItemFlag> storedFlags = getField(BaseItemBuilder.class, builder, "itemFlags");
+            assertEquals(1, storedFlags.size());
+            assertEquals(ItemFlag.HIDE_ENCHANTS, storedFlags.get(0));
+        }
+
+        @Test
+        @DisplayName("Given an invalid flag string, when addItemFlag with string, then no flag is added")
+        void addItemFlag_doesNotAddFlag_whenInvalidString() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+
+            builder.addItemFlag("NOT_A_REAL_FLAG");
+
+            List<ItemFlag> storedFlags = getField(BaseItemBuilder.class, builder, "itemFlags");
+            assertTrue(storedFlags.isEmpty());
+        }
+
+        @Test
+        @DisplayName("Given a list of valid flag strings, when addItemFlags, then adds all flags")
+        void addItemFlags_addsAllFlags_whenValidStrings() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+
+            assertSame(builder, builder.addItemFlags(List.of("HIDE_ENCHANTS", "HIDE_ATTRIBUTES")));
+
+            List<ItemFlag> storedFlags = getField(BaseItemBuilder.class, builder, "itemFlags");
+            assertEquals(2, storedFlags.size());
+            assertTrue(storedFlags.contains(ItemFlag.HIDE_ENCHANTS));
+            assertTrue(storedFlags.contains(ItemFlag.HIDE_ATTRIBUTES));
+        }
+
+        @Test
+        @DisplayName("Given an empty list, when addItemFlags, then no flags are added")
+        void addItemFlags_addsNothing_whenEmptyList() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+
+            builder.addItemFlags(List.of());
+
+            List<ItemFlag> storedFlags = getField(BaseItemBuilder.class, builder, "itemFlags");
+            assertTrue(storedFlags.isEmpty());
+        }
+
+        @Test
+        @DisplayName("Given a list of valid flag strings, when removeItemFlags, then removes matching flags")
+        void removeItemFlags_removesFlags_whenValid() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            builder.addItemFlag(ItemFlag.HIDE_ENCHANTS);
+            builder.addItemFlag(ItemFlag.HIDE_ATTRIBUTES);
+
+            assertSame(builder, builder.removeItemFlags(List.of("HIDE_ENCHANTS")));
+
+            List<ItemFlag> storedFlags = getField(BaseItemBuilder.class, builder, "itemFlags");
+            assertEquals(1, storedFlags.size());
+            assertEquals(ItemFlag.HIDE_ATTRIBUTES, storedFlags.get(0));
+        }
+
+        @Test
+        @DisplayName("Given a valid flag string, when removeItemFlag by string, then removes the flag")
+        void removeItemFlag_removesFlag_whenValidString() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            builder.addItemFlag(ItemFlag.HIDE_ENCHANTS);
+
+            assertSame(builder, builder.removeItemFlag("HIDE_ENCHANTS"));
+
+            List<ItemFlag> storedFlags = getField(BaseItemBuilder.class, builder, "itemFlags");
+            assertTrue(storedFlags.isEmpty());
+        }
+
+        @Test
+        @DisplayName("Given an invalid flag string, when removeItemFlag by string, then no flag is removed")
+        void removeItemFlag_doesNothing_whenInvalidString() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            builder.addItemFlag(ItemFlag.HIDE_ENCHANTS);
+
+            builder.removeItemFlag("NOT_A_REAL_FLAG");
+
+            List<ItemFlag> storedFlags = getField(BaseItemBuilder.class, builder, "itemFlags");
+            assertEquals(1, storedFlags.size());
+        }
+    }
+
+    @Nested
+    @DisplayName("Custom Model Data")
+    class CustomModelDataTests {
+
+        @Test
+        @DisplayName("Given -1, when setCustomModelData, then does not set data and returns builder")
+        void setCustomModelData_doesNothing_whenNegativeOne() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+
+            assertSame(builder, builder.setCustomModelData(-1));
+
+            verify(mockItem, never()).setData(
+                    org.mockito.ArgumentMatchers.eq(io.papermc.paper.datacomponent.DataComponentTypes.CUSTOM_MODEL_DATA),
+                    org.mockito.ArgumentMatchers.any(io.papermc.paper.datacomponent.item.CustomModelData.class)
+            );
+        }
+
+        @Test
+        @DisplayName("Given a positive value, when setCustomModelData, then sets data on item")
+        void setCustomModelData_setsData_whenPositiveValue() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+
+            builder.setCustomModelData(42);
+
+            verify(mockItem).setData(
+                    org.mockito.ArgumentMatchers.eq(io.papermc.paper.datacomponent.DataComponentTypes.CUSTOM_MODEL_DATA),
+                    org.mockito.ArgumentMatchers.any(io.papermc.paper.datacomponent.item.CustomModelData.class)
+            );
+        }
+
+        @Test
+        @DisplayName("Given zero, when setCustomModelData, then sets data on item")
+        void setCustomModelData_setsData_whenZero() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+
+            builder.setCustomModelData(0);
+
+            verify(mockItem).setData(
+                    org.mockito.ArgumentMatchers.eq(io.papermc.paper.datacomponent.DataComponentTypes.CUSTOM_MODEL_DATA),
+                    org.mockito.ArgumentMatchers.any(io.papermc.paper.datacomponent.item.CustomModelData.class)
+            );
+        }
+    }
+
+    @Nested
+    @DisplayName("Item Model")
+    class ItemModelTests {
+
+        @Test
+        @DisplayName("Given empty string, when setItemModel, then does not set data and returns builder")
+        void setItemModel_doesNothing_whenEmptyString() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+
+            assertSame(builder, builder.setItemModel(""));
+
+            verify(mockItem, never()).setData(
+                    org.mockito.ArgumentMatchers.eq(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL),
+                    org.mockito.ArgumentMatchers.any(org.bukkit.NamespacedKey.class)
+            );
+        }
+
+        @Test
+        @DisplayName("Given a valid model name, when setItemModel with single arg, then sets data")
+        void setItemModel_setsData_whenValidName() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+
+            builder.setItemModel("custom_sword");
+
+            verify(mockItem).setData(
+                    org.mockito.ArgumentMatchers.eq(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL),
+                    org.mockito.ArgumentMatchers.eq(org.bukkit.NamespacedKey.minecraft("custom_sword"))
+            );
+        }
+
+        @Test
+        @DisplayName("Given empty item model, when setItemModel with namespace, then does not set data")
+        void setItemModel_doesNothing_whenEmptyModelWithNamespace() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+
+            assertSame(builder, builder.setItemModel("myplugin", ""));
+
+            verify(mockItem, never()).setData(
+                    org.mockito.ArgumentMatchers.eq(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL),
+                    org.mockito.ArgumentMatchers.any(org.bukkit.NamespacedKey.class)
+            );
+        }
+
+        @Test
+        @DisplayName("Given valid namespace and model, when setItemModel with two args, then sets data")
+        void setItemModel_setsData_whenValidNamespaceAndModel() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+
+            builder.setItemModel("myplugin", "custom_axe");
+
+            verify(mockItem).setData(
+                    org.mockito.ArgumentMatchers.eq(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL),
+                    org.mockito.ArgumentMatchers.eq(new org.bukkit.NamespacedKey("myplugin", "custom_axe"))
+            );
+        }
+    }
+
+    @Nested
+    @DisplayName("Inventory Methods")
+    class InventoryMethodTests {
+
+        @Test
+        @DisplayName("Given an inventory and slot, when setItemToInventory with null audience, then sets item at slot")
+        void setItemToInventory_setsItem_whenNullAudience() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+            ItemStack clonedItem = mock(ItemStack.class);
+            when(mockItem.clone()).thenReturn(clonedItem);
+            org.bukkit.inventory.Inventory mockInventory = mock(org.bukkit.inventory.Inventory.class);
+
+            builder.setItemToInventory(mockInventory, 5);
+
+            verify(mockInventory).setItem(org.mockito.ArgumentMatchers.eq(5), org.mockito.ArgumentMatchers.any(ItemStack.class));
+        }
+
+        @Test
+        @DisplayName("Given an inventory, when addItemToInventory with null audience, then adds item to inventory")
+        void addItemToInventory_addsItem_whenNullAudience() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+            ItemStack clonedItem = mock(ItemStack.class);
+            when(mockItem.clone()).thenReturn(clonedItem);
+            org.bukkit.inventory.Inventory mockInventory = mock(org.bukkit.inventory.Inventory.class);
+
+            builder.addItemToInventory(mockInventory);
+
+            verify(mockInventory).addItem(org.mockito.ArgumentMatchers.any(ItemStack.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("Trim")
+    class TrimTests {
+
+        @Test
+        @DisplayName("Given empty pattern string, when setTrim with strings, then does not set data")
+        void setTrim_doesNothing_whenPatternIsEmpty() {
+            ItemBuilder builder = createBuilder(Material.DIAMOND_CHESTPLATE);
+            ItemStack mockItem = getItemStack(builder);
+
+            assertSame(builder, builder.setTrim("", "iron"));
+
+            verify(mockItem, never()).setData(
+                    org.mockito.ArgumentMatchers.eq(io.papermc.paper.datacomponent.DataComponentTypes.TRIM),
+                    org.mockito.ArgumentMatchers.any(io.papermc.paper.datacomponent.item.ItemArmorTrim.class)
+            );
+        }
+
+        @Test
+        @DisplayName("Given empty material string, when setTrim with strings, then does not set data")
+        void setTrim_doesNothing_whenMaterialIsEmpty() {
+            ItemBuilder builder = createBuilder(Material.DIAMOND_CHESTPLATE);
+            ItemStack mockItem = getItemStack(builder);
+
+            assertSame(builder, builder.setTrim("sentry", ""));
+
+            verify(mockItem, never()).setData(
+                    org.mockito.ArgumentMatchers.eq(io.papermc.paper.datacomponent.DataComponentTypes.TRIM),
+                    org.mockito.ArgumentMatchers.any(io.papermc.paper.datacomponent.item.ItemArmorTrim.class)
+            );
+        }
+    }
+
+    @Nested
+    @DisplayName("Display Name with Component Clearing")
+    class DisplayNameComponentTests {
+
+        @Test
+        @DisplayName("Given a builder with displayNameComponent, when setDisplayName is called, then displayNameComponent is cleared")
+        void setDisplayName_clearsComponent_whenComponentWasSet() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            setField(BaseItemBuilder.class, builder, "displayNameComponent", Component.text("Old Component"));
+
+            builder.setDisplayName("New Name", true);
+
+            Component storedComponent = getField(BaseItemBuilder.class, builder, "displayNameComponent");
+            assertNull(storedComponent);
+            String storedName = getField(BaseItemBuilder.class, builder, "displayName");
+            assertEquals("New Name", storedName);
+        }
+
+        @Test
+        @DisplayName("Given a builder, when setDisplayName with staticItemName false, then stores correctly")
+        void setDisplayName_storesStaticFlag_whenExplicitlySet() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            builder.setDisplayName("Dynamic", false);
+
+            boolean staticFlag = getField(BaseItemBuilder.class, builder, "staticItemName");
+            assertFalse(staticFlag);
+        }
+    }
+
+    @Nested
+    @DisplayName("Enchantment Removal")
+    class EnchantmentRemovalTests {
+
+        @Test
+        @DisplayName("Given a builder, when removeEnchantment with Enchantment, then delegates to item stack")
+        void removeEnchantment_delegatesToItemStack_whenEnchantmentProvided() {
+            ItemBuilder builder = createBuilder(Material.DIAMOND_SWORD);
+            ItemStack mockItem = getItemStack(builder);
+            org.bukkit.enchantments.Enchantment mockEnchant = mock(org.bukkit.enchantments.Enchantment.class);
+
+            assertSame(builder, builder.removeEnchantment(mockEnchant));
+
+            verify(mockItem).removeEnchantment(mockEnchant);
         }
     }
 }
