@@ -38,7 +38,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
@@ -184,6 +186,7 @@ class PlayerSettingDAOTest {
             PlayerSettingDAO.updateTable(mockConnection);
 
             verify(updateStatement).setString(1, "player_settings");
+            verify(updateStatement).setTime(eq(2), any(java.sql.Time.class));
             verify(updateStatement).setInt(3, 1);
             verify(updateStatement).executeUpdate();
         }
