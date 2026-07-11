@@ -25,6 +25,7 @@ import java.util.logging.Logger;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -94,6 +95,7 @@ class DatabaseAdditionalTest {
             Connection conn2 = database.getConnection();
             assertNotNull(conn1);
             assertNotNull(conn2);
+            assertNotSame(conn1, conn2);
             conn1.close();
             conn2.close();
         } finally {

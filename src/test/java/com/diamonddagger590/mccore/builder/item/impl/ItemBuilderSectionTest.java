@@ -16,6 +16,7 @@ import org.mockbukkit.mockbukkit.MockBukkit;
 import java.util.Collections;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.eq;
@@ -89,43 +90,43 @@ class ItemBuilderSectionTest {
     }
 
     @Test
-    @DisplayName("Given a section with max-stack-size, when from(Section) is called, then max stack size is set")
-    void fromSection_setsMaxStackSize_whenMaxStackSizePresent() {
+    @DisplayName("Given a section with max-stack-size, when from(Section) is called, then completes without error")
+    void fromSection_completesWithoutError_whenMaxStackSizePresent() {
         Section section = createMinimalSection();
         when(section.contains(ItemBuilderConfigurationKeys.MAX_STACK_SIZE)).thenReturn(true);
         when(section.getInt(eq(ItemBuilderConfigurationKeys.MAX_STACK_SIZE))).thenReturn(16);
 
-        ItemBuilder result = ItemBuilder.from(section);
+        ItemBuilder result = assertDoesNotThrow(() -> ItemBuilder.from(section));
         assertNotNull(result);
     }
 
     @Test
-    @DisplayName("Given a section with unbreakable=true, when from(Section) is called, then item is unbreakable")
-    void fromSection_setsUnbreakable_whenUnbreakableIsTrue() {
+    @DisplayName("Given a section with unbreakable=true, when from(Section) is called, then completes without error")
+    void fromSection_completesWithoutError_whenUnbreakableIsTrue() {
         Section section = createMinimalSection();
         when(section.getBoolean(eq(ItemBuilderConfigurationKeys.UNBREAKABLE_ITEM), eq(false))).thenReturn(true);
 
-        ItemBuilder result = ItemBuilder.from(section);
+        ItemBuilder result = assertDoesNotThrow(() -> ItemBuilder.from(section));
         assertNotNull(result);
     }
 
     @Test
-    @DisplayName("Given a section with glowing=true, when from(Section) is called, then enchant glint is set")
-    void fromSection_setsEnchantGlint_whenGlowingIsTrue() {
+    @DisplayName("Given a section with glowing=true, when from(Section) is called, then completes without error")
+    void fromSection_completesWithoutError_whenGlowingIsTrue() {
         Section section = createMinimalSection();
         when(section.getBoolean(eq(ItemBuilderConfigurationKeys.GLOWING), eq(false))).thenReturn(true);
 
-        ItemBuilder result = ItemBuilder.from(section);
+        ItemBuilder result = assertDoesNotThrow(() -> ItemBuilder.from(section));
         assertNotNull(result);
     }
 
     @Test
-    @DisplayName("Given a section with hide-tooltip=true, when from(Section) is called, then tooltip is hidden")
-    void fromSection_hidesTooltip_whenHideTooltipIsTrue() {
+    @DisplayName("Given a section with hide-tooltip=true, when from(Section) is called, then completes without error")
+    void fromSection_completesWithoutError_whenHideTooltipIsTrue() {
         Section section = createMinimalSection();
         when(section.getBoolean(eq(ItemBuilderConfigurationKeys.HIDE_TOOLTIP), eq(false))).thenReturn(true);
 
-        ItemBuilder result = ItemBuilder.from(section);
+        ItemBuilder result = assertDoesNotThrow(() -> ItemBuilder.from(section));
         assertNotNull(result);
     }
 
@@ -138,7 +139,7 @@ class ItemBuilderSectionTest {
         when(enchSection.getRoutesAsStrings(false)).thenReturn(Set.of("sharpness"));
         when(enchSection.getInt("sharpness")).thenReturn(3);
 
-        ItemBuilder result = ItemBuilder.from(section);
+        ItemBuilder result = assertDoesNotThrow(() -> ItemBuilder.from(section));
         assertNotNull(result);
     }
 
@@ -218,12 +219,12 @@ class ItemBuilderSectionTest {
     }
 
     @Test
-    @DisplayName("Given a section with damage value, when from(Section) is called, then damage is set")
-    void fromSection_setsDamage_whenDamageProvided() {
+    @DisplayName("Given a section with damage value, when from(Section) is called, then completes without error")
+    void fromSection_completesWithoutError_whenDamageProvided() {
         Section section = createMinimalSection();
         when(section.getInt(eq(ItemBuilderConfigurationKeys.DAMAGE), eq(0))).thenReturn(50);
 
-        ItemBuilder result = ItemBuilder.from(section);
+        ItemBuilder result = assertDoesNotThrow(() -> ItemBuilder.from(section));
         assertNotNull(result);
     }
 
