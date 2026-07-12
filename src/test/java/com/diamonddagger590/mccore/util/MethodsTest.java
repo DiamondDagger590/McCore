@@ -164,6 +164,46 @@ class MethodsTest {
         assertEquals(Duration.ZERO, result);
     }
 
+    @Test
+    @DisplayName("Given an uppercase unit, when parsing, then parses case-insensitively")
+    void getTimeInSeconds_parsesCaseInsensitively_whenGivenUppercaseUnit() {
+        assertEquals(Duration.ofHours(24), Methods.getTimeInSeconds("24H"));
+        assertEquals(Duration.ofDays(3), Methods.getTimeInSeconds("3D"));
+    }
+
+    @Test
+    @DisplayName("Given a mixed-case combined string, when parsing, then sums all units")
+    void getTimeInSeconds_sumsUnits_whenGivenMixedCase() {
+        Duration result = Methods.getTimeInSeconds("1D12H30M");
+        assertEquals(Duration.ofDays(1).plusHours(12).plusMinutes(30), result);
+    }
+
+    @Test
+    @DisplayName("Given a bare number with no unit, when parsing, then treats it as seconds")
+    void getTimeInSeconds_treatsBareNumberAsSeconds() {
+        assertEquals(Duration.ofSeconds(86400), Methods.getTimeInSeconds("86400"));
+    }
+
+    @Test
+    @DisplayName("Given trailing digits after a unit, when parsing, then treats the trailing digits as seconds")
+    void getTimeInSeconds_treatsTrailingDigitsAsSeconds() {
+        Duration result = Methods.getTimeInSeconds("1h30");
+        assertEquals(Duration.ofHours(1).plusSeconds(30), result);
+    }
+
+    @Test
+    @DisplayName("Given whitespace between units, when parsing, then ignores the whitespace")
+    void getTimeInSeconds_ignoresWhitespace() {
+        Duration result = Methods.getTimeInSeconds("1d 12h");
+        assertEquals(Duration.ofDays(1).plusHours(12), result);
+    }
+
+    @Test
+    @DisplayName("Given a unit with no preceding number, when parsing, then throws IllegalArgumentException")
+    void getTimeInSeconds_throwsIllegalArgument_whenUnitHasNoNumber() {
+        assertThrows(IllegalArgumentException.class, () -> Methods.getTimeInSeconds("h"));
+    }
+
     // ── getProgressBarAsString ────────────────────────────────────────────
 
     @Test

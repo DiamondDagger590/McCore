@@ -209,6 +209,9 @@ public class Methods {
      * <p>
      * An example would be `15s5m1h` to represent a duration of 1 hour, 5 minutes and 15 seconds.
      * <p>
+     * Unit characters are case-insensitive (both {@code 24h} and {@code 24H} parse identically), whitespace between
+     * units is ignored, and a bare number with no trailing unit (e.g. {@code 86400}) is interpreted as seconds.
+     * <p>
      * Accepted time units are:
      * <ul>
      *     <li>s - second</li>
@@ -228,22 +231,34 @@ public class Methods {
         StringBuilder numberBuilder = new StringBuilder();
 
         for (char c : timeString.toCharArray()) {
+            if (Character.isWhitespace(c)) {
+                continue;
+            }
             if (Character.isDigit(c)) {
                 numberBuilder.append(c);
-            } else {
-                long value = Long.parseLong(numberBuilder.toString());
-                numberBuilder.setLength(0);
-
-                duration = switch (c) {
-                    case 's' -> duration.plusSeconds(value);
-                    case 'm' -> duration.plusMinutes(value);
-                    case 'h' -> duration.plusHours(value);
-                    case 'd' -> duration.plusDays(value);
-                    case 'w' -> duration.plusDays(value * 7);
-                    case 'y' -> duration.plusDays(value * 365);
-                    default -> throw new IllegalArgumentException("Invalid time unit: " + c);
-                };
+                continue;
             }
+            if (numberBuilder.isEmpty()) {
+                throw new IllegalArgumentException("Time unit '" + c + "' has no preceding number in '" + timeString + "'");
+            }
+            long value = Long.parseLong(numberBuilder.toString());
+            numberBuilder.setLength(0);
+
+            // Units are case-insensitive so both "24h" and "24H" parse identically.
+            duration = switch (Character.toLowerCase(c)) {
+                case 's' -> duration.plusSeconds(value);
+                case 'm' -> duration.plusMinutes(value);
+                case 'h' -> duration.plusHours(value);
+                case 'd' -> duration.plusDays(value);
+                case 'w' -> duration.plusDays(value * 7);
+                case 'y' -> duration.plusDays(value * 365);
+                default -> throw new IllegalArgumentException("Invalid time unit '" + c + "' in '" + timeString + "'");
+            };
+        }
+        // Trailing digits with no trailing unit are treated as seconds (previously silently discarded,
+        // so a bare number like "86400" wrongly returned ZERO).
+        if (!numberBuilder.isEmpty()) {
+            duration = duration.plusSeconds(Long.parseLong(numberBuilder.toString()));
         }
         return duration;
     }
