@@ -20,6 +20,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -258,6 +259,134 @@ class DatabaseAdditionalTest {
         protected boolean blockMainThreadOnStart() {
             return false;
         }
+    }
+
+    @Test
+    @DisplayName("Given a non-blocking database, when initializeDatabase is called, then tables are created asynchronously")
+    void initializeDatabase_createsTablesAsync_withNonBlockingStartup() throws Exception {
+        setupDriverRegistry();
+
+        NonBlockingTestDatabase database = new NonBlockingTestDatabase(plugin);
+        try {
+            database.initializeDatabase();
+
+            // Wait for async chain to complete
+            awaitDatabaseExecutor(database);
+
+            Connection conn = database.getConnection();
+            assertTrue(database.tableExists(conn, "table_history"));
+            conn.close();
+        } finally {
+            database.shutdown();
+        }
+    }
+
+    @Test
+    @DisplayName("Given a non-blocking database with custom functions, when initializeDatabase is called, then custom create and update functions are invoked asynchronously")
+    void initializeDatabase_invokesCustomFunctionsAsync_withNonBlockingStartup() throws Exception {
+        setupDriverRegistry();
+
+        NonBlockingTestDatabase database = new NonBlockingTestDatabase(plugin);
+        boolean[] createCalled = {false};
+        boolean[] updateCalled = {false};
+
+        database.addCreateTableFunction(db -> {
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            db.getDatabaseExecutorService().submit(() -> {
+                createCalled[0] = true;
+                future.complete(null);
+            });
+            return future;
+        });
+        database.addUpdateTableFunction(db -> {
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            db.getDatabaseExecutorService().submit(() -> {
+                updateCalled[0] = true;
+                future.complete(null);
+            });
+            return future;
+        });
+
+        try {
+            database.initializeDatabase();
+
+            awaitDatabaseExecutor(database);
+
+            assertTrue(createCalled[0]);
+            assertTrue(updateCalled[0]);
+        } finally {
+            database.shutdown();
+        }
+    }
+
+    @Test
+    @DisplayName("Given a non-blocking database with multiple custom functions, when initializeDatabase is called, then all functions are invoked")
+    void initializeDatabase_invokesAllCustomFunctionsAsync_withNonBlockingStartup() throws Exception {
+        setupDriverRegistry();
+
+        NonBlockingTestDatabase database = new NonBlockingTestDatabase(plugin);
+        boolean[] create1Called = {false};
+        boolean[] create2Called = {false};
+        boolean[] update1Called = {false};
+        boolean[] update2Called = {false};
+
+        database.addCreateTableFunction(db -> {
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            db.getDatabaseExecutorService().submit(() -> {
+                create1Called[0] = true;
+                future.complete(null);
+            });
+            return future;
+        });
+        database.addCreateTableFunction(db -> {
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            db.getDatabaseExecutorService().submit(() -> {
+                create2Called[0] = true;
+                future.complete(null);
+            });
+            return future;
+        });
+        database.addUpdateTableFunction(db -> {
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            db.getDatabaseExecutorService().submit(() -> {
+                update1Called[0] = true;
+                future.complete(null);
+            });
+            return future;
+        });
+        database.addUpdateTableFunction(db -> {
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            db.getDatabaseExecutorService().submit(() -> {
+                update2Called[0] = true;
+                future.complete(null);
+            });
+            return future;
+        });
+
+        try {
+            database.initializeDatabase();
+
+            awaitDatabaseExecutor(database);
+
+            assertTrue(create1Called[0]);
+            assertTrue(create2Called[0]);
+            assertTrue(update1Called[0]);
+            assertTrue(update2Called[0]);
+        } finally {
+            database.shutdown();
+        }
+    }
+
+    private static void awaitDatabaseExecutor(Database database) throws InterruptedException {
+        CompletableFuture<Void> sentinel = new CompletableFuture<>();
+        database.getDatabaseExecutorService().submit(() -> sentinel.complete(null));
+        try {
+            sentinel.get(10, TimeUnit.SECONDS);
+        } catch (java.util.concurrent.ExecutionException | java.util.concurrent.TimeoutException e) {
+            throw new RuntimeException(e);
+        }
+        // Allow async thenAccept callbacks to propagate
+        Thread.sleep(500);
     }
 
     static class LeakDetectionTestDatabase extends Database {
