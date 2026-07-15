@@ -95,130 +95,112 @@ class MethodsTest {
     // ── getTimeInSeconds ────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("Given an empty string, when parsing time, then returns zero duration")
-    void getTimeInSeconds_returnsZero_whenGivenEmptyString() {
-        Duration result = Methods.getTimeInSeconds("");
-        assertEquals(Duration.ZERO, result);
+    @DisplayName("empty string returns zero")
+    void getTimeInSeconds_returnsZero_whenEmpty() {
+        assertEquals(Duration.ZERO, Methods.getTimeInSeconds(""));
     }
 
     @Test
-    @DisplayName("Given a seconds-only time string, when parsing, then returns correct duration")
-    void getTimeInSeconds_returnsDuration_whenGivenSeconds() {
-        Duration result = Methods.getTimeInSeconds("30s");
-        assertEquals(Duration.ofSeconds(30), result);
-    }
-
-    @Test
-    @DisplayName("Given a minutes-only time string, when parsing, then returns correct duration")
-    void getTimeInSeconds_returnsDuration_whenGivenMinutes() {
-        Duration result = Methods.getTimeInSeconds("5m");
-        assertEquals(Duration.ofMinutes(5), result);
-    }
-
-    @Test
-    @DisplayName("Given an hours-only time string, when parsing, then returns correct duration")
-    void getTimeInSeconds_returnsDuration_whenGivenHours() {
-        Duration result = Methods.getTimeInSeconds("2h");
-        assertEquals(Duration.ofHours(2), result);
-    }
-
-    @Test
-    @DisplayName("Given a days-only time string, when parsing, then returns correct duration")
-    void getTimeInSeconds_returnsDuration_whenGivenDays() {
-        Duration result = Methods.getTimeInSeconds("3d");
-        assertEquals(Duration.ofDays(3), result);
-    }
-
-    @Test
-    @DisplayName("Given a weeks-only time string, when parsing, then returns correct duration")
-    void getTimeInSeconds_returnsDuration_whenGivenWeeks() {
-        Duration result = Methods.getTimeInSeconds("2w");
-        assertEquals(Duration.ofDays(14), result);
-    }
-
-    @Test
-    @DisplayName("Given a years-only time string, when parsing, then returns correct duration")
-    void getTimeInSeconds_returnsDuration_whenGivenYears() {
-        Duration result = Methods.getTimeInSeconds("1y");
-        assertEquals(Duration.ofDays(365), result);
-    }
-
-    @Test
-    @DisplayName("Given a combined time string, when parsing, then returns summed duration")
-    void getTimeInSeconds_returnsSummedDuration_whenGivenMultipleUnits() {
-        Duration result = Methods.getTimeInSeconds("15s5m1h");
-        Duration expected = Duration.ofHours(1).plusMinutes(5).plusSeconds(15);
-        assertEquals(expected, result);
-    }
-
-    @Test
-    @DisplayName("Given an invalid time unit character, when parsing, then throws IllegalArgumentException")
-    void getTimeInSeconds_throwsIllegalArgument_whenGivenInvalidUnit() {
-        assertThrows(IllegalArgumentException.class, () -> Methods.getTimeInSeconds("5x"));
-    }
-
-    @Test
-    @DisplayName("Given zero seconds, when parsing, then returns zero duration")
-    void getTimeInSeconds_returnsZero_whenGivenZeroSeconds() {
-        Duration result = Methods.getTimeInSeconds("0s");
-        assertEquals(Duration.ZERO, result);
-    }
-
-    @Test
-    @DisplayName("Given an uppercase unit, when parsing, then parses case-insensitively")
-    void getTimeInSeconds_parsesCaseInsensitively_whenGivenUppercaseUnit() {
-        assertEquals(Duration.ofHours(24), Methods.getTimeInSeconds("24H"));
-        assertEquals(Duration.ofDays(3), Methods.getTimeInSeconds("3D"));
-        // Cover the remaining uppercase units so all six of the case-insensitive mappings are exercised.
-        assertEquals(Duration.ofDays(14), Methods.getTimeInSeconds("2W"));
-        assertEquals(Duration.ofDays(365), Methods.getTimeInSeconds("1Y"));
-        assertEquals(Duration.ofSeconds(30), Methods.getTimeInSeconds("30S"));
-    }
-
-    @Test
-    @DisplayName("Given a mixed-case combined string, when parsing, then sums all units")
-    void getTimeInSeconds_sumsUnits_whenGivenMixedCase() {
-        Duration result = Methods.getTimeInSeconds("1D12H30M");
-        assertEquals(Duration.ofDays(1).plusHours(12).plusMinutes(30), result);
-    }
-
-    @Test
-    @DisplayName("Given a bare number with no unit, when parsing, then treats it as seconds")
-    void getTimeInSeconds_treatsBareNumberAsSeconds_whenNoUnitGiven() {
-        assertEquals(Duration.ofSeconds(86400), Methods.getTimeInSeconds("86400"));
-    }
-
-    @Test
-    @DisplayName("Given trailing digits after a unit, when parsing, then treats the trailing digits as seconds")
-    void getTimeInSeconds_treatsTrailingDigitsAsSeconds_whenDigitsFollowUnit() {
-        Duration result = Methods.getTimeInSeconds("1h30");
-        assertEquals(Duration.ofHours(1).plusSeconds(30), result);
-    }
-
-    @Test
-    @DisplayName("Given whitespace between units, when parsing, then ignores the whitespace")
-    void getTimeInSeconds_ignoresWhitespace_whenPresentBetweenUnits() {
-        Duration result = Methods.getTimeInSeconds("1d 12h");
-        assertEquals(Duration.ofDays(1).plusHours(12), result);
-    }
-
-    @Test
-    @DisplayName("Given a whitespace-only string, when parsing, then returns zero duration")
-    void getTimeInSeconds_returnsZero_whenGivenWhitespaceOnly() {
+    @DisplayName("whitespace-only string returns zero")
+    void getTimeInSeconds_returnsZero_whenWhitespaceOnly() {
         assertEquals(Duration.ZERO, Methods.getTimeInSeconds("   "));
     }
 
     @Test
-    @DisplayName("Given a unit with no preceding number, when parsing, then throws IllegalArgumentException")
-    void getTimeInSeconds_throwsIllegalArgument_whenUnitHasNoNumber() {
-        assertThrows(IllegalArgumentException.class, () -> Methods.getTimeInSeconds("h"));
+    @DisplayName("zero-value unit returns zero")
+    void getTimeInSeconds_returnsZero_whenZeroValue() {
+        assertEquals(Duration.ZERO, Methods.getTimeInSeconds("0s"));
+        assertEquals(Duration.ZERO, Methods.getTimeInSeconds("0h"));
     }
 
     @Test
-    @DisplayName("Given a unit immediately after whitespace with no number, when parsing, then throws IllegalArgumentException")
-    void getTimeInSeconds_throwsIllegalArgument_whenUnitFollowsWhitespaceWithNoNumber() {
-        // "1h" flushes numberBuilder; the whitespace-skip leaves 'm' facing an empty numberBuilder.
+    @DisplayName("each unit maps to the correct duration")
+    void getTimeInSeconds_mapsEachUnit() {
+        assertEquals(Duration.ofSeconds(30), Methods.getTimeInSeconds("30s"));
+        assertEquals(Duration.ofMinutes(5), Methods.getTimeInSeconds("5m"));
+        assertEquals(Duration.ofHours(2), Methods.getTimeInSeconds("2h"));
+        assertEquals(Duration.ofDays(3), Methods.getTimeInSeconds("3d"));
+        assertEquals(Duration.ofDays(14), Methods.getTimeInSeconds("2w"));
+        assertEquals(Duration.ofDays(365), Methods.getTimeInSeconds("1y"));
+    }
+
+    @Test
+    @DisplayName("every unit is case-insensitive")
+    void getTimeInSeconds_isCaseInsensitive() {
+        assertEquals(Duration.ofSeconds(30), Methods.getTimeInSeconds("30S"));
+        assertEquals(Duration.ofMinutes(5), Methods.getTimeInSeconds("5M"));
+        assertEquals(Duration.ofHours(24), Methods.getTimeInSeconds("24H"));
+        assertEquals(Duration.ofDays(3), Methods.getTimeInSeconds("3D"));
+        assertEquals(Duration.ofDays(14), Methods.getTimeInSeconds("2W"));
+        assertEquals(Duration.ofDays(365), Methods.getTimeInSeconds("1Y"));
+    }
+
+    @Test
+    @DisplayName("multiple units sum together")
+    void getTimeInSeconds_sumsMultipleUnits() {
+        assertEquals(Duration.ofHours(1).plusMinutes(5).plusSeconds(15),
+                Methods.getTimeInSeconds("15s5m1h"));
+    }
+
+    @Test
+    @DisplayName("mixed-case combined string sums all units")
+    void getTimeInSeconds_sumsMixedCaseUnits() {
+        assertEquals(Duration.ofDays(1).plusHours(12).plusMinutes(30),
+                Methods.getTimeInSeconds("1D12H30M"));
+    }
+
+    @Test
+    @DisplayName("bare number is treated as seconds")
+    void getTimeInSeconds_treatsBareNumberAsSeconds() {
+        assertEquals(Duration.ofSeconds(86400), Methods.getTimeInSeconds("86400"));
+    }
+
+    @Test
+    @DisplayName("trailing digits after a unit are treated as seconds")
+    void getTimeInSeconds_treatsTrailingDigitsAsSeconds() {
+        assertEquals(Duration.ofHours(1).plusSeconds(30), Methods.getTimeInSeconds("1h30"));
+    }
+
+    @Test
+    @DisplayName("leading, trailing, and interior whitespace is ignored")
+    void getTimeInSeconds_ignoresWhitespace() {
+        assertEquals(Duration.ofDays(1).plusHours(12), Methods.getTimeInSeconds("1d 12h"));
+        assertEquals(Duration.ofHours(1), Methods.getTimeInSeconds("  1h"));
+        assertEquals(Duration.ofHours(1), Methods.getTimeInSeconds("1h  "));
+    }
+
+    @Test
+    @DisplayName("invalid unit character throws")
+    void getTimeInSeconds_throwsIllegalArgument_whenUnitInvalid() {
+        assertThrows(IllegalArgumentException.class, () -> Methods.getTimeInSeconds("5x"));
+    }
+
+    @Test
+    @DisplayName("unit with no preceding number throws")
+    void getTimeInSeconds_throwsIllegalArgument_whenUnitHasNoNumber() {
+        assertThrows(IllegalArgumentException.class, () -> Methods.getTimeInSeconds("h"));
+        // A unit left facing an empty accumulator after a whitespace flush hits the same guard.
         assertThrows(IllegalArgumentException.class, () -> Methods.getTimeInSeconds("1h m"));
+    }
+
+    @Test
+    @DisplayName("negative sign is rejected as an unknown leading unit")
+    void getTimeInSeconds_throwsIllegalArgument_whenNegative() {
+        assertThrows(IllegalArgumentException.class, () -> Methods.getTimeInSeconds("-5s"));
+    }
+
+    @Test
+    @DisplayName("value exceeding long range throws")
+    void getTimeInSeconds_throwsNumberFormat_whenValueExceedsLong() {
+        assertThrows(NumberFormatException.class,
+                () -> Methods.getTimeInSeconds("9223372036854775808s"));
+    }
+
+    @Test
+    @DisplayName("week or year multiplication overflow throws")
+    void getTimeInSeconds_throwsArithmetic_whenUnitMultiplicationOverflows() {
+        assertThrows(ArithmeticException.class,
+                () -> Methods.getTimeInSeconds("9223372036854775807y"));
     }
 
     // ── getProgressBarAsString ────────────────────────────────────────────

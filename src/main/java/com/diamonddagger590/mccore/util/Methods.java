@@ -244,14 +244,16 @@ public class Methods {
             long value = Long.parseLong(numberBuilder.toString());
             numberBuilder.setLength(0);
 
-            // Units are case-insensitive so both "24h" and "24H" parse identically.
+            // Units are case-insensitive so both "24h" and "24H" parse identically. The week/year
+            // day conversions use Math.multiplyExact so an absurdly large value throws rather than
+            // silently overflowing to a negative day count.
             duration = switch (Character.toLowerCase(c)) {
                 case 's' -> duration.plusSeconds(value);
                 case 'm' -> duration.plusMinutes(value);
                 case 'h' -> duration.plusHours(value);
                 case 'd' -> duration.plusDays(value);
-                case 'w' -> duration.plusDays(value * 7);
-                case 'y' -> duration.plusDays(value * 365);
+                case 'w' -> duration.plusDays(Math.multiplyExact(value, 7));
+                case 'y' -> duration.plusDays(Math.multiplyExact(value, 365));
                 default -> throw new IllegalArgumentException("Invalid time unit '" + c + "' in '" + timeString + "'");
             };
         }
