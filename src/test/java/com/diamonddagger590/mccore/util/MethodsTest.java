@@ -159,6 +159,9 @@ class MethodsTest {
     @DisplayName("trailing digits after a unit are treated as seconds")
     void getTimeInSeconds_treatsTrailingDigitsAsSeconds() {
         assertEquals(Duration.ofHours(1).plusSeconds(30), Methods.getTimeInSeconds("1h30"));
+        // Whitespace between the unit and the bare trailing digits is skipped, then the digits still
+        // fall through to the trailing-seconds branch.
+        assertEquals(Duration.ofHours(1).plusSeconds(30), Methods.getTimeInSeconds("1h 30"));
     }
 
     @Test
@@ -179,7 +182,8 @@ class MethodsTest {
     @DisplayName("unit with no preceding number throws")
     void getTimeInSeconds_throwsIllegalArgument_whenUnitHasNoNumber() {
         assertThrows(IllegalArgumentException.class, () -> Methods.getTimeInSeconds("h"));
-        // A unit left facing an empty accumulator after a whitespace flush hits the same guard.
+        // After "1h" clears the accumulator, the skipped space leaves 'm' facing an empty accumulator,
+        // which trips the same guard.
         assertThrows(IllegalArgumentException.class, () -> Methods.getTimeInSeconds("1h m"));
     }
 
@@ -194,6 +198,9 @@ class MethodsTest {
     void getTimeInSeconds_throwsNumberFormat_whenValueExceedsLong() {
         assertThrows(NumberFormatException.class,
                 () -> Methods.getTimeInSeconds("9223372036854775808s"));
+        // A bare over-long number with no unit reaches the separate trailing-digit parseLong branch.
+        assertThrows(NumberFormatException.class,
+                () -> Methods.getTimeInSeconds("9223372036854775808"));
     }
 
     @Test
@@ -201,6 +208,9 @@ class MethodsTest {
     void getTimeInSeconds_throwsArithmetic_whenUnitMultiplicationOverflows() {
         assertThrows(ArithmeticException.class,
                 () -> Methods.getTimeInSeconds("9223372036854775807y"));
+        // Weeks use the same Math.multiplyExact guard as years.
+        assertThrows(ArithmeticException.class,
+                () -> Methods.getTimeInSeconds("9223372036854775807w"));
     }
 
     // ── getProgressBarAsString ────────────────────────────────────────────
