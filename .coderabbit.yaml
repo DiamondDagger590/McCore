@@ -1,18 +1,24 @@
 language: "en"
 
 reviews:
-  profile: "assertive"
+  profile: "quiet"
   request_changes_workflow: false
   high_level_summary: true
   poem: false
-  collapse_walkthrough: false
+  collapse_walkthrough: true
   auto_review:
     enabled: true
     drafts: false
+    auto_incremental_review: true
+    # Opt a PR out of auto-review by putting [skip-review] in the title or adding
+    # the skip-review label — mirrors the Claude review workflow's skip override.
+    ignore_title_keywords:
+      - "[skip-review]"
+    labels:
+      - "!skip-review"
     base_branches:
-      - "master"
+      - "mainline"
       - "develop"
-      - "recode"
   path_filters:
     - "!gradle/wrapper/gradle-wrapper.jar"
   path_instructions:
@@ -37,9 +43,9 @@ reviews:
           by name or imports from a consumer plugin package (e.g., us.eunoians.*).
           McCore must remain fully plugin-agnostic.
 
-        Deprioritize primary review of API extension points and test structure;
-        if persona automation is unavailable or skipped, include these domains
-        in the review.
+        A separate Claude Code review workflow covers API extension points and
+        test structure once per PR and on demand; keep this review focused on
+        correctness and avoid duplicating those domains.
     - path: "src/test/**/*.java"
       instructions: |
         Test naming convention — do NOT flag as violations:

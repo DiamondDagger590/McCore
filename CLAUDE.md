@@ -469,6 +469,6 @@ After any commit or PR that introduces one of the following, **update `CLAUDE.md
 | New database pattern added | `CLAUDE.md` + `database-system.mdc` |
 | New public API pattern or breaking-change rule | `persona-extensibility.mdc` + `.claude/commands/review-extensibility.md` |
 | New test structural pattern or anti-pattern | `persona-testing.mdc` + `.claude/commands/review-testing.md` |
-| CI review file-pattern for a new domain | `.github/workflows/pr-review.yml` detect-changes step |
+| CI review routing, persona set, or signal rule changed | `.github/claude-review-prompt.md` + `.claude/agents/review-*.md` (+ `.github/workflows/claude-review.yml` for triggers/model) |
 
 These files are the project's living technical contract — stale steering files produce stale AI output.
