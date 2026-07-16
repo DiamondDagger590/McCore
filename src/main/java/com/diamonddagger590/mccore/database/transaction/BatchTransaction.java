@@ -2,7 +2,6 @@ package com.diamonddagger590.mccore.database.transaction;
 
 import com.diamonddagger590.mccore.CorePlugin;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -18,8 +17,6 @@ import java.util.logging.Logger;
  * have errors thrown and logged.
  */
 public class BatchTransaction extends Transaction {
-
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(BatchTransaction.class);
 
     public BatchTransaction(@NotNull Connection connection) {
         super(connection);

@@ -13,7 +13,9 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -42,6 +44,8 @@ class FailSafeTransactionTest {
         assertNotNull(transaction);
         assertEquals(connection, transaction.getConnection());
         assertEquals(0, transaction.getPreparedStatements().size());
+        assertEquals(TransactionState.PENDING, transaction.getTransactionState());
+        assertFalse(transaction.getFailureCause().isPresent());
     }
 
     @Test
@@ -67,6 +71,8 @@ class FailSafeTransactionTest {
         verify(ps2).executeUpdate();
         verify(connection).commit();
         verify(connection).setAutoCommit(true);
+        assertEquals(TransactionState.COMMITTED, transaction.getTransactionState());
+        assertFalse(transaction.getFailureCause().isPresent());
     }
 
     @Test
@@ -82,6 +88,8 @@ class FailSafeTransactionTest {
         verify(ps2, never()).executeUpdate();
         verify(connection, never()).commit();
         verify(connection).rollback();
+        assertEquals(TransactionState.ROLLED_BACK, transaction.getTransactionState());
+        assertTrue(transaction.getFailureCause().isPresent());
     }
 
     @Test
@@ -130,6 +138,7 @@ class FailSafeTransactionTest {
         verify(connection).commit();
         verify(connection).setAutoCommit(true);
         verify(connection, never()).rollback();
+        assertEquals(TransactionState.COMMITTED, transaction.getTransactionState());
     }
 
     @Test
@@ -142,6 +151,8 @@ class FailSafeTransactionTest {
 
         verify(connection, never()).commit();
         verify(connection).rollback();
+        assertEquals(TransactionState.ROLLED_BACK, transaction.getTransactionState());
+        assertTrue(transaction.getFailureCause().isPresent());
     }
 
     @Test
@@ -160,5 +171,6 @@ class FailSafeTransactionTest {
         verify(ps3, never()).executeUpdate();
         verify(connection).rollback();
         verify(connection, never()).commit();
+        assertEquals(TransactionState.ROLLED_BACK, transaction.getTransactionState());
     }
 }

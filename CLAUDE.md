@@ -215,6 +215,7 @@ src/main/java/com/diamonddagger590/mccore/
 | **CreateTableFunction** | Functional interface called once at DB init to create a table if it doesn't exist. |
 | **UpdateTableFunction** | Functional interface called after table creation to apply schema migrations. |
 | **Transaction** | Abstract base for executing an ordered list of `PreparedStatement`s against a single `Connection`. Subclasses define failure semantics: `BatchTransaction` commits whatever succeeds and logs individual failures; `FailSafeTransaction` rolls back everything if any single statement fails. |
+| **TransactionState** | Enum (`PENDING`, `COMMITTED`, `ROLLED_BACK`) tracking the outcome of a `FailSafeTransaction`. Fields are `volatile` for cross-thread visibility. Callers inspect state after `executeTransaction()` returns — the method still returns `void` and never throws. |
 | **DAO** | Static JDBC methods for reading/writing a specific entity. Always takes `Connection` as the first argument. |
 | **ReloadableContent** | A config-backed value that can be refreshed at runtime without a server restart. |
 | **PlayerSetting** | A namespaced, persistent player preference. Stored in the database and loaded with the player. |
