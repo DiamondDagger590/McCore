@@ -127,6 +127,44 @@ class CustomEntityWrapperTest {
     }
 
     @Nested
+    @DisplayName("isVanilla")
+    class IsVanilla {
+
+        @Test
+        @DisplayName("Entity type wrapper returns true")
+        void isVanilla_returnsTrue_whenEntityTypeWrapper() {
+            CustomEntityWrapper wrapper = entityTypeWrapper(EntityType.ZOMBIE);
+            assertTrue(wrapper.isVanilla());
+        }
+
+        @Test
+        @DisplayName("Custom entity wrapper returns false")
+        void isVanilla_returnsFalse_whenCustomEntityWrapper() throws Exception {
+            CustomEntityWrapper wrapper = customEntityWrapper("mythicmobs:fire_dragon");
+            assertFalse(wrapper.isVanilla());
+        }
+    }
+
+    @Nested
+    @DisplayName("isCustom")
+    class IsCustom {
+
+        @Test
+        @DisplayName("Custom entity wrapper returns true")
+        void isCustom_returnsTrue_whenCustomEntityWrapper() throws Exception {
+            CustomEntityWrapper wrapper = customEntityWrapper("mythicmobs:fire_dragon");
+            assertTrue(wrapper.isCustom());
+        }
+
+        @Test
+        @DisplayName("Entity type wrapper returns false")
+        void isCustom_returnsFalse_whenEntityTypeWrapper() {
+            CustomEntityWrapper wrapper = entityTypeWrapper(EntityType.ZOMBIE);
+            assertFalse(wrapper.isCustom());
+        }
+    }
+
+    @Nested
     @DisplayName("equals(EntityType)")
     class EqualsEntityType {
 

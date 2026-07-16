@@ -74,6 +74,38 @@ public class CustomBlockWrapper {
     }
 
     /**
+     * Checks whether this wrapper represents a vanilla block (resolved via the Paper registry).
+     *
+     * @return {@code true} if this wrapper holds a {@link Material}, meaning the block
+     *         was recognized as a vanilla Minecraft block.
+     */
+    public boolean isVanilla() {
+        return material != null;
+    }
+
+    /**
+     * Checks whether this wrapper represents a custom block (from a model plugin).
+     *
+     * @return {@code true} if this wrapper holds a custom block identifier, meaning the block
+     *         was not recognized as a vanilla Minecraft block.
+     */
+    public boolean isCustom() {
+        return customBlock != null;
+    }
+
+    /**
+     * Checks whether the given identifier resolves to a vanilla block in the Paper block registry.
+     *
+     * @param id The block identifier to check (e.g. {@code "stone"}, {@code "iron_ore"}).
+     * @return {@code true} if the identifier is recognized as a vanilla block.
+     */
+    public static boolean isVanillaBlock(@NotNull String id) {
+        return io.papermc.paper.registry.RegistryAccess.registryAccess()
+                .getRegistry(io.papermc.paper.registry.RegistryKey.BLOCK)
+                .get(Methods.getMinecraftKey(id)) != null;
+    }
+
+    /**
      * Gets an {@link Optional} containing the {@link Material} represented
      * by this wrapper.
      *
