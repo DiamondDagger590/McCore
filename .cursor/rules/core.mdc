@@ -98,7 +98,17 @@ void getStatistic_returnsStatistic_whenKeyIsRegistered() { ... }
 - **No state stored in Registry/Manager objects beyond their scope** — domain state belongs on domain objects
 - **No hard-coded strings for namespaced keys or config routes** — define as constants
 - **No direct entity casting without guard** — use `instanceof` pattern matching: `if (entity instanceof Player player) { ... }`
-- **No decorative section-divider comments** — do not use `// ── Section ──`, `// --- Section ---`, or similar ASCII-art dividers to group methods or tests; rely on class structure, method naming, and `@DisplayName` annotations instead
+- **No decorative section-divider comments** — rely on class structure, method naming, and `@DisplayName` annotations instead of `// --- Section ---` dividers
+- **No constructor-initiated task scheduling** — callers schedule tasks explicitly after construction via `runTask()`; constructors must not call `runTask()` because it couples object creation to the scheduler and complicates testing
+- **No `e.printStackTrace()`** — always use `Logger.log(Level.SEVERE, "context message", e)` so stack traces route through the server logger
+
+## Task Scheduling
+
+`RepeatableCoreTask.runTask(boolean)` guards against double-scheduling — calling it on an already-running task logs a warning and returns without scheduling a second timer. All cross-thread state fields in the `CoreTask` hierarchy (`taskExecuted`, `bukkitTaskId`, `cancelled`, `paused`, etc.) are `volatile` to ensure visibility across the main and async scheduler threads.
+
+## Transaction Observability
+
+`FailSafeTransaction` tracks its outcome via `TransactionState` (`PENDING`, `COMMITTED`, `ROLLED_BACK`). The `executeTransaction()` method still returns `void` and never throws — callers inspect `getTransactionState()` and `getFailureCause()` after execution to detect failures.
 
 ---
 
