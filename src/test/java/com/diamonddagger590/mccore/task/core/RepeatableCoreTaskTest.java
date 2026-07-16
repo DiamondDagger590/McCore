@@ -18,6 +18,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.logging.Logger;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -26,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -50,6 +52,7 @@ class RepeatableCoreTaskTest {
         mocks = MockitoAnnotations.openMocks(this);
         testClock = Clock.fixed(FIXED_INSTANT, ZoneOffset.UTC);
         when(mockPlugin.getTimeProvider()).thenReturn(new TimeProvider(testClock));
+        when(mockPlugin.getLogger()).thenReturn(Logger.getLogger("RepeatableCoreTaskTest"));
         when(mockBukkitTask.getTaskId()).thenReturn(TASK_ID);
 
         mockedBukkit = mockStatic(Bukkit.class);
@@ -262,6 +265,28 @@ class RepeatableCoreTaskTest {
 
         assertFalse(result);
         assertFalse(task.isTaskPaused());
+    }
+
+    @Test
+    @DisplayName("Double runTask() call schedules only one Bukkit timer")
+    void runTask_ignoredDuplicate_whenAlreadyScheduled() {
+        TestRepeatableTask task = createTask(1.0, 1.0);
+
+        task.runTask(false);
+        task.runTask(false);
+
+        verify(mockScheduler, times(1)).runTaskTimer(eq(mockPlugin), eq(task), eq(0L), eq(1L));
+    }
+
+    @Test
+    @DisplayName("Double runTask(true) call schedules only one Bukkit timer")
+    void runTask_ignoredDuplicateAsync_whenAlreadyScheduled() {
+        TestRepeatableTask task = createTask(1.0, 1.0);
+
+        task.runTask(true);
+        task.runTask(true);
+
+        verify(mockScheduler, times(1)).runTaskTimerAsynchronously(eq(mockPlugin), eq(task), eq(0L), eq(1L));
     }
 
     static class TestRepeatableTask extends RepeatableCoreTask {

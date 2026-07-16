@@ -18,10 +18,10 @@ public abstract class RepeatableCoreTask extends MultiExecutionCoreTask {
 
     protected final double taskDelay;
     protected final double taskFrequency;
-    protected int currentInterval = 0;
-    protected boolean delayExpired;
-    protected long intervalStartTime;
-    protected boolean paused;
+    protected volatile int currentInterval = 0;
+    protected volatile boolean delayExpired;
+    protected volatile long intervalStartTime;
+    protected volatile boolean paused;
 
     public RepeatableCoreTask(@NotNull CorePlugin plugin, double taskDelay, double taskFrequency) {
         super(plugin);
@@ -31,6 +31,11 @@ public abstract class RepeatableCoreTask extends MultiExecutionCoreTask {
 
     @Override
     public void runTask(boolean runAsync) {
+        if (taskExecuted) {
+            getPlugin().getLogger().warning("RepeatableCoreTask (id=" + bukkitTaskId + ") is already scheduled; ignoring duplicate runTask() call");
+            return;
+        }
+
         if (runAsync) {
             bukkitTaskId = Bukkit.getScheduler().runTaskTimerAsynchronously(getPlugin(), this, 0, 1).getTaskId();
             taskRunningAsync = true;

@@ -341,6 +341,8 @@ managerRegistry.manager(CoreManagerKey.CORE_DATABASE_MANAGER).getDatabase().init
 
 ### Task Scheduling
 
+`RepeatableCoreTask.runTask(boolean)` guards against double-scheduling — calling it on an already-running task logs a warning and returns without scheduling a second timer. All cross-thread state fields in the `CoreTask` hierarchy (`taskExecuted`, `bukkitTaskId`, `cancelled`, `paused`, etc.) are `volatile` to ensure visibility across the main and async scheduler threads.
+
 ```java
 // One-off sync task
 new CoreTask(plugin) {
@@ -422,6 +424,7 @@ Register with `ReloadableContentManager` so it refreshes automatically on `/relo
 - **No hard-coded strings for namespaced keys or config routes** — define constants on the owning class or a dedicated constants file
 - **No direct entity casting without a null/type guard** — use `instanceof` pattern matching: `if (entity instanceof Player player) { ... }`
 - **No decorative section-divider comments** — do not use `// ── Section ──`, `// --- Section ---`, or similar ASCII-art dividers to group methods or tests; rely on class structure, method naming, and `@DisplayName` annotations to communicate organization
+- **No constructor-initiated task scheduling** — callers schedule tasks explicitly after construction via `runTask()`; constructors must not call `runTask()` because it couples object creation to the scheduler and complicates testing
 
 ---
 

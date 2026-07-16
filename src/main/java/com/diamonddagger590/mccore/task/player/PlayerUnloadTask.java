@@ -23,12 +23,17 @@ public abstract class PlayerUnloadTask extends ExpireableCoreTask {
     private final CompletableFuture<Boolean> result;
     private boolean completed;
 
+    /**
+     * Callers must invoke {@code runTask(true)} after construction to begin the async unload task.
+     *
+     * @param plugin     The {@link CorePlugin} that owns this task.
+     * @param corePlayer The {@link CorePlayer} to unload.
+     */
     public PlayerUnloadTask(@NotNull CorePlugin plugin, @NotNull CorePlayer corePlayer) {
         super(plugin, 0L, 2, 10L);
         this.corePlayer = corePlayer;
         this.result = new CompletableFuture<>();
         completed = false;
-        runTask(true);
     }
 
     private void runUnloadPlayerTask() {
