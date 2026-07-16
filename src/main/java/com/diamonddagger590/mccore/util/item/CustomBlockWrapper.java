@@ -47,7 +47,7 @@ public class CustomBlockWrapper {
     }
 
     public CustomBlockWrapper(@NotNull String customBlock) {
-        BlockType blockType = io.papermc.paper.registry.RegistryAccess.registryAccess().getRegistry(io.papermc.paper.registry.RegistryKey.BLOCK).get(Methods.getMinecraftKey(customBlock));
+        BlockType blockType = lookupVanillaBlock(customBlock);
         if (blockType != null) {
             this.material = blockType.asMaterial();
             this.customBlock = null;
@@ -100,9 +100,20 @@ public class CustomBlockWrapper {
      * @return {@code true} if the identifier is recognized as a vanilla block.
      */
     public static boolean isVanillaBlock(@NotNull String id) {
+        return lookupVanillaBlock(id) != null;
+    }
+
+    /**
+     * Looks up a block identifier in the Paper block registry.
+     *
+     * @param id The block identifier to look up (e.g. {@code "stone"}, {@code "iron_ore"}).
+     * @return The {@link BlockType} if the identifier is a vanilla block, or {@code null} if not found.
+     */
+    @Nullable
+    private static BlockType lookupVanillaBlock(@NotNull String id) {
         return io.papermc.paper.registry.RegistryAccess.registryAccess()
                 .getRegistry(io.papermc.paper.registry.RegistryKey.BLOCK)
-                .get(Methods.getMinecraftKey(id)) != null;
+                .get(Methods.getMinecraftKey(id));
     }
 
     /**

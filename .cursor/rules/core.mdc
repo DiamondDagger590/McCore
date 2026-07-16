@@ -100,7 +100,7 @@ void getStatistic_returnsStatistic_whenKeyIsRegistered() { ... }
 - **No direct entity casting without guard** — use `instanceof` pattern matching: `if (entity instanceof Player player) { ... }`
 - **No decorative section-divider comments** — rely on class structure, method naming, and `@DisplayName` annotations instead of `// --- Section ---` dividers
 - **No constructor-initiated task scheduling** — callers schedule tasks explicitly after construction via `runTask()`; constructors must not call `runTask()` because it couples object creation to the scheduler and complicates testing
-- **No `e.printStackTrace()`** — always use `Logger.log(Level.SEVERE, "context message", e)` so stack traces route through the server logger
+- **No `e.printStackTrace()`** — always use `CorePlugin.getInstance().getLogger().log(Level.SEVERE, "context message", e)` so stack traces route through the server logger
 
 ## Task Scheduling
 

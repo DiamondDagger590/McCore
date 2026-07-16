@@ -38,7 +38,7 @@ public class CustomEntityWrapper {
     }
 
     public CustomEntityWrapper(@NotNull String customEntity) {
-        EntityType entityType = io.papermc.paper.registry.RegistryAccess.registryAccess().getRegistry(io.papermc.paper.registry.RegistryKey.ENTITY_TYPE).get(Methods.getMinecraftKey(customEntity));
+        EntityType entityType = lookupVanillaEntityType(customEntity);
         if (entityType != null) {
             this.entityType = entityType;
             this.customEntity = null;
@@ -92,9 +92,20 @@ public class CustomEntityWrapper {
      * @return {@code true} if the identifier is recognized as a vanilla entity type.
      */
     public static boolean isVanillaEntity(@NotNull String id) {
+        return lookupVanillaEntityType(id) != null;
+    }
+
+    /**
+     * Looks up an entity identifier in the Paper entity type registry.
+     *
+     * @param id The entity identifier to look up (e.g. {@code "zombie"}, {@code "creeper"}).
+     * @return The {@link EntityType} if the identifier is a vanilla entity, or {@code null} if not found.
+     */
+    @Nullable
+    private static EntityType lookupVanillaEntityType(@NotNull String id) {
         return io.papermc.paper.registry.RegistryAccess.registryAccess()
                 .getRegistry(io.papermc.paper.registry.RegistryKey.ENTITY_TYPE)
-                .get(Methods.getMinecraftKey(id)) != null;
+                .get(Methods.getMinecraftKey(id));
     }
 
     /**
