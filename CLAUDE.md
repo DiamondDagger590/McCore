@@ -215,6 +215,7 @@ src/main/java/com/diamonddagger590/mccore/
 | **CreateTableFunction** | Functional interface called once at DB init to create a table if it doesn't exist. |
 | **UpdateTableFunction** | Functional interface called after table creation to apply schema migrations. |
 | **Transaction** | Abstract base for executing an ordered list of `PreparedStatement`s against a single `Connection`. Subclasses define failure semantics: `BatchTransaction` commits whatever succeeds and logs individual failures; `FailSafeTransaction` rolls back everything if any single statement fails. |
+| **TransactionState** | Enum (`PENDING`, `COMMITTED`, `ROLLED_BACK`) tracking the outcome of a `FailSafeTransaction`. Fields are `volatile` for cross-thread visibility. Callers inspect state after `executeTransaction()` returns — the method still returns `void` and never throws. |
 | **DAO** | Static JDBC methods for reading/writing a specific entity. Always takes `Connection` as the first argument. |
 | **ReloadableContent** | A config-backed value that can be refreshed at runtime without a server restart. |
 | **PlayerSetting** | A namespaced, persistent player preference. Stored in the database and loaded with the player. |
@@ -341,6 +342,8 @@ managerRegistry.manager(CoreManagerKey.CORE_DATABASE_MANAGER).getDatabase().init
 
 ### Task Scheduling
 
+`RepeatableCoreTask.runTask(boolean)` guards against double-scheduling — calling it on an already-running task logs a warning and returns without scheduling a second timer. All cross-thread state fields in the `CoreTask` hierarchy (`taskExecuted`, `bukkitTaskId`, `cancelled`, `paused`, etc.) are `volatile` to ensure visibility across the main and async scheduler threads.
+
 ```java
 // One-off sync task
 new CoreTask(plugin) {
@@ -422,6 +425,7 @@ Register with `ReloadableContentManager` so it refreshes automatically on `/relo
 - **No hard-coded strings for namespaced keys or config routes** — define constants on the owning class or a dedicated constants file
 - **No direct entity casting without a null/type guard** — use `instanceof` pattern matching: `if (entity instanceof Player player) { ... }`
 - **No decorative section-divider comments** — do not use `// ── Section ──`, `// --- Section ---`, or similar ASCII-art dividers to group methods or tests; rely on class structure, method naming, and `@DisplayName` annotations to communicate organization
+- **No constructor-initiated task scheduling** — callers schedule tasks explicitly after construction via `runTask()`; constructors must not call `runTask()` because it couples object creation to the scheduler and complicates testing
 
 ---
 

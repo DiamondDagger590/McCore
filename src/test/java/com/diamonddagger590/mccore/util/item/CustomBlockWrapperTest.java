@@ -149,6 +149,44 @@ class CustomBlockWrapperTest {
     }
 
     @Nested
+    @DisplayName("isVanilla")
+    class IsVanilla {
+
+        @Test
+        @DisplayName("Material wrapper returns true")
+        void isVanilla_returnsTrue_whenMaterialWrapper() {
+            CustomBlockWrapper wrapper = materialWrapper(Material.STONE);
+            assertTrue(wrapper.isVanilla());
+        }
+
+        @Test
+        @DisplayName("Custom block wrapper returns false")
+        void isVanilla_returnsFalse_whenCustomBlockWrapper() throws Exception {
+            CustomBlockWrapper wrapper = customBlockWrapper("nexo:ruby_ore");
+            assertFalse(wrapper.isVanilla());
+        }
+    }
+
+    @Nested
+    @DisplayName("isCustom")
+    class IsCustom {
+
+        @Test
+        @DisplayName("Custom block wrapper returns true")
+        void isCustom_returnsTrue_whenCustomBlockWrapper() throws Exception {
+            CustomBlockWrapper wrapper = customBlockWrapper("nexo:ruby_ore");
+            assertTrue(wrapper.isCustom());
+        }
+
+        @Test
+        @DisplayName("Material wrapper returns false")
+        void isCustom_returnsFalse_whenMaterialWrapper() {
+            CustomBlockWrapper wrapper = materialWrapper(Material.STONE);
+            assertFalse(wrapper.isCustom());
+        }
+    }
+
+    @Nested
     @DisplayName("equals(Material)")
     class EqualsMaterial {
 

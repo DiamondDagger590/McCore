@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class CancelableCoreTask extends RepeatableCoreTask {
 
-    protected boolean cancelled;
+    protected volatile boolean cancelled;
 
     public CancelableCoreTask(@NotNull CorePlugin plugin, double taskDelay, double taskFrequency) {
         super(plugin, taskDelay, taskFrequency);

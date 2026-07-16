@@ -11,10 +11,10 @@ import org.jetbrains.annotations.NotNull;
 public abstract class CoreTask implements Runnable {
 
     private final CorePlugin plugin;
-    protected int bukkitTaskId = -1;
-    protected long taskStartTime = -1;
-    protected boolean taskRunningAsync;
-    protected boolean taskExecuted;
+    protected volatile int bukkitTaskId = -1;
+    protected volatile long taskStartTime = -1;
+    protected volatile boolean taskRunningAsync;
+    protected volatile boolean taskExecuted;
 
     public CoreTask(@NotNull CorePlugin plugin) {
         this.plugin = plugin;

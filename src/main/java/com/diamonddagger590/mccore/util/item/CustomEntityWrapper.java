@@ -38,7 +38,7 @@ public class CustomEntityWrapper {
     }
 
     public CustomEntityWrapper(@NotNull String customEntity) {
-        EntityType entityType = io.papermc.paper.registry.RegistryAccess.registryAccess().getRegistry(io.papermc.paper.registry.RegistryKey.ENTITY_TYPE).get(Methods.getMinecraftKey(customEntity));
+        EntityType entityType = lookupVanillaEntityType(customEntity);
         if (entityType != null) {
             this.entityType = entityType;
             this.customEntity = null;
@@ -63,6 +63,49 @@ public class CustomEntityWrapper {
         }
         this.entityType = customEntityResult == null ? entity.getType() : null;
         this.customEntity = customEntityResult;
+    }
+
+    /**
+     * Checks whether this wrapper represents a vanilla entity (resolved via the Paper registry).
+     *
+     * @return {@code true} if this wrapper holds an {@link EntityType}, meaning the entity
+     *         was recognized as a vanilla Minecraft entity.
+     */
+    public boolean isVanilla() {
+        return entityType != null;
+    }
+
+    /**
+     * Checks whether this wrapper represents a custom entity (from a model plugin).
+     *
+     * @return {@code true} if this wrapper holds a custom entity identifier, meaning the entity
+     *         was not recognized as a vanilla Minecraft entity.
+     */
+    public boolean isCustom() {
+        return customEntity != null;
+    }
+
+    /**
+     * Checks whether the given identifier resolves to a vanilla entity in the Paper entity type registry.
+     *
+     * @param id The entity identifier to check (e.g. {@code "zombie"}, {@code "creeper"}).
+     * @return {@code true} if the identifier is recognized as a vanilla entity type.
+     */
+    public static boolean isVanillaEntity(@NotNull String id) {
+        return lookupVanillaEntityType(id) != null;
+    }
+
+    /**
+     * Looks up an entity identifier in the Paper entity type registry.
+     *
+     * @param id The entity identifier to look up (e.g. {@code "zombie"}, {@code "creeper"}).
+     * @return The {@link EntityType} if the identifier is a vanilla entity, or {@code null} if not found.
+     */
+    @Nullable
+    private static EntityType lookupVanillaEntityType(@NotNull String id) {
+        return io.papermc.paper.registry.RegistryAccess.registryAccess()
+                .getRegistry(io.papermc.paper.registry.RegistryKey.ENTITY_TYPE)
+                .get(Methods.getMinecraftKey(id));
     }
 
     /**

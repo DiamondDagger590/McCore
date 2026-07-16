@@ -34,6 +34,7 @@ public enum ItemPluginType {
             try {
                 return fromBase64(customItem);
             } catch (Exception exception) {
+                CorePlugin.getInstance().getLogger().warning("Unresolvable material '" + customItem + "', falling back to STONE");
                 return ItemType.STONE.createItemStack(1);
             }
         }
@@ -54,6 +55,7 @@ public enum ItemPluginType {
             try {
                 return fromBase64(customItem);
             } catch (Exception exception) {
+                CorePlugin.getInstance().getLogger().warning("Unresolvable material '" + customItem + "', falling back to STONE");
                 return ItemType.STONE.createItemStack(1);
             }
         }
@@ -82,6 +84,7 @@ public enum ItemPluginType {
             try {
                 return fromBase64(customItem);
             } catch (Exception exception) {
+                CorePlugin.getInstance().getLogger().warning("Unresolvable material '" + customItem + "', falling back to STONE");
                 return ItemType.STONE.createItemStack(1);
             }
         }

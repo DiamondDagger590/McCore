@@ -47,7 +47,7 @@ public class CustomBlockWrapper {
     }
 
     public CustomBlockWrapper(@NotNull String customBlock) {
-        BlockType blockType = io.papermc.paper.registry.RegistryAccess.registryAccess().getRegistry(io.papermc.paper.registry.RegistryKey.BLOCK).get(Methods.getMinecraftKey(customBlock));
+        BlockType blockType = lookupVanillaBlock(customBlock);
         if (blockType != null) {
             this.material = blockType.asMaterial();
             this.customBlock = null;
@@ -71,6 +71,49 @@ public class CustomBlockWrapper {
         }
         this.material = customBlockResult == null ? block.getType() : null;
         this.customBlock = customBlockResult;
+    }
+
+    /**
+     * Checks whether this wrapper represents a vanilla block (resolved via the Paper registry).
+     *
+     * @return {@code true} if this wrapper holds a {@link Material}, meaning the block
+     *         was recognized as a vanilla Minecraft block.
+     */
+    public boolean isVanilla() {
+        return material != null;
+    }
+
+    /**
+     * Checks whether this wrapper represents a custom block (from a model plugin).
+     *
+     * @return {@code true} if this wrapper holds a custom block identifier, meaning the block
+     *         was not recognized as a vanilla Minecraft block.
+     */
+    public boolean isCustom() {
+        return customBlock != null;
+    }
+
+    /**
+     * Checks whether the given identifier resolves to a vanilla block in the Paper block registry.
+     *
+     * @param id The block identifier to check (e.g. {@code "stone"}, {@code "iron_ore"}).
+     * @return {@code true} if the identifier is recognized as a vanilla block.
+     */
+    public static boolean isVanillaBlock(@NotNull String id) {
+        return lookupVanillaBlock(id) != null;
+    }
+
+    /**
+     * Looks up a block identifier in the Paper block registry.
+     *
+     * @param id The block identifier to look up (e.g. {@code "stone"}, {@code "iron_ore"}).
+     * @return The {@link BlockType} if the identifier is a vanilla block, or {@code null} if not found.
+     */
+    @Nullable
+    private static BlockType lookupVanillaBlock(@NotNull String id) {
+        return io.papermc.paper.registry.RegistryAccess.registryAccess()
+                .getRegistry(io.papermc.paper.registry.RegistryKey.BLOCK)
+                .get(Methods.getMinecraftKey(id));
     }
 
     /**

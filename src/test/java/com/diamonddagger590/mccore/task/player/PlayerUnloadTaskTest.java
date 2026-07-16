@@ -166,9 +166,17 @@ class PlayerUnloadTaskTest {
     }
 
     @Test
-    @DisplayName("Given a new task, when constructed, then task is started asynchronously")
-    void constructor_startsAsyncTask() {
+    @DisplayName("Constructor does not self-schedule")
+    void constructor_doesNotSchedule() {
         createTask();
+        verify(mockScheduler, never()).runTaskTimerAsynchronously(any(), any(Runnable.class), anyLong(), anyLong());
+    }
+
+    @Test
+    @DisplayName("runTask(true) after construction schedules async timer")
+    void runTask_schedulesAsyncTimer_whenCalledAfterConstruction() {
+        PlayerUnloadTask task = createTask();
+        task.runTask(true);
         verify(mockScheduler).runTaskTimerAsynchronously(eq(mockPlugin), any(Runnable.class), eq(0L), eq(1L));
     }
 
