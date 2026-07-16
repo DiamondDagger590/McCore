@@ -8,7 +8,6 @@ import org.bukkit.inventory.ItemType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static com.diamonddagger590.mccore.util.Methods.fromBase64;
 import static com.diamonddagger590.mccore.util.Methods.getItemType;
@@ -35,7 +34,7 @@ public enum ItemPluginType {
             try {
                 return fromBase64(customItem);
             } catch (Exception exception) {
-                warnUnresolvableMaterial(customItem);
+                CorePlugin.getInstance().getLogger().warning("Unresolvable material '" + customItem + "', falling back to STONE");
                 return ItemType.STONE.createItemStack(1);
             }
         }
@@ -56,7 +55,7 @@ public enum ItemPluginType {
             try {
                 return fromBase64(customItem);
             } catch (Exception exception) {
-                warnUnresolvableMaterial(customItem);
+                CorePlugin.getInstance().getLogger().warning("Unresolvable material '" + customItem + "', falling back to STONE");
                 return ItemType.STONE.createItemStack(1);
             }
         }
@@ -85,14 +84,12 @@ public enum ItemPluginType {
             try {
                 return fromBase64(customItem);
             } catch (Exception exception) {
-                warnUnresolvableMaterial(customItem);
+                CorePlugin.getInstance().getLogger().warning("Unresolvable material '" + customItem + "', falling back to STONE");
                 return ItemType.STONE.createItemStack(1);
             }
         }
     }, "none"),
     ;
-
-    private static final Set<String> WARNED_MATERIALS = ConcurrentHashMap.newKeySet();
 
     @NotNull
     private final CustomItemFunction customItemFunction;
@@ -123,18 +120,6 @@ public enum ItemPluginType {
                 .filter(itemPluginType -> itemPluginType.names.contains(name.toLowerCase(Locale.ROOT)))
                 .findFirst()
                 .orElse(ItemPluginType.NONE);
-    }
-
-    /**
-     * Logs a warning the first time a given material string cannot be resolved,
-     * suppressing duplicates for the same string.
-     *
-     * @param customItem The unresolvable material string.
-     */
-    private static void warnUnresolvableMaterial(@NotNull String customItem) {
-        if (WARNED_MATERIALS.add(customItem)) {
-            CorePlugin.getInstance().getLogger().warning("Unresolvable material '" + customItem + "', falling back to STONE");
-        }
     }
 
     /**
