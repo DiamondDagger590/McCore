@@ -33,19 +33,19 @@ Caffeine is shadowed and relocated to `com.diamonddagger590.mccore.caffeine` in 
 
 ### Test Naming Convention
 
-Every test method **must** follow the Given/When/Then naming pattern and carry a `@DisplayName` annotation:
+Every test method carries a `@DisplayName` annotation and a descriptive method name:
 
-- **Method name:** `methodUnderTest_expectedOutcome_whenCondition` (descriptive, snake_case segments)
-- **@DisplayName:** `"Given [precondition], when [action], then [expected outcome]"` — a full human-readable sentence
+- **Method name:** `methodUnderTest_expectedOutcome_whenCondition` (descriptive, snake_case segments; the `_whenCondition` suffix is optional when the context is obvious from the action and outcome alone)
+- **@DisplayName:** a short, descriptive label — **not** a Given/When/Then sentence
 
 ```java
 @Test
-@DisplayName("Given a registered statistic, when getting by key, then returns the statistic")
+@DisplayName("returns the statistic for a registered key")
 void getStatistic_returnsStatistic_whenKeyIsRegistered() { ... }
 
 @Test
-@DisplayName("Given an uninitialized variable with error mode, when evaluating, then throws EvaluationException")
-void getValue_throwsEvaluationException_whenVariableUninitializedAndErrorModeEnabled() { ... }
+@DisplayName("throws when an uninitialized variable is evaluated in error mode")
+void getValue_throwsEvaluationException_whenVariableUninitialized() { ... }
 ```
 
 - Test methods must be `public` or package-private (not `private`)
