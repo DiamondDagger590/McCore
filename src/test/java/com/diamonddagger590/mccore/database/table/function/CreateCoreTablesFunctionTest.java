@@ -10,6 +10,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -21,7 +24,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
@@ -72,7 +77,7 @@ class CreateCoreTablesFunctionTest {
 
         when(mockDatabase.getDatabaseExecutorService()).thenReturn(executor);
         when(mockDatabase.getConnection()).thenReturn(mockConnection);
-        when(mockDatabase.tableExists(eq(mockConnection), any(String.class))).thenReturn(true);
+        when(mockDatabase.tableExists(eq(mockConnection), anyString())).thenReturn(true);
 
         CreateTableFunction function = CreateCoreTablesFunction.getCreateCoreTablesFunction();
 
@@ -82,5 +87,56 @@ class CreateCoreTablesFunctionTest {
         result.get(5, TimeUnit.SECONDS);
         assertTrue(result.isDone());
         assertFalse(result.isCompletedExceptionally());
+    }
+
+    @Test
+    @DisplayName("Given tables do not exist, when createTables is called, then creates all tables and completes successfully")
+    void createTables_completesSuccessfully_whenTablesDoNotExist() throws Exception {
+        Database mockDatabase = mock(Database.class);
+        Connection mockConnection = mock(Connection.class);
+        PreparedStatement mockStatement = mock(PreparedStatement.class);
+        ResultSet mockResultSet = mock(ResultSet.class);
+
+        when(mockDatabase.getDatabaseExecutorService()).thenReturn(executor);
+        when(mockDatabase.getConnection()).thenReturn(mockConnection);
+        when(mockDatabase.tableExists(eq(mockConnection), anyString())).thenReturn(false);
+        when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
+        when(mockStatement.executeQuery()).thenReturn(mockResultSet);
+        when(mockStatement.executeUpdate()).thenReturn(1);
+        when(mockResultSet.next()).thenReturn(false);
+
+        CreateTableFunction function = CreateCoreTablesFunction.getCreateCoreTablesFunction();
+
+        CompletableFuture<Void> result = function.createTables(mockDatabase);
+        assertNotNull(result);
+
+        result.get(5, TimeUnit.SECONDS);
+        assertTrue(result.isDone());
+        assertFalse(result.isCompletedExceptionally());
+    }
+
+    @Test
+    @DisplayName("Given connection close throws SQLException, when createTables is called, then the catch block handles it gracefully")
+    void createTables_handlesSQLException_whenConnectionCloseThrows() throws Exception {
+        Database mockDatabase = mock(Database.class);
+        Connection mockConnection = mock(Connection.class);
+        PreparedStatement mockStatement = mock(PreparedStatement.class);
+        ResultSet mockResultSet = mock(ResultSet.class);
+
+        when(mockDatabase.getDatabaseExecutorService()).thenReturn(executor);
+        when(mockDatabase.getConnection()).thenReturn(mockConnection);
+        when(mockDatabase.tableExists(eq(mockConnection), anyString())).thenReturn(true);
+        when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
+        when(mockStatement.executeQuery()).thenReturn(mockResultSet);
+        when(mockResultSet.next()).thenReturn(false);
+        doThrow(new SQLException("Close failed")).when(mockConnection).close();
+
+        CreateTableFunction function = CreateCoreTablesFunction.getCreateCoreTablesFunction();
+
+        CompletableFuture<Void> result = function.createTables(mockDatabase);
+        assertNotNull(result);
+
+        result.get(5, TimeUnit.SECONDS);
+        assertTrue(result.isDone());
     }
 }
