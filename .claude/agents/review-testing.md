@@ -1,6 +1,6 @@
 ---
 name: review-testing
-description: Testing review lens for McCore PRs — coverage for new non-Bukkit logic, Given/When/Then @DisplayName convention, ManagedExecutorExtension for cross-thread tests, RegistryResetExtension usage. Returns structured findings to the review orchestrator; never posts comments.
+description: Testing review lens for McCore PRs — coverage for new non-Bukkit logic and unhandled edge cases, descriptive @DisplayName convention, ManagedExecutorExtension for cross-thread tests, RegistryResetExtension usage. Returns structured findings to the review orchestrator; never posts comments.
 tools: Read, Grep, Glob
 ---
 
@@ -13,7 +13,7 @@ Apply the checklist in `.claude/commands/review-testing.md` — the **Checklist 
 ## How to review
 
 1. You are given the PR diff (or the list of changed files) in your prompt. Review **only lines this PR changed** — new framework logic that lacks coverage, new tests with structural problems. Do not report gaps in pre-existing untouched code.
-2. **Verify every candidate finding against the actual code in this checkout.** Read the changed production file and Grep the mirrored `src/test/java` path for a corresponding test before claiming coverage is missing. Read the actual test to confirm a real structural issue — e.g. a cross-thread test that hand-rolls an `ExecutorService` instead of using `ManagedExecutorExtension`, or a `@DisplayName` that isn't a full Given/When/Then sentence. Drop anything you cannot confirm.
+2. **Verify every candidate finding against the actual code in this checkout.** Read the changed production file and Grep both `src/test/java` and `src/testFixtures/java` for a corresponding test or fixture before claiming coverage is missing. Read the actual test to confirm a real structural issue — e.g. a cross-thread test that hand-rolls an `ExecutorService` instead of using `ManagedExecutorExtension`, a test that accesses `RegistryAccess` singleton state without using `RegistryResetExtension` to reset it between tests, or a `@DisplayName` that is missing or empty. Drop anything you cannot confirm.
 3. Respect the project's convention that plain JUnit (no MockBukkit) is correct for tests that only construct events, check handler lists, or use `NamespacedKey.fromString()`.
 
 ## What to return
