@@ -36,7 +36,7 @@ Caffeine is shadowed and relocated to `com.diamonddagger590.mccore.caffeine` in 
 Every test method carries a `@DisplayName` annotation and a descriptive method name:
 
 - **Method name:** `methodUnderTest_expectedOutcome_whenCondition` (descriptive, snake_case segments; the `_whenCondition` suffix is optional when the context is obvious from the action and outcome alone)
-- **@DisplayName:** a short, descriptive label — **not** a Given/When/Then sentence
+- **@DisplayName:** a descriptive label that clearly communicates the test's intent
 
 ```java
 @Test
