@@ -19,12 +19,15 @@ Pick the persona subagents whose patterns match the changed files. Match generou
 | `review-security` | any `src/main/**/*.java` |
 | `review-testing` | any `src/main/**/*.java` |
 | `review-extensibility` | `src/**/event/**`, `src/**/registry/**`, `src/**/gui/**`, `src/**/database/**`, or any change to a public type/method signature, generic parameter, or new/changed event |
+| `review-architecture` | any `src/main/**/*.java` |
+| `review-error-handling` | any `src/main/**/*.java` |
+| `review-performance` | any `src/main/**/*.java` |
 
 If the PR changes only non-code files (docs, workflows, `.md`) and no lens matches, skip straight to §5 and post a one-line "No reviewable code changes" summary.
 
 ## 3. Fan out (one subagent per lens, in parallel)
 
-Spawn every applicable lens **in a single message with multiple Task calls** so they run concurrently. For each, use the matching `subagent_type` (e.g. `review-security`) and pass in the prompt:
+Spawn every applicable lens **in a single message with multiple Agent calls** so they run concurrently. For each, use the matching `subagent_type` (e.g. `review-security`) and pass in the prompt:
 
 - The PR diff (or, if very large, the changed-file list plus the diff hunks relevant to that lens).
 - A one-line instruction to follow its own agent definition.
