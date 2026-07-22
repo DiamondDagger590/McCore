@@ -96,16 +96,23 @@ dependencies {
     // Custom items
     val itemsAdderVersion = "4.0.10"
     compileOnly("dev.lone:api-itemsadder:$itemsAdderVersion")
+    testImplementation("dev.lone:api-itemsadder:$itemsAdderVersion")
     val nexoVersion = "1.16.0"
     compileOnly("com.nexomc:nexo:$nexoVersion") {
         exclude(group = "net.byteflux")
     }
+    testImplementation("com.nexomc:nexo:$nexoVersion") {
+        exclude(group = "net.byteflux")
+        exclude(group = "dev.triumphteam")
+    }
 
     val mythicMobsVersion = "5.6.1"
     compileOnly("io.lumine:Mythic-Dist:$mythicMobsVersion")
+    testImplementation("io.lumine:Mythic-Dist:$mythicMobsVersion")
 
     val modelEngineVersion = "R4.0.4"
     compileOnly("com.ticxo.modelengine:ModelEngine:$modelEngineVersion")
+    testImplementation("com.ticxo.modelengine:ModelEngine:$modelEngineVersion")
 
     // Command annotations
     val cloudMinecraftVersion = "2.0.0-beta.14"
