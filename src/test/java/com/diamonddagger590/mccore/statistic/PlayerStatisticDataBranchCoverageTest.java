@@ -46,6 +46,7 @@ class PlayerStatisticDataBranchCoverageTest {
     private static final NamespacedKey STRING_KEY = key("test", "string_stat");
     private static final NamespacedKey TIMESTAMP_KEY = key("test", "timestamp_stat");
     private static final NamespacedKey SET_KEY = key("test", "set_stat");
+    private static final NamespacedKey UNLIMITED_SET_KEY = key("test", "unlimited_set_stat");
 
     private final List<Event> firedEvents = Collections.synchronizedList(new ArrayList<>());
     private CorePlayer mockPlayer;
@@ -62,6 +63,7 @@ class PlayerStatisticDataBranchCoverageTest {
         registry.register(new SimpleStatistic(STRING_KEY, StatisticType.STRING, "", "String", "String stat"));
         registry.register(new SimpleStatistic(TIMESTAMP_KEY, StatisticType.TIMESTAMP, Instant.EPOCH, "Timestamp", "Timestamp stat"));
         registry.register(new SimpleStatistic(SET_KEY, StatisticType.SET_STRING, new LinkedHashSet<String>(), "Set", "Set stat", 3));
+        registry.register(new SimpleStatistic(UNLIMITED_SET_KEY, StatisticType.SET_STRING, new LinkedHashSet<String>(), "Unlimited Set", "Unlimited set stat", -1));
 
         mockPlayer = new TestCorePlayer(PLAYER_UUID);
 
@@ -526,6 +528,31 @@ class PlayerStatisticDataBranchCoverageTest {
             assertFalse(firedEvents.isEmpty(), "Expected at least one event to be fired");
             StatisticModifyEvent preEvent = (StatisticModifyEvent) firedEvents.get(0);
             assertEquals(0, preEvent.getOldValue());
+        }
+    }
+
+    @Nested
+    @DisplayName("addToSet unlimited max size")
+    class AddToSetUnlimitedMaxSize {
+
+        @Test
+        @DisplayName("Given a set with unlimited max size, when adding more elements than a bounded set would allow, then no eviction occurs")
+        void addToSet_doesNotEvict_whenMaxSizeIsUnlimited() {
+            for (int i = 0; i < 10; i++) {
+                assertTrue(data.addToSet(UNLIMITED_SET_KEY, "element_" + i));
+            }
+            Set<String> result = data.getSetValue(UNLIMITED_SET_KEY).get();
+            assertEquals(10, result.size());
+            for (int i = 0; i < 10; i++) {
+                assertTrue(result.contains("element_" + i));
+            }
+        }
+
+        @Test
+        @DisplayName("Given a set with unlimited max size, when adding a duplicate element, then returns false")
+        void addToSet_returnsFalse_whenElementAlreadyExists() {
+            data.addToSet(UNLIMITED_SET_KEY, "dup");
+            assertFalse(data.addToSet(UNLIMITED_SET_KEY, "dup"));
         }
     }
 

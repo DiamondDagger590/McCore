@@ -928,4 +928,46 @@ class MethodsTest {
     void toRoutePath_joinsAll_whenGivenFourElements() {
         assertEquals("a.b.c.d", Methods.toRoutePath("a", "b", "c", "d"));
     }
+
+    @Test
+    @DisplayName("Given an empty string, when calling getItemType, then returns empty Optional")
+    void getItemType_returnsEmpty_whenStringIsEmpty() {
+        assertTrue(Methods.getItemType("").isEmpty());
+    }
+
+    @Test
+    @DisplayName("Given an empty string, when calling getEnchantment, then returns empty Optional")
+    void getEnchantment_returnsEmpty_whenStringIsEmpty() {
+        assertTrue(Methods.getEnchantment("").isEmpty());
+    }
+
+    @Test
+    @DisplayName("Given an empty string, when calling getPatternType, then returns empty Optional")
+    void getPatternType_returnsEmpty_whenStringIsEmpty() {
+        assertTrue(Methods.getPatternType("").isEmpty());
+    }
+
+    @Test
+    @DisplayName("Given an empty string, when calling getEntityType, then returns empty Optional")
+    void getEntityType_returnsEmpty_whenStringIsEmpty() {
+        assertTrue(Methods.getEntityType("").isEmpty());
+    }
+
+    @Test
+    @DisplayName("Given an empty string, when calling getTrimPattern, then returns empty Optional")
+    void getTrimPattern_returnsEmpty_whenStringIsEmpty() {
+        assertTrue(Methods.getTrimPattern("").isEmpty());
+    }
+
+    @Test
+    @DisplayName("Given an empty string, when calling getTrimMaterial, then returns empty Optional")
+    void getTrimMaterial_returnsEmpty_whenStringIsEmpty() {
+        assertTrue(Methods.getTrimMaterial("").isEmpty());
+    }
+
+    @Test
+    @DisplayName("Given an empty string, when calling getPotionEffect, then returns empty Optional")
+    void getPotionEffect_returnsEmpty_whenStringIsEmpty() {
+        assertTrue(Methods.getPotionEffect("").isEmpty());
+    }
 }
