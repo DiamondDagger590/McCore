@@ -119,7 +119,9 @@ McCore provides two built-in tasks for player lifecycle management:
 @EventHandler
 public void onPlayerLoad(PlayerLoadEvent event) {
     // Safe — player data is fully loaded at this point
-    McRPGPlayer player = (McRPGPlayer) event.getCorePlayer();
+    if (event.getCorePlayer() instanceof MyPlayer myPlayer) {
+        // ...
+    }
 }
 ```
 

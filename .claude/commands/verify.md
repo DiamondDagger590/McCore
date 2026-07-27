@@ -1,9 +1,9 @@
-# Verify: Build shadowJar
+# Verify: Test + Build shadowJar
 
-Run `./gradlew shadowJar` from the project root and report the outcome.
+Run the full test suite and build the shaded jar from the project root, then report the outcome.
 
 Steps:
-1. Execute the build with `./gradlew shadowJar`.
+1. Execute `./gradlew clean test shadowJar` (McCore's `shadowJar` task does not run tests on its own, so `test` must be invoked explicitly).
 2. Report:
    - Total tests run / passed / failed / skipped.
    - Whether the shaded jar was produced — show its exact filename under `build/libs/`.
