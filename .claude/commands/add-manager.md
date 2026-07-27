@@ -14,7 +14,7 @@ Scaffold a new `Manager` subclass in McCore or a downstream plugin. Follow every
 
 ---
 
-## Step 2 — Read existing examples
+## Step 1 — Read existing examples
 
 Before writing any code, read:
 - `src/main/java/com/diamonddagger590/mccore/chat/ChatResponseManager.java` — a minimal Manager example
@@ -23,7 +23,7 @@ Before writing any code, read:
 
 ---
 
-## Step 3 — Create the Manager class
+## Step 2 — Create the Manager class
 
 Create `<Name>Manager.java` in the appropriate package:
 
@@ -54,7 +54,7 @@ public class <Name>Manager extends Manager<<PluginType>> {
 
 ---
 
-## Step 4 — Declare the ManagerKey constant
+## Step 3 — Declare the ManagerKey constant
 
 **If the Manager is built in to McCore**, add to `CoreManagerKey`:
 ```java
@@ -70,7 +70,7 @@ Import the new manager class.
 
 ---
 
-## Step 5 — Register in bootstrap
+## Step 4 — Register in bootstrap
 
 In the relevant `Registrar` or bootstrap startup sequence, register the manager before it is first used:
 
@@ -88,7 +88,7 @@ managerRegistry.register(new <Name>Manager(plugin));
 
 ---
 
-## Step 6 — Access pattern
+## Step 5 — Access pattern
 
 Always access via `RegistryAccess` — never hold a direct field reference to the manager across hot paths:
 
@@ -100,7 +100,7 @@ Always access via `RegistryAccess` — never hold a direct field reference to th
 
 ---
 
-## Step 7 — Verify
+## Step 6 — Verify
 
 ```
 ./gradlew compileJava
