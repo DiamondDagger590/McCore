@@ -135,6 +135,9 @@ dependencies {
     compileOnly("net.citizensnpcs:citizens-main:$citizensVersion") {
         exclude(group = "*", module = "*")
     }
+    testImplementation("net.citizensnpcs:citizens-main:$citizensVersion") {
+        exclude(group = "*", module = "*")
+    }
 
 }
 

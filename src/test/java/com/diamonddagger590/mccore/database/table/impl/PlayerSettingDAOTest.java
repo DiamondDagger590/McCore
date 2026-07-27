@@ -139,14 +139,42 @@ class PlayerSettingDAOTest {
         }
 
         @Test
-        @DisplayName("Given a SQL exception during index creation, when attemptCreateTable is called, then returns false")
+        @DisplayName("Given executeUpdate throws during table creation, when attemptCreateTable is called, then returns false")
+        void attemptCreateTable_returnsFalse_whenExecuteUpdateThrows() throws SQLException {
+            when(mockDatabase.tableExists(mockConnection, "player_settings")).thenReturn(false);
+            PreparedStatement failingStatement = mock(PreparedStatement.class);
+            when(failingStatement.executeUpdate()).thenThrow(new SQLException("executeUpdate failed"));
+            when(mockConnection.prepareStatement(anyString())).thenReturn(failingStatement);
+
+            boolean result = PlayerSettingDAO.attemptCreateTable(mockConnection, mockDatabase);
+
+            assertFalse(result);
+        }
+
+        @Test
+        @DisplayName("Given a SQL exception during index creation prepareStatement, when attemptCreateTable is called, then returns false")
         void attemptCreateTable_returnsFalse_whenSqlExceptionOnIndex() throws SQLException {
             when(mockDatabase.tableExists(mockConnection, "player_settings")).thenReturn(false);
             PreparedStatement createTableStmt = mock(PreparedStatement.class);
-            PreparedStatement indexStmt = mock(PreparedStatement.class);
             when(mockConnection.prepareStatement(anyString()))
                     .thenReturn(createTableStmt)
                     .thenThrow(new SQLException("Index failed"));
+
+            boolean result = PlayerSettingDAO.attemptCreateTable(mockConnection, mockDatabase);
+
+            assertFalse(result);
+        }
+
+        @Test
+        @DisplayName("Given executeUpdate throws during index creation, when attemptCreateTable is called, then returns false")
+        void attemptCreateTable_returnsFalse_whenIndexExecuteUpdateThrows() throws SQLException {
+            when(mockDatabase.tableExists(mockConnection, "player_settings")).thenReturn(false);
+            PreparedStatement createTableStmt = mock(PreparedStatement.class);
+            PreparedStatement indexStmt = mock(PreparedStatement.class);
+            when(indexStmt.executeUpdate()).thenThrow(new SQLException("Index executeUpdate failed"));
+            when(mockConnection.prepareStatement(anyString()))
+                    .thenReturn(createTableStmt)
+                    .thenReturn(indexStmt);
 
             boolean result = PlayerSettingDAO.attemptCreateTable(mockConnection, mockDatabase);
 
@@ -272,6 +300,46 @@ class PlayerSettingDAOTest {
 
             assertNotNull(settings);
             assertTrue(settings.isEmpty());
+        }
+
+    }
+
+    @Nested
+    @DisplayName("getPlayerSettings branch coverage")
+    class GetPlayerSettingsBranchCoverage {
+
+        @Test
+        @DisplayName("Given a registry key whose getSetting returns empty, when getPlayerSettings is called, then that key is skipped")
+        void getPlayerSettings_skipsKey_whenGetSettingReturnsEmpty() throws SQLException {
+            NamespacedKey phantomKey = new NamespacedKey("mccore", "phantom_setting");
+
+            PlayerSettingRegistry mockRegistry = mock(PlayerSettingRegistry.class);
+            when(mockRegistry.getSettingKeys()).thenReturn(Set.of(TestSetting.ON.getSettingKey(), phantomKey));
+            when(mockRegistry.getSetting(TestSetting.ON.getSettingKey())).thenReturn(Optional.of(TestSetting.ON));
+            when(mockRegistry.getSetting(phantomKey)).thenReturn(Optional.empty());
+
+            RegistryAccess mockRegistryAccess = mock(RegistryAccess.class);
+            when(mockRegistryAccess.<PlayerSettingRegistry>registry(RegistryKey.PLAYER_SETTING)).thenReturn(mockRegistry);
+
+            CorePlugin mockCorePlugin = mock(CorePlugin.class);
+            when(mockCorePlugin.registryAccess()).thenReturn(mockRegistryAccess);
+            when(mockCorePlugin.getLogger()).thenReturn(Logger.getLogger("TestLogger"));
+
+            try (MockedStatic<CorePlugin> corePluginStatic = mockStatic(CorePlugin.class)) {
+                corePluginStatic.when(CorePlugin::getInstance).thenReturn(mockCorePlugin);
+
+                Connection conn = mock(Connection.class);
+                PreparedStatement stmt = mock(PreparedStatement.class);
+                ResultSet rs = mock(ResultSet.class);
+                when(conn.prepareStatement(anyString())).thenReturn(stmt);
+                when(stmt.executeQuery()).thenReturn(rs);
+                when(rs.next()).thenReturn(false);
+
+                Set<PlayerSetting> settings = PlayerSettingDAO.getPlayerSettings(conn, TEST_UUID);
+
+                assertEquals(1, settings.size());
+                assertTrue(settings.stream().anyMatch(s -> s.name().equals("ON")));
+            }
         }
     }
 

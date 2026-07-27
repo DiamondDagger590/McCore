@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -74,6 +75,19 @@ class MutexDAOTest {
         void attemptCreateTable_returnsFalse_whenSqlExceptionOccurs() throws SQLException {
             when(mockDatabase.tableExists(mockConnection, "player_mutex")).thenReturn(false);
             when(mockConnection.prepareStatement(anyString())).thenThrow(new SQLException("Create failed"));
+
+            boolean result = MutexDAO.attemptCreateTable(mockConnection, mockDatabase);
+
+            assertFalse(result);
+        }
+
+        @Test
+        @DisplayName("Given executeUpdate throws during table creation, when attemptCreateTable is called, then returns false")
+        void attemptCreateTable_returnsFalse_whenExecuteUpdateThrows() throws SQLException {
+            when(mockDatabase.tableExists(mockConnection, "player_mutex")).thenReturn(false);
+            PreparedStatement failingStatement = mock(PreparedStatement.class);
+            when(failingStatement.executeUpdate()).thenThrow(new SQLException("executeUpdate failed"));
+            when(mockConnection.prepareStatement(anyString())).thenReturn(failingStatement);
 
             boolean result = MutexDAO.attemptCreateTable(mockConnection, mockDatabase);
 
@@ -150,6 +164,19 @@ class MutexDAOTest {
             boolean result = MutexDAO.isUserMutexLocked(mockConnection, TEST_UUID);
 
             assertFalse(result);
+        }
+
+        @Test
+        @DisplayName("Given multiple rows exist, when isUserMutexLocked is called, then it returns the last row's value")
+        void isUserMutexLocked_returnsLastRowValue_whenMultipleRowsExist() throws SQLException {
+            when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
+            when(mockStatement.executeQuery()).thenReturn(mockResultSet);
+            when(mockResultSet.next()).thenReturn(true, true, false);
+            when(mockResultSet.getBoolean("mutex")).thenReturn(false, true);
+
+            boolean result = MutexDAO.isUserMutexLocked(mockConnection, TEST_UUID);
+
+            assertTrue(result);
         }
 
         @Test
