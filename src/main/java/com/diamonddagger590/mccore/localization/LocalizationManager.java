@@ -583,6 +583,15 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
         throw new NoLocalizationContainsMessageException(route, Set.of(locale));
     }
 
+    /**
+     * Broadcasts a localized message to all online players and the console. Each online player
+     * receives the message resolved against their own locale chain if they are loaded, or the
+     * default locale chain otherwise. The console always receives the default-locale variant.
+     *
+     * @param route The {@link Route} to check for a translated message.
+     * @throws NoLocalizationContainsMessageException If no localization in a recipient's locale
+     *                                                chain contains the provided {@link Route}.
+     */
     public void broadcastMessage(@NotNull Route route) {
         PlayerManager<?, T> playerManager = (PlayerManager<?, T>) RegistryAccess.registryAccess()
                 .registry(RegistryKey.MANAGER)
@@ -601,6 +610,34 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
         }
         // Send to console using default locale chain
         Bukkit.getConsoleSender().sendMessage(getLocalizedMessage(route));
+    }
+
+    /**
+     * Broadcasts a localized message with placeholders to all online players and the console.
+     * Each online player receives the message resolved against their own locale chain if they
+     * are loaded, or the default locale chain otherwise. Placeholders are substituted after
+     * locale resolution. The console always receives the default-locale variant.
+     *
+     * @param route        The {@link Route} to check for a translated message.
+     * @param placeholders The placeholders to replace in the message.
+     * @throws NoLocalizationContainsMessageException If no localization in a recipient's locale
+     *                                                chain contains the provided {@link Route}.
+     */
+    public void broadcastMessage(@NotNull Route route, @NotNull Map<String, String> placeholders) {
+        PlayerManager<?, T> playerManager = (PlayerManager<?, T>) RegistryAccess.registryAccess()
+                .registry(RegistryKey.MANAGER)
+                .manager(CoreManagerKey.CORE_PLAYER_MANAGER);
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            var playerOptional = playerManager.getPlayer(player.getUniqueId());
+            if (playerOptional.isPresent()) {
+                T corePlayer = playerOptional.get();
+                player.sendMessage(getLocalizedMessageAsComponent(corePlayer, route, placeholders));
+            }
+            else {
+                player.sendMessage(getLocalizedMessageAsComponent(route, placeholders));
+            }
+        }
+        Bukkit.getConsoleSender().sendMessage(getLocalizedMessageAsComponent(route, placeholders));
     }
 
     /**
