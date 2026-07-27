@@ -293,7 +293,7 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
                         if (papiHookOptional.isPresent() && playerOptional.isPresent()) {
                             message = papiHookOptional.get().translateMessage(playerOptional.get(), message);
                         }
-                        return message;
+                        return postProcessResolvedString(message);
                     }
                 }
             }
@@ -301,6 +301,26 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
         // If we reach here, then that means no languages support the message which shouldn't be true.
         // English should always be supported.
         throw new NoLocalizationContainsMessageException(route, processedLocales);
+    }
+
+    /**
+     * Gets a localized message using the provided {@link Route} to find a translated message,
+     * with placeholder replacements applied via MiniMessage tag resolution.
+     *
+     * @param player       The {@link T} to localize for.
+     * @param route        The {@link Route} to check for a translated message.
+     * @param placeholders The placeholders to replace in the message.
+     * @return A localized message using the provided {@link Route} to find a translated message.
+     * @throws NoLocalizationContainsMessageException If there is no localization in the player's locale
+     *                                                chain that supports the provided route.
+     */
+    @NotNull
+    public String getLocalizedMessage(@NotNull T player, @NotNull Route route, @NotNull Map<String, String> placeholders) {
+        String message = getLocalizedMessage(player, route);
+        for (var entry : placeholders.entrySet()) {
+            message = message.replace("<" + entry.getKey() + ">", entry.getValue());
+        }
+        return message;
     }
 
     /**
@@ -561,6 +581,19 @@ public abstract class LocalizationManager<P extends CorePlugin, T extends CorePl
         // If we reach here, then that means no languages support the message which shouldn't be true.
         // English should always be supported.
         throw new NoLocalizationContainsMessageException(route, Set.of(locale));
+    }
+
+    /**
+     * Post-processes a resolved localization string before it is returned to callers.
+     * Subclasses can override this to apply global transformations such as palette color
+     * replacement.
+     *
+     * @param raw The raw resolved string.
+     * @return The post-processed string.
+     */
+    @NotNull
+    protected String postProcessResolvedString(@NotNull String raw) {
+        return raw;
     }
 
     /**

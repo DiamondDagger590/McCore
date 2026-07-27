@@ -100,6 +100,22 @@ public class CustomBlockWrapper {
     }
 
     /**
+     * Gets a human-readable name for this block. For vanilla materials, this returns
+     * the material name in lowercase with underscores replaced by spaces. For custom
+     * blocks, this returns the custom block identifier.
+     *
+     * @return A display-friendly name for this block.
+     */
+    @NotNull
+    public String blockName() {
+        if (customBlock != null) {
+            return customBlock;
+        }
+        assert material != null;
+        return material.name().toLowerCase().replace('_', ' ');
+    }
+
+    /**
      * Get an {@link ItemBuilder} representation of this custom block, meant to allow for conversion between
      * custom blocks and custom items.
      *

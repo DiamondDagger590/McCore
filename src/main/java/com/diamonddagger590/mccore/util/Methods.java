@@ -234,7 +234,7 @@ public class Methods {
                 long value = Long.parseLong(numberBuilder.toString());
                 numberBuilder.setLength(0);
 
-                duration = switch (c) {
+                duration = switch (Character.toLowerCase(c)) {
                     case 's' -> duration.plusSeconds(value);
                     case 'm' -> duration.plusMinutes(value);
                     case 'h' -> duration.plusHours(value);
@@ -244,6 +244,9 @@ public class Methods {
                     default -> throw new IllegalArgumentException("Invalid time unit: " + c);
                 };
             }
+        }
+        if (!numberBuilder.isEmpty()) {
+            duration = duration.plusSeconds(Long.parseLong(numberBuilder.toString()));
         }
         return duration;
     }

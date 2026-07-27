@@ -92,6 +92,22 @@ public class CustomEntityWrapper {
     }
 
     /**
+     * Gets a human-readable name for this entity. For vanilla entity types, this returns
+     * the type name in lowercase with underscores replaced by spaces. For custom entities,
+     * this returns the custom entity identifier.
+     *
+     * @return A display-friendly name for this entity.
+     */
+    @NotNull
+    public String entityName() {
+        if (customEntity != null) {
+            return customEntity;
+        }
+        assert entityType != null;
+        return entityType.name().toLowerCase().replace('_', ' ');
+    }
+
+    /**
      * Checks to see if the provided {@link EntityType} equals this wrapper.
      *
      * @param entityType The entity type to check.

@@ -30,6 +30,15 @@ public class ItemBuilder extends BaseItemBuilder<ItemBuilder> {
     }
 
     /**
+     * Copy constructor that duplicates all builder state from an existing {@link ItemBuilder}.
+     *
+     * @param other The {@link ItemBuilder} to copy state from.
+     */
+    protected ItemBuilder(@NotNull final ItemBuilder other) {
+        super(other);
+    }
+
+    /**
      * Returns a {@link PotionBuilder} using the provided {@link ItemType}.
      *
      * @param itemType The {@link ItemType} to use.

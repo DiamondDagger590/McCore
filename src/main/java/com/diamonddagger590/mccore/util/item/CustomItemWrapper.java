@@ -94,6 +94,22 @@ public class CustomItemWrapper {
         return Optional.ofNullable(customItem);
     }
 
+    /**
+     * Gets a human-readable name for this item. For vanilla materials, this returns
+     * the material name in lowercase with underscores replaced by spaces. For custom items,
+     * this returns the custom item identifier.
+     *
+     * @return A display-friendly name for this item.
+     */
+    @NotNull
+    public String itemName() {
+        if (customItem != null) {
+            return customItem;
+        }
+        assert material != null;
+        return material.name().toLowerCase().replace('_', ' ');
+    }
+
     @NotNull
     public ItemBuilder itemBuilder() {
         if (customItem != null) {

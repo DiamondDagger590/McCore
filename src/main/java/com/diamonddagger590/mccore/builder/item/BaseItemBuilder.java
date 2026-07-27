@@ -134,6 +134,26 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
         }
     }
 
+    /**
+     * Copy constructor that duplicates all builder state from an existing builder.
+     * This keeps lore and display name in string form so placeholders added later
+     * are resolved in the same parse pass.
+     *
+     * @param other The builder to copy state from.
+     */
+    protected BaseItemBuilder(@NotNull BaseItemBuilder<?> other) {
+        this.placeholders = new HashMap<>(other.placeholders);
+        this.itemFlags.addAll(other.itemFlags);
+        this.lore = new ArrayList<>(other.lore);
+        this.loreAsComponent = new ArrayList<>(other.loreAsComponent);
+        this.displayName = other.displayName;
+        this.displayNameComponent = other.displayNameComponent;
+        this.customItem = other.customItem;
+        this.itemStack = other.itemStack.clone();
+        this.staticItemName = other.staticItemName;
+        this.applyAudienceSkullTexture = other.applyAudienceSkullTexture;
+    }
+
     public BaseItemBuilder(@NotNull String item) {
         withCustomItem(item);
     }
@@ -291,6 +311,32 @@ public class BaseItemBuilder<B extends BaseItemBuilder<B>> {
             applyAudienceSkullTexture = false;
         } else {
             this.itemStack = ItemType.PLAYER_HEAD.createItemStack();
+        }
+        return (B) this;
+    }
+
+    /**
+     * Applies tag replacements to the raw display name and lore strings. This performs
+     * direct string replacement of MiniMessage-style tags (e.g., {@code <primary>})
+     * with their mapped values before the strings are parsed into {@link Component}s.
+     *
+     * @param replacements A map of tag names to their replacement values.
+     * @return This builder.
+     */
+    @NotNull
+    public B applyTagReplacements(@NotNull Map<String, String> replacements) {
+        if (this.displayName != null) {
+            for (var entry : replacements.entrySet()) {
+                this.displayName = this.displayName.replace(entry.getKey(), entry.getValue());
+            }
+        }
+        if (!this.lore.isEmpty()) {
+            this.lore.replaceAll(line -> {
+                for (var entry : replacements.entrySet()) {
+                    line = line.replace(entry.getKey(), entry.getValue());
+                }
+                return line;
+            });
         }
         return (B) this;
     }
