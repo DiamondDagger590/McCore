@@ -344,6 +344,27 @@ class BaseGuiTest {
     }
 
     @Nested
+    @DisplayName("refreshGUI")
+    class RefreshGUI {
+
+        @Test
+        @DisplayName("Given a gui, when refreshGUI is called, then paintInventory is invoked")
+        void refreshGUI_callsPaintInventory() {
+            boolean[] painted = {false};
+            TestGui trackingGui = new TestGui(player, mockInventory) {
+                @Override
+                public void paintInventory() {
+                    painted[0] = true;
+                }
+            };
+
+            trackingGui.refreshGUI();
+
+            assertTrue(painted[0]);
+        }
+    }
+
+    @Nested
     @DisplayName("canProcessEvent")
     class CanProcessEvent {
 
@@ -506,6 +527,66 @@ class BaseGuiTest {
             InventoryView mockView = mock(InventoryView.class);
             when(event.getView()).thenReturn(mockView);
             when(mockView.getTopInventory()).thenReturn(mockInventory);
+
+            gui.handleClickEvent(event);
+
+            verify(event, never()).setCancelled(true);
+            verify(event, never()).setCancelled(false);
+        }
+
+        @SuppressWarnings("unchecked")
+        @Test
+        @DisplayName("Given bottom inventory clicked and bottom click allowed, when handleClickEvent, then does not cancel event and returns")
+        void handleClickEvent_doesNotCancel_whenBottomInventoryClickedAndAllowed() {
+            TestGui allowBottomGui = new TestGui(player, mockInventory) {
+                @Override
+                public boolean allowBottomInventoryClick() {
+                    return true;
+                }
+            };
+            allowBottomGui.getInventory();
+            Player mockBukkitPlayer = mock(Player.class);
+            when(mockBukkitPlayer.getUniqueId()).thenReturn(player.getUUID());
+            when(mockGuiManager.getOpenedGui(mockBukkitPlayer)).thenReturn(Optional.of(allowBottomGui));
+            when(mockPlayerManager.getPlayer(player.getUUID())).thenReturn(Optional.of(player));
+
+            InventoryClickEvent event = mock(InventoryClickEvent.class);
+            when(event.getSlot()).thenReturn(0);
+            when(event.getWhoClicked()).thenReturn(mockBukkitPlayer);
+
+            InventoryView mockView = mock(InventoryView.class);
+            when(event.getView()).thenReturn(mockView);
+            when(mockView.getTopInventory()).thenReturn(mockInventory);
+
+            Inventory bottomInventory = mock(Inventory.class);
+            when(mockView.getBottomInventory()).thenReturn(bottomInventory);
+            when(event.getClickedInventory()).thenReturn(bottomInventory);
+
+            allowBottomGui.handleClickEvent(event);
+
+            verify(event, never()).setCancelled(true);
+            verify(event, never()).setCancelled(false);
+        }
+
+        @SuppressWarnings("unchecked")
+        @Test
+        @DisplayName("Given top inventory clicked but player not in PlayerManager, when handleClickEvent, then does not cancel")
+        void handleClickEvent_doesNotCancel_whenPlayerNotFoundInPlayerManager() {
+            gui.getInventory();
+            Player mockBukkitPlayer = mock(Player.class);
+            when(mockBukkitPlayer.getUniqueId()).thenReturn(player.getUUID());
+            when(mockGuiManager.getOpenedGui(mockBukkitPlayer)).thenReturn(Optional.of(gui));
+            when(mockPlayerManager.getPlayer(player.getUUID())).thenReturn(Optional.empty());
+
+            InventoryClickEvent event = mock(InventoryClickEvent.class);
+            when(event.getSlot()).thenReturn(0);
+            when(event.getWhoClicked()).thenReturn(mockBukkitPlayer);
+
+            InventoryView mockView = mock(InventoryView.class);
+            when(event.getView()).thenReturn(mockView);
+            when(mockView.getTopInventory()).thenReturn(mockInventory);
+            when(mockView.getBottomInventory()).thenReturn(mock(Inventory.class));
+            when(event.getClickedInventory()).thenReturn(mockInventory);
 
             gui.handleClickEvent(event);
 

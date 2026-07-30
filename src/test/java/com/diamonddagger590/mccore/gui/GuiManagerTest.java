@@ -1,8 +1,10 @@
 package com.diamonddagger590.mccore.gui;
 
 import com.diamonddagger590.mccore.CorePlugin;
+import com.diamonddagger590.mccore.event.gui.CoreGuiOpenEvent;
 import com.diamonddagger590.mccore.player.CorePlayer;
 import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
@@ -10,6 +12,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.lang.reflect.Field;
 import java.util.Optional;
@@ -321,13 +324,51 @@ class GuiManagerTest {
     }
 
     @Test
-    @DisplayName("Given a keyed gui, when trackPlayerGui, then fires CoreGuiOpenEvent")
-    void trackPlayerGui_firesEvent_always() {
+    @DisplayName("Given a non-keyed gui, when trackPlayerGui, then fires CoreGuiOpenEvent with null key")
+    void trackPlayerGui_firesEventWithNullKey_whenGuiIsNotKeyed() {
         UUID playerUUID = UUID.randomUUID();
         Gui<CorePlayer> gui = createMockGui();
 
         guiManager.trackPlayerGui(playerUUID, gui);
 
-        verify(mockPluginManager).callEvent(any());
+        ArgumentCaptor<CoreGuiOpenEvent> captor = ArgumentCaptor.forClass(CoreGuiOpenEvent.class);
+        verify(mockPluginManager).callEvent(captor.capture());
+        assertFalse(captor.getValue().getGuiKey().isPresent());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    @DisplayName("Given a KeyedGui with present key, when trackPlayerGui, then fires CoreGuiOpenEvent with that key")
+    void trackPlayerGui_firesEventWithKey_whenGuiIsKeyedWithPresentKey() {
+        UUID playerUUID = UUID.randomUUID();
+        NamespacedKey expectedKey = NamespacedKey.fromString("test:my_gui");
+
+        Gui<CorePlayer> gui = mock(Gui.class, org.mockito.Mockito.withSettings().extraInterfaces(KeyedGui.class));
+        when(gui.getUUID()).thenReturn(UUID.randomUUID());
+        when(((KeyedGui) gui).getGuiKey()).thenReturn(Optional.of(expectedKey));
+
+        guiManager.trackPlayerGui(playerUUID, gui);
+
+        ArgumentCaptor<CoreGuiOpenEvent> captor = ArgumentCaptor.forClass(CoreGuiOpenEvent.class);
+        verify(mockPluginManager).callEvent(captor.capture());
+        assertTrue(captor.getValue().getGuiKey().isPresent());
+        assertEquals(expectedKey, captor.getValue().getGuiKey().get());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    @DisplayName("Given a KeyedGui with empty key, when trackPlayerGui, then fires CoreGuiOpenEvent with null key")
+    void trackPlayerGui_firesEventWithNullKey_whenGuiIsKeyedWithEmptyKey() {
+        UUID playerUUID = UUID.randomUUID();
+
+        Gui<CorePlayer> gui = mock(Gui.class, org.mockito.Mockito.withSettings().extraInterfaces(KeyedGui.class));
+        when(gui.getUUID()).thenReturn(UUID.randomUUID());
+        when(((KeyedGui) gui).getGuiKey()).thenReturn(Optional.empty());
+
+        guiManager.trackPlayerGui(playerUUID, gui);
+
+        ArgumentCaptor<CoreGuiOpenEvent> captor = ArgumentCaptor.forClass(CoreGuiOpenEvent.class);
+        verify(mockPluginManager).callEvent(captor.capture());
+        assertFalse(captor.getValue().getGuiKey().isPresent());
     }
 }
