@@ -54,6 +54,20 @@ class CorePlayerTest {
         }
     }
 
+    private static class SecondTestAfkPluginHook extends PluginHook<CorePlugin> implements AfkPluginHook {
+        private final boolean afk;
+
+        SecondTestAfkPluginHook(boolean afk) {
+            super(null);
+            this.afk = afk;
+        }
+
+        @Override
+        public boolean isAfk(CorePlayer corePlayer) {
+            return afk;
+        }
+    }
+
     private UUID testUUID;
     private TestCorePlayer player;
 
@@ -140,6 +154,22 @@ class CorePlayerTest {
         assertFalse(player.isAfk());
     }
 
+    @Test
+    @DisplayName("Given multiple AfkPluginHooks where first returns false and second returns true, when calling isAfk, then returns true")
+    void isAfk_returnsTrue_whenSecondHookReturnsTrue() {
+        RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(new TestAfkPluginHook(false));
+        RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(new SecondTestAfkPluginHook(true));
+        assertTrue(player.isAfk());
+    }
+
+    @Test
+    @DisplayName("Given multiple AfkPluginHooks that all return false, when calling isAfk, then returns false")
+    void isAfk_returnsFalse_whenAllHooksReturnFalse() {
+        RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(new TestAfkPluginHook(false));
+        RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(new SecondTestAfkPluginHook(false));
+        assertFalse(player.isAfk());
+    }
+
     // --- equals ---
 
     @Test
@@ -166,12 +196,14 @@ class CorePlayerTest {
     @DisplayName("Given a CorePlayer, when compared to a non-CorePlayer object, then returns not equal")
     void equals_returnsFalse_whenComparedToNonCorePlayer() {
         assertNotEquals("not a player", player);
+        assertFalse(player.equals("not a player"));
     }
 
     @Test
     @DisplayName("Given a CorePlayer, when compared to null, then returns not equal")
     void equals_returnsFalse_whenComparedToNull() {
         assertNotEquals(null, player);
+        assertFalse(player.equals(null));
     }
 
     // --- hashCode ---
