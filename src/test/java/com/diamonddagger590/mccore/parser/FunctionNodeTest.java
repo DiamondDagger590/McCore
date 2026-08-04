@@ -271,4 +271,13 @@ class FunctionNodeTest {
         FunctionNode inner = new FunctionNode(c(5.0), 0);
         assertEquals("-(-5)", new FunctionNode(inner, 0).toString());
     }
+
+    // ── getValue default switch branch ────────────────────────────────────
+
+    @Test
+    @DisplayName("Given an out-of-range function index, when evaluating, then returns 0")
+    void getValue_returnsZero_whenFunctionIndexIsOutOfRange() {
+        FunctionNode node = new FunctionNode(c(5.0), FunctionNode.FUNCTIONS.length);
+        assertEquals(0.0, node.getValue(), DELTA);
+    }
 }

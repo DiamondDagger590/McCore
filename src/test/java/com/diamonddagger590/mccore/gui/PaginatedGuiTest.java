@@ -189,6 +189,15 @@ class PaginatedGuiTest {
 
             assertThrows(IllegalArgumentException.class, () -> gui.setPage(-1));
         }
+
+        @Test
+        @DisplayName("Given max page is 0, when setPage to 1, then throws IllegalArgumentException")
+        void setPage_throwsForMaxPageBelowOne() {
+            TestPaginatedGui gui = new TestPaginatedGui(player, mockInventory, 0);
+            gui.getInventory();
+
+            assertThrows(IllegalArgumentException.class, () -> gui.setPage(1));
+        }
     }
 
     @Nested

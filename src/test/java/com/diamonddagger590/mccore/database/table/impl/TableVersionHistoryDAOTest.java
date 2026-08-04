@@ -219,5 +219,19 @@ class TableVersionHistoryDAOTest {
             verify(mockStatement).setString(1, "table_history");
             verify(mockStatement, never()).executeUpdate();
         }
+
+        @Test
+        @DisplayName("Given the stored version is negative, when updateTable is called, then no version-0 update is performed")
+        void updateTable_skipsVersionZeroUpdate_whenVersionIsNegative() throws SQLException {
+            when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
+            when(mockStatement.executeQuery()).thenReturn(mockResultSet);
+            when(mockResultSet.next()).thenReturn(true, false);
+            when(mockResultSet.getInt("table_version")).thenReturn(-1);
+
+            TableVersionHistoryDAO.updateTable(mockConnection);
+
+            verify(mockStatement).setString(1, "table_history");
+            verify(mockStatement, never()).executeUpdate();
+        }
     }
 }

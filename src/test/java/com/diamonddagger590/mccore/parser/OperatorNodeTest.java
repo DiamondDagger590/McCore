@@ -404,4 +404,24 @@ class OperatorNodeTest {
         OperatorNode node = new OperatorNode(left, c(4.0), '/');
         assertEquals("(8/2)/4", node.toString());
     }
+
+    // ── getValue default switch branch ────────────────────────────────────
+
+    @Test
+    @DisplayName("Given an unsupported operator character, when evaluating, then returns 0")
+    void getValue_returnsZero_whenOperatorIsUnsupported() {
+        OperatorNode node = new OperatorNode(c(3.0), c(4.0), '!');
+        assertEquals(0.0, node.getValue(), DELTA);
+    }
+
+    // ── needBrackets default switch branch ────────────────────────────────
+
+    @Test
+    @DisplayName("Given an unsupported operator with operator children, when converting to string, then adds brackets")
+    void toString_addsBrackets_whenOperatorIsUnsupported() {
+        OperatorNode left = new OperatorNode(c(1.0), c(2.0), '+');
+        OperatorNode right = new OperatorNode(c(3.0), c(4.0), '*');
+        OperatorNode node = new OperatorNode(left, right, '!');
+        assertEquals("(1+2)!(3*4)", node.toString());
+    }
 }
