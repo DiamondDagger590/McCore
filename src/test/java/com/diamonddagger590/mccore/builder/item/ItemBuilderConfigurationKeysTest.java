@@ -135,4 +135,11 @@ class ItemBuilderConfigurationKeysTest {
             }
         }
     }
+
+    @Test
+    @DisplayName("Given ItemBuilderConfigurationKeys class, when instantiated, then no exception is thrown")
+    void constructor_doesNotThrow_whenInstantiated() {
+        ItemBuilderConfigurationKeys instance = new ItemBuilderConfigurationKeys();
+        assertNotNull(instance);
+    }
 }
