@@ -3,6 +3,7 @@ package com.diamonddagger590.mccore.localization;
 import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.configuration.ReloadableContent;
 import com.diamonddagger590.mccore.exception.localization.NoLocalizationContainsMessageException;
+import com.diamonddagger590.mccore.external.papi.CorePapiHook;
 import com.diamonddagger590.mccore.player.CorePlayer;
 import com.diamonddagger590.mccore.player.PlayerManager;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
@@ -278,6 +279,79 @@ class LocalizationManagerTest {
 
         assertThrows(NoLocalizationContainsMessageException.class,
                 () -> localizationManager.getLocalizedMessage(player, testRoute));
+    }
+
+    // --- getLocalizedMessage(CorePlayer, Route) PAPI branch ---
+
+    @Test
+    @DisplayName("Given PAPI hook registered and player online, when getLocalizedMessage(player, route), then PAPI translates message")
+    void getLocalizedMessage_player_withPapiHook_translatesViaPapi() {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getString(testRoute)).thenReturn("Hello %player_name%");
+
+        TestCorePlayer player = createPlayerWithLocale(Locale.ENGLISH);
+
+        CorePapiHook papiHook = mock(CorePapiHook.class);
+        when(papiHook.translateMessage(player.getAsBukkitPlayer().get(), "Hello %player_name%")).thenReturn("Hello Steve");
+        RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(papiHook);
+
+        assertEquals("Hello Steve", localizationManager.getLocalizedMessage(player, testRoute));
+    }
+
+    @Test
+    @DisplayName("Given PAPI hook registered but player offline, when getLocalizedMessage(player, route), then skips PAPI")
+    void getLocalizedMessage_player_withPapiHookButOffline_skipsPapi() {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getString(testRoute)).thenReturn("Hello %player_name%");
+
+        TestCorePlayer player = createPlayerWithoutBukkit();
+
+        CorePapiHook papiHook = mock(CorePapiHook.class);
+        RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(papiHook);
+
+        assertEquals("Hello %player_name%", localizationManager.getLocalizedMessage(player, testRoute));
+    }
+
+    // --- getLocalizedMessages(CorePlayer, Route) PAPI branch ---
+
+    @Test
+    @DisplayName("Given PAPI hook and player online, when getLocalizedMessages(player, route), then PAPI translates each line")
+    void getLocalizedMessages_player_withPapiHook_translatesEachLine() {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getStringList(testRoute)).thenReturn(List.of("Line %player_name%", "Health %player_health%"));
+
+        TestCorePlayer player = createPlayerWithLocale(Locale.ENGLISH);
+        Player bukkitPlayer = player.getAsBukkitPlayer().get();
+
+        CorePapiHook papiHook = mock(CorePapiHook.class);
+        when(papiHook.translateMessage(bukkitPlayer, "Line %player_name%")).thenReturn("Line Steve");
+        when(papiHook.translateMessage(bukkitPlayer, "Health %player_health%")).thenReturn("Health 20");
+        RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(papiHook);
+
+        List<String> result = localizationManager.getLocalizedMessages(player, testRoute);
+        assertEquals(2, result.size());
+        assertEquals("Line Steve", result.get(0));
+        assertEquals("Health 20", result.get(1));
+    }
+
+    @Test
+    @DisplayName("Given PAPI hook but player offline, when getLocalizedMessages(player, route), then skips PAPI translation")
+    void getLocalizedMessages_player_withPapiHookButOffline_skipsPapi() {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getStringList(testRoute)).thenReturn(List.of("Line %player_name%"));
+
+        TestCorePlayer player = createPlayerWithoutBukkit();
+
+        CorePapiHook papiHook = mock(CorePapiHook.class);
+        RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(papiHook);
+
+        List<String> result = localizationManager.getLocalizedMessages(player, testRoute);
+        assertEquals(1, result.size());
+        assertEquals("Line %player_name%", result.get(0));
     }
 
     // --- getLocalizedMessage with placeholders ---
