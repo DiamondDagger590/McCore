@@ -64,6 +64,19 @@ class NoLocalizationContainsMessageExceptionTest {
     }
 
     @Test
+    @DisplayName("Given multiple locales, when calling getMessage, then all locale names are joined with commas")
+    void getMessage_joinsMultipleLocaleNames_whenMultipleLocalesProvided() {
+        Route route = Route.from("messages", "multi");
+        Set<Locale> locales = Set.of(Locale.ENGLISH, Locale.FRENCH);
+        NoLocalizationContainsMessageException ex = new NoLocalizationContainsMessageException(route, locales);
+
+        String message = ex.getMessage();
+        assertNotNull(message);
+        assertTrue(message.contains(Locale.ENGLISH.getDisplayName()));
+        assertTrue(message.contains(Locale.FRENCH.getDisplayName()));
+    }
+
+    @Test
     @DisplayName("Given a NoLocalizationContainsMessageException, when checking type, then it is a RuntimeException")
     void noLocalizationContainsMessageException_isRuntimeException_always() {
         assertInstanceOf(RuntimeException.class,
