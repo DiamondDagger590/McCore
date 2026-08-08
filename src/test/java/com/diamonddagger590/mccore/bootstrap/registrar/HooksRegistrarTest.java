@@ -5,6 +5,7 @@ import com.diamonddagger590.mccore.bootstrap.BootstrapContext;
 import com.diamonddagger590.mccore.bootstrap.StartupProfile;
 import com.diamonddagger590.mccore.external.citizens.CoreCitizensHook;
 import com.diamonddagger590.mccore.external.cmi.CoreCMIHook;
+import com.diamonddagger590.mccore.external.headdatabase.CoreHeadDatabaseHook;
 import com.diamonddagger590.mccore.external.itemsadder.CoreItemsAdderHook;
 import com.diamonddagger590.mccore.external.modelengine.CoreModelEngineHook;
 import com.diamonddagger590.mccore.external.mythicmobs.CoreMythicMobsHook;
@@ -71,6 +72,7 @@ class HooksRegistrarTest {
     private void enableAllPlugins() {
         enablePlugin("Nexo");
         enablePlugin("ItemsAdder");
+        enablePlugin("HeadDatabase");
         enablePlugin("PlaceholderAPI");
         enablePlugin("ModelEngine");
         enablePlugin("MythicMobs");
@@ -124,6 +126,21 @@ class HooksRegistrarTest {
 
             assertTrue(hookRegistry.pluginHook(CorePluginHookKey.CORE_ITEMS_ADDER).isPresent());
             assertTrue(hookRegistry.pluginHook(CorePluginHookKey.CORE_ITEMS_ADDER).get() instanceof CoreItemsAdderHook);
+        }
+    }
+
+    @Test
+    @DisplayName("Given HeadDatabase enabled, when registering hooks, then HeadDatabase hook is registered")
+    void register_registersHeadDatabaseHook_whenHeadDatabaseEnabled() {
+        try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+            bukkit.when(Bukkit::getPluginManager).thenReturn(mockPluginManager);
+            when(mockPluginManager.isPluginEnabled(anyString())).thenReturn(false);
+            enablePlugin("HeadDatabase");
+
+            new HooksRegistrar<CorePlugin>().register(context());
+
+            assertTrue(hookRegistry.pluginHook(CorePluginHookKey.CORE_HEAD_DATABASE).isPresent());
+            assertTrue(hookRegistry.pluginHook(CorePluginHookKey.CORE_HEAD_DATABASE).get() instanceof CoreHeadDatabaseHook);
         }
     }
 
@@ -203,7 +220,7 @@ class HooksRegistrarTest {
     }
 
     @Test
-    @DisplayName("Given all testable plugins enabled, when registering hooks, then all 7 hooks are registered")
+    @DisplayName("Given all testable plugins enabled, when registering hooks, then all 8 hooks are registered")
     void register_registersAllHooks_whenAllPluginsEnabled() {
         try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
             bukkit.when(Bukkit::getPluginManager).thenReturn(mockPluginManager);
@@ -214,6 +231,7 @@ class HooksRegistrarTest {
 
             assertTrue(hookRegistry.pluginHook(CorePluginHookKey.CORE_NEXO).isPresent());
             assertTrue(hookRegistry.pluginHook(CorePluginHookKey.CORE_ITEMS_ADDER).isPresent());
+            assertTrue(hookRegistry.pluginHook(CorePluginHookKey.CORE_HEAD_DATABASE).isPresent());
             assertTrue(hookRegistry.pluginHook(CorePluginHookKey.CORE_PAPI).isPresent());
             assertTrue(hookRegistry.pluginHook(CorePluginHookKey.CORE_MODEL_ENGINE).isPresent());
             assertTrue(hookRegistry.pluginHook(CorePluginHookKey.CORE_MYTHIC_MOBS).isPresent());

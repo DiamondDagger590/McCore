@@ -42,6 +42,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
@@ -282,5 +283,42 @@ class PlayerUnloadTaskTest {
         // getConnection() wraps SQLException in RuntimeException, and the catch block in
         // runUnloadPlayerTask only catches SQLException, so RuntimeException propagates
         org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, task::onIntervalComplete);
+    }
+
+    @Test
+    @DisplayName("Given connection close throws SQLException, when onIntervalComplete, then exception is caught silently")
+    void onIntervalComplete_connectionCloseSqlException_caughtSilently() throws SQLException {
+        when(mockDatabase.getConnection()).thenReturn(mockConnection);
+        when(mockCorePlayer.useMutex()).thenReturn(false);
+        lenient().doNothing().when(mockScheduler).cancelTask(anyInt());
+        lenient().when(mockScheduler.scheduleSyncDelayedTask(eq(mockPlugin), any(Runnable.class))).thenReturn(1);
+        doThrow(new SQLException("Close failed")).when(mockConnection).close();
+
+        unloadPlayerResult = true;
+        PlayerUnloadTask task = createTask();
+        task.onIntervalComplete();
+
+        assertTrue(task.getResult().isDone());
+        assertTrue(task.getResult().join());
+    }
+
+    @Test
+    @DisplayName("Given task completed successfully, when onCancel is invoked, then onPlayerUnloadFail is not called")
+    void onCancel_afterCompletion_doesNotCallFail() throws SQLException {
+        when(mockDatabase.getConnection()).thenReturn(mockConnection);
+        when(mockCorePlayer.useMutex()).thenReturn(false);
+        lenient().doNothing().when(mockScheduler).cancelTask(anyInt());
+        lenient().when(mockScheduler.scheduleSyncDelayedTask(eq(mockPlugin), any(Runnable.class))).thenReturn(1);
+
+        unloadPlayerResult = true;
+        PlayerUnloadTask task = createTask();
+        task.onIntervalComplete();
+
+        assertTrue(task.getResult().isDone());
+        assertTrue(task.getResult().join());
+
+        task.onCancel();
+
+        assertTrue(task.getResult().join());
     }
 }
