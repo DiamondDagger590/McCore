@@ -2,9 +2,11 @@ package com.diamonddagger590.mccore.util.item;
 
 import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.external.common.CustomBlockHook;
+import com.diamonddagger590.mccore.external.common.CustomItemHook;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
 import com.diamonddagger590.mccore.registry.RegistryKey;
 import com.diamonddagger590.mccore.registry.plugin.PluginHook;
+import com.diamonddagger590.mccore.testing.CorePluginTestHelper;
 import com.diamonddagger590.mccore.testing.RegistryResetExtension;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -18,6 +20,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockbukkit.mockbukkit.MockBukkit;
+import org.mockito.Mockito;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -27,18 +31,23 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CustomBlockWrapperTest {
 
     @BeforeEach
     void setUp() {
+        MockBukkit.mock();
         RegistryResetExtension.setupRegistry();
+        CorePluginTestHelper.installMinimalInstance();
     }
 
     @AfterEach
     void tearDown() {
+        CorePluginTestHelper.uninstallInstance();
         RegistryResetExtension.resetRegistry();
+        MockBukkit.unmock();
     }
 
     private static CustomBlockWrapper materialWrapper(Material material) {
@@ -58,13 +67,24 @@ class CustomBlockWrapperTest {
 
     static class TestCustomBlockPluginHook extends PluginHook<CorePlugin> implements CustomBlockHook {
 
+        private final boolean recognizesBlock;
+        private final Set<String> models;
+        private final List<ItemStack> drops;
+
         TestCustomBlockPluginHook() {
+            this(false, Set.of(), List.of());
+        }
+
+        TestCustomBlockPluginHook(boolean recognizesBlock, Set<String> models, List<ItemStack> drops) {
             super(null);
+            this.recognizesBlock = recognizesBlock;
+            this.models = models;
+            this.drops = drops;
         }
 
         @Override
         public boolean isCustomBlock(@NotNull Block block) {
-            return false;
+            return recognizesBlock;
         }
 
         @Override
@@ -74,7 +94,7 @@ class CustomBlockWrapperTest {
 
         @Override
         public boolean isCustomBlockOfType(@NotNull Block block, @NotNull String customBlockType) {
-            return false;
+            return recognizesBlock && "nexo:ruby_ore".equals(customBlockType);
         }
 
         @Override
@@ -84,7 +104,7 @@ class CustomBlockWrapperTest {
         @NotNull
         @Override
         public List<ItemStack> drops(@NotNull Block block, @NotNull ItemStack itemToBreakWith, @Nullable Entity entityBreaking) {
-            return List.of();
+            return drops;
         }
 
         @Override
@@ -98,13 +118,61 @@ class CustomBlockWrapperTest {
         @NotNull
         @Override
         public Optional<Set<String>> blockModels(@NotNull Block block) {
-            return Optional.empty();
+            return models.isEmpty() ? Optional.empty() : Optional.of(models);
         }
 
         @NotNull
         @Override
         public String blockName(@NotNull CustomBlockWrapper customBlockWrapper) {
             return "Ruby Ore";
+        }
+    }
+
+    static class TestCustomItemPluginHook extends PluginHook<CorePlugin> implements CustomItemHook {
+
+        private final String recognizedItem;
+        private final ItemStack returnedItem;
+
+        TestCustomItemPluginHook(String recognizedItem, ItemStack returnedItem) {
+            super(null);
+            this.recognizedItem = recognizedItem;
+            this.returnedItem = returnedItem;
+        }
+
+        @Override
+        public boolean isItem(@NotNull String itemName) {
+            return recognizedItem != null && recognizedItem.equals(itemName);
+        }
+
+        @Override
+        public boolean isItem(@NotNull ItemStack itemStack) {
+            return false;
+        }
+
+        @Override
+        public boolean isItemOfType(@NotNull ItemStack itemStack, @NotNull String itemName) {
+            return false;
+        }
+
+        @NotNull
+        @Override
+        public Optional<ItemStack> item(@NotNull String itemName) {
+            if (recognizedItem != null && recognizedItem.equals(itemName) && returnedItem != null) {
+                return Optional.of(returnedItem);
+            }
+            return Optional.empty();
+        }
+
+        @NotNull
+        @Override
+        public Optional<Set<String>> itemModels(@NotNull ItemStack itemStack) {
+            return Optional.empty();
+        }
+
+        @NotNull
+        @Override
+        public String itemName(@NotNull CustomItemWrapper customItemWrapper) {
+            return "Test Item";
         }
     }
 
@@ -433,6 +501,216 @@ class CustomBlockWrapperTest {
             String result = wrapper.toString();
             assertTrue(result.contains("nexo:ruby_ore"), "Expected toString to contain nexo:ruby_ore, got: " + result);
             assertTrue(result.contains("material=null"), "Expected material=null, got: " + result);
+        }
+    }
+
+    @Nested
+    @DisplayName("blockName - vanilla material path")
+    class BlockNameVanilla {
+
+        @Test
+        @DisplayName("Given material wrapper, when getting blockName, then returns lang tag with translation key")
+        void blockName_returnsLangTag_whenMaterialWrapper() {
+            CustomBlockWrapper wrapper = materialWrapper(Material.IRON_ORE);
+            String result = wrapper.blockName();
+            assertTrue(result.startsWith("<lang:"), "Expected lang tag, got: " + result);
+            assertTrue(result.endsWith(">"), "Expected lang tag to end with >, got: " + result);
+            assertTrue(result.contains(Material.IRON_ORE.translationKey()), "Expected translation key, got: " + result);
+        }
+    }
+
+    @Nested
+    @DisplayName("itemBuilder")
+    class ItemBuilderTests {
+
+        @Test
+        @DisplayName("Given material wrapper, when getting itemBuilder, then returns builder with that material")
+        void itemBuilder_returnsMaterialBuilder_whenMaterialWrapper() {
+            CustomBlockWrapper wrapper = materialWrapper(Material.DIAMOND_ORE);
+            var builder = wrapper.itemBuilder();
+            assertNotNull(builder);
+        }
+
+        @Test
+        @DisplayName("Given custom block wrapper with no hooks, when getting itemBuilder, then returns AIR builder")
+        void itemBuilder_returnsAirBuilder_whenNoHooksRegistered() throws Exception {
+            CustomBlockWrapper wrapper = customBlockWrapper("nexo:unknown_block");
+            var builder = wrapper.itemBuilder();
+            assertNotNull(builder);
+        }
+
+        @Test
+        @DisplayName("Given custom block wrapper with hook providing item, when getting itemBuilder, then returns hook item builder")
+        void itemBuilder_returnsHookItemBuilder_whenHookProvidesItem() throws Exception {
+            RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK)
+                    .register(new TestCustomItemPluginHook("nexo:ruby_ore", new ItemStack(Material.EMERALD)));
+            CustomBlockWrapper wrapper = customBlockWrapper("nexo:ruby_ore");
+            var builder = wrapper.itemBuilder();
+            assertNotNull(builder);
+        }
+
+        @Test
+        @DisplayName("Given custom block wrapper with hook not providing item, when getting itemBuilder, then returns AIR builder")
+        void itemBuilder_returnsAirBuilder_whenHookDoesNotProvideItem() throws Exception {
+            RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK)
+                    .register(new TestCustomItemPluginHook("nexo:other_item", new ItemStack(Material.EMERALD)));
+            CustomBlockWrapper wrapper = customBlockWrapper("nexo:ruby_ore");
+            var builder = wrapper.itemBuilder();
+            assertNotNull(builder);
+        }
+    }
+
+    @Nested
+    @DisplayName("equals(Block)")
+    class EqualsBlock {
+
+        @Test
+        @DisplayName("Given material wrapper matching block type, when comparing with block, then returns true")
+        void equals_returnsTrue_whenMaterialMatchesBlockType() {
+            CustomBlockWrapper wrapper = materialWrapper(Material.STONE);
+            Block block = Mockito.mock(Block.class);
+            Mockito.when(block.getType()).thenReturn(Material.STONE);
+            assertTrue(wrapper.equals(block));
+        }
+
+        @Test
+        @DisplayName("Given material wrapper not matching block type, when comparing with block, then returns false")
+        void equals_returnsFalse_whenMaterialDoesNotMatchBlockType() {
+            CustomBlockWrapper wrapper = materialWrapper(Material.STONE);
+            Block block = Mockito.mock(Block.class);
+            Mockito.when(block.getType()).thenReturn(Material.DIRT);
+            assertFalse(wrapper.equals(block));
+        }
+
+        @Test
+        @DisplayName("Given custom block wrapper with hook confirming type, when comparing with block, then returns true")
+        void equals_returnsTrue_whenHookConfirmsCustomBlockType() throws Exception {
+            RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK)
+                    .register(new TestCustomBlockPluginHook(true, Set.of("nexo:ruby_ore"), List.of()));
+            CustomBlockWrapper wrapper = customBlockWrapper("nexo:ruby_ore");
+            Block block = Mockito.mock(Block.class);
+            assertTrue(wrapper.equals(block));
+        }
+
+        @Test
+        @DisplayName("Given custom block wrapper with no hooks, when comparing with block, then returns false")
+        void equals_returnsFalse_whenNoHooksForCustomBlock() throws Exception {
+            CustomBlockWrapper wrapper = customBlockWrapper("nexo:ruby_ore");
+            Block block = Mockito.mock(Block.class);
+            assertFalse(wrapper.equals(block));
+        }
+    }
+
+    @Nested
+    @DisplayName("Block constructor")
+    class BlockConstructor {
+
+        @Test
+        @DisplayName("Given block with custom hook recognizing it, when constructing wrapper, then sets custom block")
+        void constructor_setsCustomBlock_whenHookRecognizesBlock() {
+            RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK)
+                    .register(new TestCustomBlockPluginHook(true, Set.of("nexo:ruby_ore"), List.of()));
+            Block block = Mockito.mock(Block.class);
+            Mockito.when(block.getType()).thenReturn(Material.STONE);
+
+            CustomBlockWrapper wrapper = new CustomBlockWrapper(block);
+            assertTrue(wrapper.customBlock().isPresent());
+            assertEquals("nexo:ruby_ore", wrapper.customBlock().get());
+            assertFalse(wrapper.material().isPresent());
+        }
+
+        @Test
+        @DisplayName("Given block with no hooks, when constructing wrapper, then sets material from block type")
+        void constructor_setsMaterial_whenNoHooksRecognizeBlock() {
+            Block block = Mockito.mock(Block.class);
+            Mockito.when(block.getType()).thenReturn(Material.DIAMOND_ORE);
+
+            CustomBlockWrapper wrapper = new CustomBlockWrapper(block);
+            assertTrue(wrapper.material().isPresent());
+            assertEquals(Material.DIAMOND_ORE, wrapper.material().get());
+            assertFalse(wrapper.customBlock().isPresent());
+        }
+
+        @Test
+        @DisplayName("Given block with hook that recognizes but returns empty models, when constructing wrapper, then sets material")
+        void constructor_setsMaterial_whenHookReturnsEmptyModels() {
+            RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK)
+                    .register(new TestCustomBlockPluginHook(true, Set.of(), List.of()));
+            Block block = Mockito.mock(Block.class);
+            Mockito.when(block.getType()).thenReturn(Material.STONE);
+
+            CustomBlockWrapper wrapper = new CustomBlockWrapper(block);
+            assertTrue(wrapper.material().isPresent());
+            assertEquals(Material.STONE, wrapper.material().get());
+        }
+    }
+
+    @Nested
+    @DisplayName("static customModels")
+    class CustomModels {
+
+        @Test
+        @DisplayName("Given block with no hooks registered, when getting customModels, then returns empty set")
+        void customModels_returnsEmptySet_whenNoHooksRegistered() {
+            Block block = Mockito.mock(Block.class);
+            Optional<Set<String>> result = CustomBlockWrapper.customModels(block);
+            assertTrue(result.isPresent());
+            assertTrue(result.get().isEmpty());
+        }
+
+        @Test
+        @DisplayName("Given block with hook providing models, when getting customModels, then returns those models")
+        void customModels_returnsModels_whenHookProvidesModels() {
+            RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK)
+                    .register(new TestCustomBlockPluginHook(true, Set.of("nexo:ruby_ore", "nexo:sapphire_ore"), List.of()));
+            Block block = Mockito.mock(Block.class);
+            Optional<Set<String>> result = CustomBlockWrapper.customModels(block);
+            assertTrue(result.isPresent());
+            assertEquals(2, result.get().size());
+            assertTrue(result.get().contains("nexo:ruby_ore"));
+            assertTrue(result.get().contains("nexo:sapphire_ore"));
+        }
+    }
+
+    @Nested
+    @DisplayName("static drops")
+    class Drops {
+
+        @Test
+        @DisplayName("Given block with hook registered, when getting drops, then returns hook drops")
+        void drops_returnsHookDrops_whenHookRegistered() {
+            ItemStack drop = new ItemStack(Material.DIAMOND);
+            RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK)
+                    .register(new TestCustomBlockPluginHook(true, Set.of("nexo:ruby_ore"), List.of(drop)));
+            Block block = Mockito.mock(Block.class);
+            ItemStack tool = new ItemStack(Material.DIAMOND_PICKAXE);
+
+            List<ItemStack> result = CustomBlockWrapper.drops(block, tool, null);
+            assertEquals(1, result.size());
+            assertEquals(Material.DIAMOND, result.get(0).getType());
+        }
+    }
+
+    @Nested
+    @DisplayName("static removeBlock")
+    class RemoveBlock {
+
+        @Test
+        @DisplayName("Given block with no hooks, when removing block, then sets type to AIR")
+        void removeBlock_setsAir_whenNoHooksRegistered() {
+            Block block = Mockito.mock(Block.class);
+            CustomBlockWrapper.removeBlock(block);
+            Mockito.verify(block).setType(Material.AIR);
+        }
+
+        @Test
+        @DisplayName("Given block with hook registered, when removing block, then delegates to hook")
+        void removeBlock_delegatesToHook_whenHookRegistered() {
+            TestCustomBlockPluginHook hook = Mockito.spy(new TestCustomBlockPluginHook(true, Set.of("nexo:ruby_ore"), List.of()));
+            RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(hook);
+            Block block = Mockito.mock(Block.class);
+            CustomBlockWrapper.removeBlock(block);
+            Mockito.verify(hook).removeBlock(block);
         }
     }
 }

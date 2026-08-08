@@ -5,6 +5,7 @@ import com.diamonddagger590.mccore.external.common.CustomItemHook;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
 import com.diamonddagger590.mccore.registry.RegistryKey;
 import com.diamonddagger590.mccore.registry.plugin.PluginHook;
+import com.diamonddagger590.mccore.testing.CorePluginTestHelper;
 import com.diamonddagger590.mccore.testing.RegistryResetExtension;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -14,6 +15,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockbukkit.mockbukkit.MockBukkit;
+import org.mockito.Mockito;
 
 import java.lang.reflect.Field;
 import java.util.Optional;
@@ -22,18 +25,23 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CustomItemWrapperTest {
 
     @BeforeEach
     void setUp() {
+        MockBukkit.mock();
         RegistryResetExtension.setupRegistry();
+        CorePluginTestHelper.installMinimalInstance();
     }
 
     @AfterEach
     void tearDown() {
+        CorePluginTestHelper.uninstallInstance();
         RegistryResetExtension.resetRegistry();
+        MockBukkit.unmock();
     }
 
     private static CustomItemWrapper materialWrapper(Material material) {
@@ -53,18 +61,31 @@ class CustomItemWrapperTest {
 
     static class TestCustomItemPluginHook extends PluginHook<CorePlugin> implements CustomItemHook {
 
+        private final String recognizedItem;
+        private final ItemStack returnedItem;
+        private final boolean recognizesItemStack;
+        private final Set<String> models;
+
         TestCustomItemPluginHook() {
+            this("nexo:ruby_sword", null, false, Set.of());
+        }
+
+        TestCustomItemPluginHook(String recognizedItem, ItemStack returnedItem, boolean recognizesItemStack, Set<String> models) {
             super(null);
+            this.recognizedItem = recognizedItem;
+            this.returnedItem = returnedItem;
+            this.recognizesItemStack = recognizesItemStack;
+            this.models = models;
         }
 
         @Override
         public boolean isItem(@NotNull String itemName) {
-            return "nexo:ruby_sword".equals(itemName);
+            return recognizedItem != null && recognizedItem.equals(itemName);
         }
 
         @Override
         public boolean isItem(@NotNull ItemStack itemStack) {
-            return false;
+            return recognizesItemStack;
         }
 
         @Override
@@ -75,13 +96,16 @@ class CustomItemWrapperTest {
         @NotNull
         @Override
         public Optional<ItemStack> item(@NotNull String itemName) {
+            if (recognizedItem != null && recognizedItem.equals(itemName) && returnedItem != null) {
+                return Optional.of(returnedItem);
+            }
             return Optional.empty();
         }
 
         @NotNull
         @Override
         public Optional<Set<String>> itemModels(@NotNull ItemStack itemStack) {
-            return Optional.empty();
+            return models.isEmpty() ? Optional.empty() : Optional.of(models);
         }
 
         @NotNull
@@ -357,6 +381,133 @@ class CustomItemWrapperTest {
             RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(new TestCustomItemPluginHook());
             CustomItemWrapper wrapper = customItemWrapper("nexo:ruby_sword");
             assertEquals("Ruby Sword", wrapper.itemName());
+        }
+    }
+
+    @Nested
+    @DisplayName("itemName - vanilla material path")
+    class ItemNameVanilla {
+
+        @Test
+        @DisplayName("Given material wrapper, when getting itemName, then returns lang tag with translation key")
+        void itemName_returnsLangTag_whenMaterialWrapper() {
+            CustomItemWrapper wrapper = materialWrapper(Material.IRON_INGOT);
+            String result = wrapper.itemName();
+            assertTrue(result.startsWith("<lang:"), "Expected lang tag, got: " + result);
+            assertTrue(result.endsWith(">"), "Expected lang tag to end with >, got: " + result);
+            assertTrue(result.contains(Material.IRON_INGOT.translationKey()), "Expected translation key, got: " + result);
+        }
+    }
+
+    @Nested
+    @DisplayName("itemBuilder")
+    class ItemBuilderTests {
+
+        @Test
+        @DisplayName("Given material wrapper, when getting itemBuilder, then returns builder with that material")
+        void itemBuilder_returnsMaterialBuilder_whenMaterialWrapper() {
+            CustomItemWrapper wrapper = materialWrapper(Material.DIAMOND);
+            var builder = wrapper.itemBuilder();
+            assertNotNull(builder);
+        }
+
+        @Test
+        @DisplayName("Given custom item wrapper with no hooks, when getting itemBuilder, then returns AIR builder")
+        void itemBuilder_returnsAirBuilder_whenNoHooksRegistered() throws Exception {
+            CustomItemWrapper wrapper = customItemWrapper("nexo:unknown_item");
+            var builder = wrapper.itemBuilder();
+            assertNotNull(builder);
+        }
+
+        @Test
+        @DisplayName("Given custom item wrapper with hook providing item, when getting itemBuilder, then returns hook item builder")
+        void itemBuilder_returnsHookItemBuilder_whenHookProvidesItem() throws Exception {
+            RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK)
+                    .register(new TestCustomItemPluginHook("nexo:ruby_sword", new ItemStack(Material.DIAMOND_SWORD), false, Set.of()));
+            CustomItemWrapper wrapper = customItemWrapper("nexo:ruby_sword");
+            var builder = wrapper.itemBuilder();
+            assertNotNull(builder);
+        }
+
+        @Test
+        @DisplayName("Given custom item wrapper with hook not providing item, when getting itemBuilder, then returns AIR builder")
+        void itemBuilder_returnsAirBuilder_whenHookDoesNotProvideItem() throws Exception {
+            RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK)
+                    .register(new TestCustomItemPluginHook("nexo:other_item", new ItemStack(Material.EMERALD), false, Set.of()));
+            CustomItemWrapper wrapper = customItemWrapper("nexo:ruby_sword");
+            var builder = wrapper.itemBuilder();
+            assertNotNull(builder);
+        }
+    }
+
+    @Nested
+    @DisplayName("ItemStack constructor")
+    class ItemStackConstructor {
+
+        @Test
+        @DisplayName("Given item stack with hook recognizing it, when constructing wrapper, then sets custom item")
+        void constructor_setsCustomItem_whenHookRecognizesItemStack() {
+            RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK)
+                    .register(new TestCustomItemPluginHook("nexo:ruby_sword", null, true, Set.of("nexo:ruby_sword")));
+            ItemStack itemStack = Mockito.mock(ItemStack.class);
+            Mockito.when(itemStack.getType()).thenReturn(Material.DIAMOND_SWORD);
+
+            CustomItemWrapper wrapper = new CustomItemWrapper(itemStack);
+            assertTrue(wrapper.customItem().isPresent());
+            assertEquals("nexo:ruby_sword", wrapper.customItem().get());
+            assertFalse(wrapper.material().isPresent());
+        }
+
+        @Test
+        @DisplayName("Given item stack with no hooks, when constructing wrapper, then sets material from item type")
+        void constructor_setsMaterial_whenNoHooksRecognizeItemStack() {
+            ItemStack itemStack = Mockito.mock(ItemStack.class);
+            Mockito.when(itemStack.getType()).thenReturn(Material.IRON_INGOT);
+
+            CustomItemWrapper wrapper = new CustomItemWrapper(itemStack);
+            assertTrue(wrapper.material().isPresent());
+            assertEquals(Material.IRON_INGOT, wrapper.material().get());
+            assertFalse(wrapper.customItem().isPresent());
+        }
+
+        @Test
+        @DisplayName("Given item stack with hook that recognizes but returns empty models, when constructing wrapper, then sets material")
+        void constructor_setsMaterial_whenHookReturnsEmptyModels() {
+            RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK)
+                    .register(new TestCustomItemPluginHook("nexo:ruby_sword", null, true, Set.of()));
+            ItemStack itemStack = Mockito.mock(ItemStack.class);
+            Mockito.when(itemStack.getType()).thenReturn(Material.DIAMOND_SWORD);
+
+            CustomItemWrapper wrapper = new CustomItemWrapper(itemStack);
+            assertTrue(wrapper.material().isPresent());
+            assertEquals(Material.DIAMOND_SWORD, wrapper.material().get());
+        }
+    }
+
+    @Nested
+    @DisplayName("static customModels")
+    class CustomModelsTests {
+
+        @Test
+        @DisplayName("Given item stack with no hooks registered, when getting customModels, then returns empty set")
+        void customModels_returnsEmptySet_whenNoHooksRegistered() {
+            ItemStack itemStack = Mockito.mock(ItemStack.class);
+            Optional<Set<String>> result = CustomItemWrapper.customModels(itemStack);
+            assertTrue(result.isPresent());
+            assertTrue(result.get().isEmpty());
+        }
+
+        @Test
+        @DisplayName("Given item stack with hook providing models, when getting customModels, then returns those models")
+        void customModels_returnsModels_whenHookProvidesModels() {
+            RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK)
+                    .register(new TestCustomItemPluginHook("nexo:ruby_sword", null, true, Set.of("nexo:ruby_sword", "nexo:ruby_shield")));
+            ItemStack itemStack = Mockito.mock(ItemStack.class);
+            Optional<Set<String>> result = CustomItemWrapper.customModels(itemStack);
+            assertTrue(result.isPresent());
+            assertEquals(2, result.get().size());
+            assertTrue(result.get().contains("nexo:ruby_sword"));
+            assertTrue(result.get().contains("nexo:ruby_shield"));
         }
     }
 }
