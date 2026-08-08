@@ -5,6 +5,7 @@ import com.diamonddagger590.mccore.testing.RegistryResetExtension;
 import com.diamonddagger590.mccore.testing.TestCorePlugin;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
 import org.bukkit.Material;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ItemType;
 import org.junit.jupiter.api.AfterEach;
@@ -13,12 +14,17 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.MockBukkit;
 
+import dev.dejvokep.boostedyaml.route.Route;
+
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -246,5 +252,101 @@ class ItemBuilderSectionTest {
 
         ItemBuilder copy = ItemBuilder.from(source.asItemStack());
         assertNotNull(copy);
+    }
+
+    @Test
+    @DisplayName("Given a section with a non-empty player field, when from(Section) is called, then skull builder path is invoked")
+    void fromSection_invokesSkullBuilder_whenPlayerIsNonEmpty() {
+        Section section = createMinimalSection();
+        when(section.getString(eq(ItemBuilderConfigurationKeys.MATERIAL), eq("stone"))).thenReturn("player_head");
+        when(section.getString(eq(ItemBuilderConfigurationKeys.PLAYER), eq(""))).thenReturn("Notch");
+
+        ItemBuilder result = assertDoesNotThrow(() -> ItemBuilder.from(section));
+        assertNotNull(result);
+    }
+
+    @Test
+    @DisplayName("Given a section with a mob type, when from(Section) is called, then spawner builder path is invoked")
+    void fromSection_invokesSpawnerBuilder_whenMobTypeProvided() {
+        Section section = createMinimalSection();
+        when(section.getString(eq(ItemBuilderConfigurationKeys.MATERIAL), eq("stone"))).thenReturn("spawner");
+        when(section.getString(eq(ItemBuilderConfigurationKeys.MOB_TYPE), eq(""))).thenReturn("zombie");
+
+        ItemBuilder result = assertDoesNotThrow(() -> ItemBuilder.from(section));
+        assertNotNull(result);
+    }
+
+    @Test
+    @DisplayName("Given a section with potions, when from(Section) is called, then potion builder path is invoked")
+    void fromSection_invokesPotionBuilder_whenPotionSectionProvided() {
+        Section section = createMinimalSection();
+        when(section.getString(eq(ItemBuilderConfigurationKeys.MATERIAL), eq("stone"))).thenReturn("potion");
+
+        Section potionSection = mock(Section.class);
+        when(section.getSection(eq(ItemBuilderConfigurationKeys.POTION_HEADER))).thenReturn(potionSection);
+        when(potionSection.getRoutesAsStrings(false)).thenReturn(Set.of("speed"));
+        when(potionSection.getInt(any(Route.class), eq(60))).thenReturn(200);
+        when(potionSection.getInt(any(Route.class), eq(1))).thenReturn(2);
+        when(potionSection.getBoolean(any(Route.class), eq(false))).thenReturn(false);
+
+        ItemBuilder result = assertDoesNotThrow(() -> ItemBuilder.from(section));
+        assertNotNull(result);
+    }
+
+    @Test
+    @DisplayName("Given a section with banner patterns, when from(Section) is called, then pattern builder path is invoked")
+    void fromSection_invokesPatternBuilder_whenPatternSectionProvided() {
+        Section section = createMinimalSection();
+        when(section.getString(eq(ItemBuilderConfigurationKeys.MATERIAL), eq("stone"))).thenReturn("white_banner");
+
+        Section patternSection = mock(Section.class);
+        when(section.getSection(eq(ItemBuilderConfigurationKeys.PATTERN_HEADER))).thenReturn(patternSection);
+        when(patternSection.getRoutesAsStrings(false)).thenReturn(Set.of("stripe_top"));
+        when(patternSection.getString("stripe_top", "white")).thenReturn("red");
+
+        ItemBuilder result = assertDoesNotThrow(() -> ItemBuilder.from(section));
+        assertNotNull(result);
+    }
+
+    @Test
+    @DisplayName("Given a section with item flags, when from(Section) is called, then item flags are applied")
+    void fromSection_appliesItemFlags_whenItemFlagsProvided() {
+        Section section = createMinimalSection();
+        when(section.getStringList(eq(ItemBuilderConfigurationKeys.ITEM_FLAGS))).thenReturn(List.of("HIDE_ENCHANTS"));
+
+        ItemBuilder result = assertDoesNotThrow(() -> ItemBuilder.from(section));
+        assertNotNull(result);
+        ItemStack stack = result.asItemStack();
+        assertTrue(stack.getItemFlags().contains(ItemFlag.HIDE_ENCHANTS));
+    }
+
+    @Test
+    @DisplayName("Given a section with custom model data, when from(Section) is called, then custom model data is set")
+    void fromSection_setsCustomModelData_whenProvided() {
+        Section section = createMinimalSection();
+        when(section.getInt(eq(ItemBuilderConfigurationKeys.CUSTOM_MODEL_DATA), eq(-1))).thenReturn(42);
+
+        ItemBuilder result = assertDoesNotThrow(() -> ItemBuilder.from(section));
+        assertNotNull(result);
+    }
+
+    @Test
+    @DisplayName("Given a section with display name, when from(Section) is called, then completes without error")
+    void fromSection_completesWithoutError_whenNameProvided() {
+        Section section = createMinimalSection();
+        when(section.getString(eq(ItemBuilderConfigurationKeys.NAME), eq(""))).thenReturn("Custom Name");
+
+        ItemBuilder result = assertDoesNotThrow(() -> ItemBuilder.from(section));
+        assertNotNull(result);
+    }
+
+    @Test
+    @DisplayName("Given a section with lore, when from(Section) is called, then completes without error")
+    void fromSection_completesWithoutError_whenLoreProvided() {
+        Section section = createMinimalSection();
+        when(section.getStringList(eq(ItemBuilderConfigurationKeys.LORE_ROUTE))).thenReturn(List.of("Line 1", "Line 2"));
+
+        ItemBuilder result = assertDoesNotThrow(() -> ItemBuilder.from(section));
+        assertNotNull(result);
     }
 }

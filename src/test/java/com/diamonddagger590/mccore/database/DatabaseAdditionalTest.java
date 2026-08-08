@@ -20,8 +20,10 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -257,6 +259,113 @@ class DatabaseAdditionalTest {
         @Override
         protected boolean blockMainThreadOnStart() {
             return false;
+        }
+    }
+
+    @Test
+    @DisplayName("Given a non-blocking database with custom functions, when initializeDatabase is called, then functions are invoked asynchronously")
+    void initializeDatabase_invokesCustomFunctions_whenNonBlocking() throws Exception {
+        setupDriverRegistry();
+
+        NonBlockingTestDatabase database = new NonBlockingTestDatabase(plugin);
+        CompletableFuture<Void> createDone = new CompletableFuture<>();
+        CompletableFuture<Void> updateDone = new CompletableFuture<>();
+
+        database.addCreateTableFunction(db -> {
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            db.getDatabaseExecutorService().submit(() -> {
+                future.complete(null);
+                createDone.complete(null);
+            });
+            return future;
+        });
+        database.addUpdateTableFunction(db -> {
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            db.getDatabaseExecutorService().submit(() -> {
+                future.complete(null);
+                updateDone.complete(null);
+            });
+            return future;
+        });
+
+        try {
+            database.initializeDatabase();
+            createDone.get(5, TimeUnit.SECONDS);
+            updateDone.get(5, TimeUnit.SECONDS);
+            assertTrue(createDone.isDone(), "Create table function should have been called");
+            assertTrue(updateDone.isDone(), "Update table function should have been called");
+        } finally {
+            database.shutdown();
+        }
+    }
+
+    @Test
+    @DisplayName("Given a non-blocking database, when initializeDatabase is called, then core tables are created")
+    void initializeDatabase_createsTables_whenNonBlocking() throws Exception {
+        setupDriverRegistry();
+
+        NonBlockingTestDatabase database = new NonBlockingTestDatabase(plugin);
+        CompletableFuture<Void> tablesReady = new CompletableFuture<>();
+        database.addUpdateTableFunction(db -> {
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            db.getDatabaseExecutorService().submit(() -> {
+                future.complete(null);
+                tablesReady.complete(null);
+            });
+            return future;
+        });
+        try {
+            database.initializeDatabase();
+            tablesReady.get(5, TimeUnit.SECONDS);
+
+            Connection conn = database.getConnection();
+            assertTrue(database.tableExists(conn, "table_history"));
+            conn.close();
+        } finally {
+            database.shutdown();
+        }
+    }
+
+    @Test
+    @DisplayName("Given an initialized database, when shutdown is called twice, then no error occurs")
+    void shutdown_noError_whenCalledTwice() throws Exception {
+        setupDriverRegistry();
+
+        InMemoryTestDatabase database = new InMemoryTestDatabase(plugin);
+        database.initializeDatabase();
+        database.shutdown();
+        assertDoesNotThrow(database::shutdown);
+    }
+
+    @Test
+    @DisplayName("Given an initialized database, when getDatabaseDriverType is called, then returns the configured type")
+    void getDatabaseDriverType_returnsConfiguredType() {
+        InMemoryTestDatabase database = new InMemoryTestDatabase(plugin);
+        assertEquals(DatabaseDriverType.SQLITE, database.getDatabaseDriverType());
+        database.getDatabaseExecutorService().shutdownNow();
+    }
+
+    @Test
+    @DisplayName("Given an initialized database, when getDatabaseExecutorService is called, then returns non-null executor")
+    void getDatabaseExecutorService_returnsNonNullExecutor() {
+        InMemoryTestDatabase database = new InMemoryTestDatabase(plugin);
+        assertNotNull(database.getDatabaseExecutorService());
+        database.getDatabaseExecutorService().shutdownNow();
+    }
+
+    @Test
+    @DisplayName("Given an initialized database, when tableExists is called for non-existent table, then returns false")
+    void tableExists_returnsFalse_whenTableDoesNotExist() throws Exception {
+        setupDriverRegistry();
+
+        InMemoryTestDatabase database = new InMemoryTestDatabase(plugin);
+        try {
+            database.initializeDatabase();
+            Connection conn = database.getConnection();
+            assertFalse(database.tableExists(conn, "non_existent_table"));
+            conn.close();
+        } finally {
+            database.shutdown();
         }
     }
 

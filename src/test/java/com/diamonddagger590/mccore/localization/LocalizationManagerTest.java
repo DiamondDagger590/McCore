@@ -10,6 +10,7 @@ import com.diamonddagger590.mccore.registry.RegistryKey;
 import com.diamonddagger590.mccore.registry.manager.CoreManagerKey;
 import com.diamonddagger590.mccore.registry.manager.ManagerKey;
 import com.diamonddagger590.mccore.registry.manager.ManagerRegistry;
+import com.diamonddagger590.mccore.external.papi.CorePapiHook;
 import com.diamonddagger590.mccore.registry.plugin.PluginHookRegistry;
 import com.diamonddagger590.mccore.configuration.ReloadableContentManager;
 import com.diamonddagger590.mccore.setting.PlayerSettingRegistry;
@@ -33,6 +34,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -786,5 +788,211 @@ class LocalizationManagerTest {
         TestCorePlayer player = createPlayerWithLocale(Locale.KOREAN);
 
         assertEquals("English fallback", localizationManager.getLocalizedMessage(player, testRoute));
+    }
+
+    // --- PAPI hook integration ---
+
+    private void registerPapiHook(CorePapiHook papiHook) {
+        try {
+            PluginHookRegistry hookRegistry = RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK);
+            java.lang.reflect.Field hooksField = PluginHookRegistry.class.getDeclaredField("hooks");
+            hooksField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            Map<Class<?>, Object> hooks = (Map<Class<?>, Object>) hooksField.get(hookRegistry);
+            hooks.put(CorePapiHook.class, papiHook);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    @DisplayName("Given PAPI hook is registered and player is online, when getLocalizedMessage(player, route), then PAPI translates message")
+    void getLocalizedMessage_player_appliesPapiHook_whenAvailable() {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getString(testRoute)).thenReturn("Hello %player_name%");
+
+        UUID uuid = UUID.randomUUID();
+        Player bukkitPlayer = mock(Player.class);
+        when(bukkitPlayer.locale()).thenReturn(Locale.ENGLISH);
+        TestCorePlayer player = new TestCorePlayer(uuid, mockPlugin, bukkitPlayer);
+
+        CorePapiHook papiHook = mock(CorePapiHook.class);
+        when(papiHook.translateMessage(bukkitPlayer, "Hello %player_name%")).thenReturn("Hello Steve");
+        registerPapiHook(papiHook);
+
+        assertEquals("Hello Steve", localizationManager.getLocalizedMessage(player, testRoute));
+    }
+
+    @Test
+    @DisplayName("Given PAPI hook is registered and player is online, when getLocalizedMessages(player, route), then PAPI translates each line")
+    void getLocalizedMessages_player_appliesPapiHook_whenAvailable() {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getStringList(testRoute)).thenReturn(List.of("Line %player_name%", "Another %player_level%"));
+
+        UUID uuid = UUID.randomUUID();
+        Player bukkitPlayer = mock(Player.class);
+        when(bukkitPlayer.locale()).thenReturn(Locale.ENGLISH);
+        TestCorePlayer player = new TestCorePlayer(uuid, mockPlugin, bukkitPlayer);
+
+        CorePapiHook papiHook = mock(CorePapiHook.class);
+        when(papiHook.translateMessage(bukkitPlayer, "Line %player_name%")).thenReturn("Line Steve");
+        when(papiHook.translateMessage(bukkitPlayer, "Another %player_level%")).thenReturn("Another 10");
+        registerPapiHook(papiHook);
+
+        List<String> result = localizationManager.getLocalizedMessages(player, testRoute);
+        assertEquals(2, result.size());
+        assertEquals("Line Steve", result.get(0));
+        assertEquals("Another 10", result.get(1));
+    }
+
+    @Test
+    @DisplayName("Given PAPI hook is absent, when getLocalizedMessage(player, route), then message is returned without PAPI translation")
+    void getLocalizedMessage_player_noPapiHook_returnsRawMessage() {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getString(testRoute)).thenReturn("Hello %player_name%");
+
+        TestCorePlayer player = createPlayerWithLocale(Locale.ENGLISH);
+
+        assertEquals("Hello %player_name%", localizationManager.getLocalizedMessage(player, testRoute));
+    }
+
+    @Test
+    @DisplayName("Given PAPI hook present but player has no Bukkit player, when getLocalizedMessage(player, route), then message is returned without PAPI translation")
+    void getLocalizedMessage_player_papiHookPresent_noBukkitPlayer_returnsRawMessage() {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getString(testRoute)).thenReturn("Hello %player_name%");
+
+        TestCorePlayer player = createPlayerWithoutBukkit();
+
+        CorePapiHook papiHook = mock(CorePapiHook.class);
+        registerPapiHook(papiHook);
+
+        assertEquals("Hello %player_name%", localizationManager.getLocalizedMessage(player, testRoute));
+    }
+
+    // --- broadcastMessage ---
+
+    @Test
+    @DisplayName("Given no online players, when broadcastMessage is called, then message is sent to console")
+    void broadcastMessage_sendsToConsole_whenNoOnlinePlayers() {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getString(testRoute)).thenReturn("Broadcast!");
+
+        PlayerManager<CorePlugin, TestCorePlayer> playerManager = new PlayerManager<>(mockPlugin);
+        ManagerRegistry managerRegistry = RegistryAccess.registryAccess().registry(RegistryKey.MANAGER);
+        managerRegistry.register(playerManager);
+
+        org.bukkit.command.ConsoleCommandSender consoleSender = mock(org.bukkit.command.ConsoleCommandSender.class);
+        try (var mockedBukkit = org.mockito.Mockito.mockStatic(org.bukkit.Bukkit.class)) {
+            mockedBukkit.when(org.bukkit.Bukkit::getOnlinePlayers).thenReturn(java.util.Collections.emptyList());
+            mockedBukkit.when(org.bukkit.Bukkit::getConsoleSender).thenReturn(consoleSender);
+
+            assertDoesNotThrow(() -> localizationManager.broadcastMessage(testRoute));
+            org.mockito.Mockito.verify(consoleSender).sendMessage(org.mockito.ArgumentMatchers.anyString());
+        }
+    }
+
+    @Test
+    @DisplayName("Given an online player with a stored CorePlayer, when broadcastMessage, then uses player's locale chain")
+    void broadcastMessage_usesPlayerLocaleChain_whenPlayerIsLoaded() {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getString(testRoute)).thenReturn("Broadcast msg");
+
+        UUID uuid = UUID.randomUUID();
+        Player bukkitPlayer = mock(Player.class);
+        when(bukkitPlayer.getUniqueId()).thenReturn(uuid);
+        when(bukkitPlayer.locale()).thenReturn(Locale.ENGLISH);
+
+        TestCorePlayer corePlayer = new TestCorePlayer(uuid, mockPlugin, bukkitPlayer);
+        PlayerManager<CorePlugin, TestCorePlayer> playerManager = new PlayerManager<>(mockPlugin);
+        playerManager.addPlayer(corePlayer);
+        ManagerRegistry managerRegistry = RegistryAccess.registryAccess().registry(RegistryKey.MANAGER);
+        managerRegistry.register(playerManager);
+
+        org.bukkit.command.ConsoleCommandSender consoleSender = mock(org.bukkit.command.ConsoleCommandSender.class);
+        try (var mockedBukkit = org.mockito.Mockito.mockStatic(org.bukkit.Bukkit.class)) {
+            mockedBukkit.when(org.bukkit.Bukkit::getOnlinePlayers).thenReturn(List.of(bukkitPlayer));
+            mockedBukkit.when(org.bukkit.Bukkit::getConsoleSender).thenReturn(consoleSender);
+
+            assertDoesNotThrow(() -> localizationManager.broadcastMessage(testRoute));
+            org.mockito.Mockito.verify(bukkitPlayer).sendMessage(org.mockito.ArgumentMatchers.anyString());
+            org.mockito.Mockito.verify(consoleSender).sendMessage(org.mockito.ArgumentMatchers.anyString());
+        }
+    }
+
+    @Test
+    @DisplayName("Given an online player not stored in PlayerManager, when broadcastMessage, then uses default locale chain")
+    void broadcastMessage_usesDefaultLocale_whenPlayerNotLoaded() {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getString(testRoute)).thenReturn("Default broadcast");
+
+        UUID uuid = UUID.randomUUID();
+        Player bukkitPlayer = mock(Player.class);
+        when(bukkitPlayer.getUniqueId()).thenReturn(uuid);
+
+        PlayerManager<CorePlugin, TestCorePlayer> playerManager = new PlayerManager<>(mockPlugin);
+        ManagerRegistry managerRegistry = RegistryAccess.registryAccess().registry(RegistryKey.MANAGER);
+        managerRegistry.register(playerManager);
+
+        org.bukkit.command.ConsoleCommandSender consoleSender = mock(org.bukkit.command.ConsoleCommandSender.class);
+        try (var mockedBukkit = org.mockito.Mockito.mockStatic(org.bukkit.Bukkit.class)) {
+            mockedBukkit.when(org.bukkit.Bukkit::getOnlinePlayers).thenReturn(List.of(bukkitPlayer));
+            mockedBukkit.when(org.bukkit.Bukkit::getConsoleSender).thenReturn(consoleSender);
+
+            assertDoesNotThrow(() -> localizationManager.broadcastMessage(testRoute));
+            org.mockito.Mockito.verify(bukkitPlayer).sendMessage("Default broadcast");
+            org.mockito.Mockito.verify(consoleSender).sendMessage("Default broadcast");
+        }
+    }
+
+    // --- getLocalizedMessages(Audience, Route) player-not-found branch ---
+
+    @Test
+    @DisplayName("Given audience is a Player not stored in PlayerManager, when getLocalizedMessages(audience, route), then falls back to default locale")
+    void getLocalizedMessages_audience_playerNotFound_usesDefault() {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getStringList(testRoute)).thenReturn(List.of("Fallback"));
+
+        UUID uuid = UUID.randomUUID();
+        Player bukkitPlayer = mock(Player.class);
+        when(bukkitPlayer.getUniqueId()).thenReturn(uuid);
+
+        PlayerManager<CorePlugin, TestCorePlayer> playerManager = new PlayerManager<>(mockPlugin);
+        RegistryAccess.registryAccess().registry(RegistryKey.MANAGER).register(playerManager);
+
+        List<String> result = localizationManager.getLocalizedMessages(bukkitPlayer, testRoute);
+        assertEquals(1, result.size());
+        assertEquals("Fallback", result.get(0));
+    }
+
+    // --- getLocalizedMessages(Route) missing locale branch ---
+
+    @Test
+    @DisplayName("Given no localizations registered, when getLocalizedMessages(route), then throws")
+    void getLocalizedMessages_route_throwsWhenNoLocalizations() {
+        assertThrows(NoLocalizationContainsMessageException.class,
+                () -> localizationManager.getLocalizedMessages(testRoute));
+    }
+
+    // --- getLocalizedSection locale-not-in-map branch ---
+
+    @Test
+    @DisplayName("Given player's locale is unsupported, when getLocalizedSection(player, route), then falls back to English")
+    void getLocalizedSection_player_fallsToEnglish_whenClientLocaleUnsupported() {
+        registerEnglishDoc();
+        Section mockSection = mock(Section.class);
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getSection(testRoute)).thenReturn(mockSection);
+
+        TestCorePlayer player = createPlayerWithLocale(Locale.JAPANESE);
+        assertEquals(mockSection, localizationManager.getLocalizedSection(player, testRoute));
     }
 }
