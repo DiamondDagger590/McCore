@@ -4,6 +4,9 @@ import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.testing.RegistryResetExtension;
 import com.diamonddagger590.mccore.testing.TestCorePlugin;
 import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.TooltipDisplay;
+import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.identity.Identity;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.junit.jupiter.api.AfterEach;
@@ -17,6 +20,8 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class SkullBuilderTest {
 
@@ -136,5 +141,73 @@ class SkullBuilderTest {
         SkullBuilder builder = new SkullBuilder(itemStack);
         builder.hideSkullDynamicToolTip();
         assertTrue(itemStack.hasData(DataComponentTypes.TOOLTIP_DISPLAY));
+    }
+
+    @Test
+    @DisplayName("Given an item with existing tooltip data, when hideSkullDynamicToolTip is called, then PROFILE is merged into existing hidden components")
+    void hideSkullDynamicToolTip_mergesProfileIntoExistingHiddenComponents_whenTooltipAlreadyExists() {
+        ItemStack itemStack = new ItemStack(Material.PLAYER_HEAD);
+        itemStack.setData(DataComponentTypes.TOOLTIP_DISPLAY,
+                TooltipDisplay.tooltipDisplay()
+                        .addHiddenComponents(DataComponentTypes.ENCHANTMENTS)
+                        .build());
+
+        SkullBuilder builder = new SkullBuilder(itemStack);
+        builder.hideSkullDynamicToolTip();
+
+        assertTrue(itemStack.hasData(DataComponentTypes.TOOLTIP_DISPLAY));
+        TooltipDisplay result = itemStack.getData(DataComponentTypes.TOOLTIP_DISPLAY);
+        assertNotNull(result);
+        assertTrue(result.hiddenComponents().contains(DataComponentTypes.PROFILE));
+        assertTrue(result.hiddenComponents().contains(DataComponentTypes.ENCHANTMENTS));
+    }
+
+    @Test
+    @DisplayName("Given an Audience with a UUID, when withAudience(Audience) is called, then sets the UUID on the builder")
+    void withAudience_setsUuid_whenAudienceHasUuid() {
+        SkullBuilder builder = createBuilder();
+        UUID testUuid = UUID.randomUUID();
+        Audience audience = mock(Audience.class);
+        when(audience.getOrDefault(Identity.UUID, null)).thenReturn(testUuid);
+
+        SkullBuilder result = builder.withAudience(audience);
+
+        assertSame(builder, result);
+    }
+
+    @Test
+    @DisplayName("Given an Audience without a UUID, when withAudience(Audience) is called, then returns builder unchanged")
+    void withAudience_returnsSelf_whenAudienceHasNoUuid() {
+        SkullBuilder builder = createBuilder();
+        Audience audience = mock(Audience.class);
+        when(audience.getOrDefault(Identity.UUID, null)).thenReturn(null);
+
+        SkullBuilder result = builder.withAudience(audience);
+
+        assertSame(builder, result);
+    }
+
+    @Test
+    @DisplayName("Given a builder with UUID audience, when build is called, then profile includes the UUID")
+    void build_setsProfile_whenAudienceUuidProvided() {
+        ItemStack itemStack = new ItemStack(Material.PLAYER_HEAD);
+        SkullBuilder builder = new SkullBuilder(itemStack);
+        UUID testUuid = UUID.randomUUID();
+        builder.withAudience(testUuid);
+        builder.build();
+
+        assertTrue(itemStack.hasData(DataComponentTypes.PROFILE));
+    }
+
+    @Test
+    @DisplayName("Given a builder with name and url texture, when build is called, then profile data is set")
+    void build_setsProfile_whenNameAndUrlProvided() {
+        ItemStack itemStack = new ItemStack(Material.PLAYER_HEAD);
+        SkullBuilder builder = new SkullBuilder(itemStack);
+        builder.withName("Steve");
+        builder.withUrl("abc123textureid");
+        builder.build();
+
+        assertTrue(itemStack.hasData(DataComponentTypes.PROFILE));
     }
 }

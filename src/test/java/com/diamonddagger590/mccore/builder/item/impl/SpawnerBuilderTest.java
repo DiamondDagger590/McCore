@@ -3,7 +3,6 @@ package com.diamonddagger590.mccore.builder.item.impl;
 import com.diamonddagger590.mccore.CorePlugin;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
-import org.bukkit.block.CreatureSpawner;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
@@ -18,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
@@ -177,5 +177,60 @@ class SpawnerBuilderTest {
 
         assertFalse(itemStack.getItemMeta() instanceof BlockStateMeta,
                 "Non-spawner item should not have BlockStateMeta");
+    }
+
+    @Test
+    @DisplayName("Given a SpawnerBuilder with entity type and positive count, when build is called, then build completes without error")
+    void build_completesWithoutError_whenPositiveCount() {
+        ItemStack itemStack = new ItemStack(Material.SPAWNER);
+        SpawnerBuilder builder = new SpawnerBuilder(itemStack);
+
+        assertDoesNotThrow(() -> builder.withEntityType(EntityType.ZOMBIE)
+                .withSpawnCount(8)
+                .build());
+    }
+
+    @Test
+    @DisplayName("Given a SpawnerBuilder with positive delay, when build is called, then build completes without error")
+    void build_completesWithoutError_whenPositiveDelay() {
+        ItemStack itemStack = new ItemStack(Material.SPAWNER);
+        SpawnerBuilder builder = new SpawnerBuilder(itemStack);
+
+        assertDoesNotThrow(() -> builder.withEntityType(EntityType.SKELETON)
+                .withSpawnDelay(15)
+                .build());
+    }
+
+    @Test
+    @DisplayName("Given a SpawnerBuilder with positive range, when build is called, then build completes without error")
+    void build_completesWithoutError_whenPositiveRange() {
+        ItemStack itemStack = new ItemStack(Material.SPAWNER);
+        SpawnerBuilder builder = new SpawnerBuilder(itemStack);
+
+        assertDoesNotThrow(() -> builder.withEntityType(EntityType.CREEPER)
+                .withSpawnRange(12)
+                .build());
+    }
+
+    @Test
+    @DisplayName("Given a SpawnerBuilder with zero count, when build is called, then entity type branch executes but count is skipped")
+    void build_completesWithoutError_whenZeroCount() {
+        ItemStack itemStack = new ItemStack(Material.SPAWNER);
+        SpawnerBuilder builder = new SpawnerBuilder(itemStack);
+
+        assertDoesNotThrow(() -> builder.withEntityType(EntityType.ZOMBIE)
+                .withSpawnCount(0)
+                .build());
+    }
+
+    @Test
+    @DisplayName("Given a SpawnerBuilder with negative count, when build is called, then entity type branch executes but count is skipped")
+    void build_completesWithoutError_whenNegativeCount() {
+        ItemStack itemStack = new ItemStack(Material.SPAWNER);
+        SpawnerBuilder builder = new SpawnerBuilder(itemStack);
+
+        assertDoesNotThrow(() -> builder.withEntityType(EntityType.ZOMBIE)
+                .withSpawnCount(-5)
+                .build());
     }
 }
