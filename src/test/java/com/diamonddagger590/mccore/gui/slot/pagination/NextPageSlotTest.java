@@ -1,6 +1,7 @@
 package com.diamonddagger590.mccore.gui.slot.pagination;
 
 import com.diamonddagger590.mccore.CorePlugin;
+import com.diamonddagger590.mccore.gui.Gui;
 import com.diamonddagger590.mccore.gui.GuiManager;
 import com.diamonddagger590.mccore.gui.PaginatedGui;
 import com.diamonddagger590.mccore.player.CorePlayer;
@@ -162,6 +163,18 @@ class NextPageSlotTest {
 
         verify(paginatedGui).setPage(3);
         verify(paginatedGui).refreshGUI();
+    }
+
+    @Test
+    @DisplayName("Given a non-paginated gui is open, when onClick, then no page change occurs")
+    void onClick_nonPaginatedGui_noPageChange() {
+        CorePlayer corePlayer = mock(CorePlayer.class);
+        Gui<CorePlayer> nonPaginatedGui = mock(Gui.class);
+        when(mockGuiManager.getOpenedGui(corePlayer)).thenReturn(Optional.of(nonPaginatedGui));
+
+        boolean result = slot.onClick(corePlayer, ClickType.LEFT);
+
+        assertTrue(result);
     }
 
     @Test
