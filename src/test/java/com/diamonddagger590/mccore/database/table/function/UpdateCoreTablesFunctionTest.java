@@ -12,6 +12,7 @@ import org.mockito.MockedStatic;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -23,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
@@ -88,5 +90,30 @@ class UpdateCoreTablesFunctionTest {
         result.get(5, TimeUnit.SECONDS);
         assertTrue(result.isDone());
         assertFalse(result.isCompletedExceptionally());
+    }
+
+    @Test
+    @DisplayName("Given connection close throws SQLException, when updating tables, then the catch block handles it gracefully")
+    void updateTables_handlesSQLException_whenConnectionCloseThrows() throws Exception {
+        Database mockDatabase = mock(Database.class);
+        Connection mockConnection = mock(Connection.class);
+        PreparedStatement mockStatement = mock(PreparedStatement.class);
+        ResultSet mockResultSet = mock(ResultSet.class);
+
+        when(mockDatabase.getDatabaseExecutorService()).thenReturn(executor);
+        when(mockDatabase.getConnection()).thenReturn(mockConnection);
+        when(mockConnection.prepareStatement(any(String.class))).thenReturn(mockStatement);
+        when(mockStatement.executeQuery()).thenReturn(mockResultSet);
+        when(mockStatement.executeUpdate()).thenReturn(1);
+        when(mockResultSet.next()).thenReturn(false);
+        doThrow(new SQLException("Close failed")).when(mockConnection).close();
+
+        UpdateTableFunction function = UpdateCoreTablesFunction.getUpdateCoreTablesFunction();
+
+        CompletableFuture<Void> result = function.updateTables(mockDatabase);
+        assertNotNull(result);
+
+        result.get(5, TimeUnit.SECONDS);
+        assertTrue(result.isDone());
     }
 }
