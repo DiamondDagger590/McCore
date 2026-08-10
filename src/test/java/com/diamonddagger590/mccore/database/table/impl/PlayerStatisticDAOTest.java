@@ -157,6 +157,19 @@ class PlayerStatisticDAOTest {
                 tvhStatic.verify(() -> TableVersionHistoryDAO.setTableVersion(eq(connection), anyString(), eq(1)));
             }
         }
+
+        @Test
+        @DisplayName("Given negative version stored, when updateTable, then does not perform version 0 migration")
+        void doesNotPerformVersion0Migration_whenVersionIsNegative() {
+            try (MockedStatic<TableVersionHistoryDAO> tvhStatic = mockStatic(TableVersionHistoryDAO.class)) {
+                tvhStatic.when(() -> TableVersionHistoryDAO.getLatestVersion(any(), anyString())).thenReturn(-1);
+
+                PlayerStatisticDAO.updateTable(connection);
+
+                tvhStatic.verify(() -> TableVersionHistoryDAO.setTableVersion(any(), anyString(), eq(1)),
+                        org.mockito.Mockito.never());
+            }
+        }
     }
 
     @Nested
