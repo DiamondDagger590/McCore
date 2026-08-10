@@ -190,6 +190,19 @@ class PlayerSettingDAOTest {
             verify(updateStatement).setInt(3, 1);
             verify(updateStatement).executeUpdate();
         }
+
+        @Test
+        @DisplayName("Given the table is at a negative version, when updateTable is called, then it does not attempt version 0 migration")
+        void updateTable_skipsVersion0Migration_whenVersionIsNegative() throws SQLException {
+            try (MockedStatic<TableVersionHistoryDAO> tvhStatic = mockStatic(TableVersionHistoryDAO.class)) {
+                tvhStatic.when(() -> TableVersionHistoryDAO.getLatestVersion(any(), anyString())).thenReturn(-1);
+
+                PlayerSettingDAO.updateTable(mockConnection);
+
+                tvhStatic.verify(() -> TableVersionHistoryDAO.setTableVersion(any(), anyString(), eq(1)),
+                        org.mockito.Mockito.never());
+            }
+        }
     }
 
     @Nested
@@ -273,6 +286,7 @@ class PlayerSettingDAOTest {
             assertNotNull(settings);
             assertTrue(settings.isEmpty());
         }
+
     }
 
     @Nested
