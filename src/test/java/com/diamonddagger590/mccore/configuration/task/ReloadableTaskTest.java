@@ -121,4 +121,28 @@ class ReloadableTaskTest {
 
         verify(initialTask, never()).cancelTask();
     }
+
+    @Test
+    @DisplayName("Given a ReloadableTask, when first constructed, then runTask is called on the initial task")
+    void constructor_callsRunTaskOnInitialTask() {
+        CancelableCoreTask initialTask = mock(CancelableCoreTask.class);
+        BiFunction<YamlDocument, Route, CancelableCoreTask> callback = (doc, r) -> initialTask;
+
+        new ReloadableTask<>(yamlDocument, route, callback, false);
+
+        verify(initialTask).runTask(false);
+    }
+
+    @Test
+    @DisplayName("Given async=true, when first constructed, then initial runTask receives false due to field initialization order")
+    void constructor_callsRunTaskWithFalse_whenAsyncIsTrueDueToFieldInitOrder() {
+        CancelableCoreTask initialTask = mock(CancelableCoreTask.class);
+        BiFunction<YamlDocument, Route, CancelableCoreTask> callback = (doc, r) -> initialTask;
+
+        new ReloadableTask<>(yamlDocument, route, callback, true);
+
+        // During construction, super() calls reloadContent() before 'async' is assigned.
+        // The async field is still at its default value (false) at that point.
+        verify(initialTask).runTask(false);
+    }
 }
