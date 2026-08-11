@@ -129,6 +129,50 @@ class FailSafeTransactionTest {
     }
 
     @Test
+    @DisplayName("Given a successful execution, when commit throws, then transaction state is ROLLED_BACK and rollback is called")
+    void executeTransaction_rollsBack_whenCommitFails() throws SQLException {
+        PreparedStatement ps = mock(PreparedStatement.class);
+        doThrow(new SQLException("commit failed")).when(connection).commit();
+
+        var transaction = new FailSafeTransaction(connection, List.of(ps));
+        assertDoesNotThrow(transaction::executeTransaction);
+
+        verify(ps).executeUpdate();
+        verify(connection).rollback();
+        assertEquals(TransactionState.ROLLED_BACK, transaction.getTransactionState());
+        assertTrue(transaction.getFailureCause().isPresent());
+    }
+
+    @Test
+    @DisplayName("Given a statement failure, when getting failure cause, then cause message wraps the original exception")
+    void executeTransaction_storesFailureCause_withOriginalExceptionDetails() throws SQLException {
+        PreparedStatement ps = mock(PreparedStatement.class);
+        doThrow(new SQLException("specific error detail")).when(ps).executeUpdate();
+
+        var transaction = new FailSafeTransaction(connection, List.of(ps));
+        transaction.executeTransaction();
+
+        assertTrue(transaction.getFailureCause().isPresent());
+        assertNotNull(transaction.getFailureCause().get().getCause());
+        assertEquals("specific error detail", transaction.getFailureCause().get().getCause().getMessage());
+    }
+
+    @Test
+    @DisplayName("Given a successful execution with autocommit-reset failure, when checking state, then state remains COMMITTED")
+    void executeTransaction_remainsCommitted_whenAutoCommitResetFails() throws SQLException {
+        PreparedStatement ps = mock(PreparedStatement.class);
+        doNothing().when(connection).setAutoCommit(false);
+        doThrow(new SQLException("autocommit fail")).when(connection).setAutoCommit(true);
+
+        var transaction = new FailSafeTransaction(connection, List.of(ps));
+        transaction.executeTransaction();
+
+        verify(connection).commit();
+        assertEquals(TransactionState.COMMITTED, transaction.getTransactionState());
+        assertFalse(transaction.getFailureCause().isPresent());
+    }
+
+    @Test
     @DisplayName("Given no statements, when executing transaction, then commit succeeds and no rollback occurs")
     void executeTransaction_commitsSuccessfully_whenNoStatementsAdded() throws SQLException {
         var transaction = new FailSafeTransaction(connection);

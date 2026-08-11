@@ -64,6 +64,30 @@ class NoLocalizationContainsMessageExceptionTest {
     }
 
     @Test
+    @DisplayName("Given an empty locale set, when calling getMessage, then message contains Optional.empty for locales")
+    void getMessage_containsOptionalEmpty_whenConstructedWithEmptyLocales() {
+        Route route = Route.from("messages", "empty");
+        NoLocalizationContainsMessageException ex = new NoLocalizationContainsMessageException(route, Set.of());
+
+        String message = ex.getMessage();
+        assertNotNull(message);
+        assertTrue(message.contains(route.toString()));
+        assertTrue(message.contains("Optional.empty"));
+    }
+
+    @Test
+    @DisplayName("Given multiple locales, when calling getMessage, then message contains comma-separated locale names")
+    void getMessage_containsCommaSeparatedLocaleNames_whenConstructedWithMultipleLocales() {
+        Route route = Route.from("messages", "multi");
+        NoLocalizationContainsMessageException ex = new NoLocalizationContainsMessageException(route, Set.of(Locale.ENGLISH, Locale.FRENCH));
+
+        String message = ex.getMessage();
+        assertNotNull(message);
+        assertTrue(message.contains(Locale.ENGLISH.getDisplayName()));
+        assertTrue(message.contains(Locale.FRENCH.getDisplayName()));
+    }
+
+    @Test
     @DisplayName("Given a NoLocalizationContainsMessageException, when checking type, then it is a RuntimeException")
     void noLocalizationContainsMessageException_isRuntimeException_always() {
         assertInstanceOf(RuntimeException.class,
