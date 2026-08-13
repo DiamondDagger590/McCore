@@ -217,6 +217,47 @@ class DatabaseAdditionalTest {
         }
     }
 
+    @Test
+    @DisplayName("Given a non-blocking database with custom functions, when initializeDatabase is called, then custom functions are invoked asynchronously")
+    void initializeDatabase_invokesCustomFunctionsAsynchronously_withNonBlockingStartup() throws Exception {
+        setupDriverRegistry();
+
+        NonBlockingTestDatabase database = new NonBlockingTestDatabase(plugin);
+        boolean[] createCalled = {false};
+        boolean[] updateCalled = {false};
+
+        database.addCreateTableFunction(db -> {
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            db.getDatabaseExecutorService().submit(() -> {
+                createCalled[0] = true;
+                future.complete(null);
+            });
+            return future;
+        });
+        database.addUpdateTableFunction(db -> {
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            db.getDatabaseExecutorService().submit(() -> {
+                updateCalled[0] = true;
+                future.complete(null);
+            });
+            return future;
+        });
+
+        try {
+            database.initializeDatabase();
+
+            long deadline = System.currentTimeMillis() + 10_000;
+            while (System.currentTimeMillis() < deadline) {
+                if (createCalled[0] && updateCalled[0]) break;
+                Thread.sleep(100);
+            }
+            assertTrue(createCalled[0], "Custom create function should be called asynchronously");
+            assertTrue(updateCalled[0], "Custom update function should be called asynchronously");
+        } finally {
+            database.shutdown();
+        }
+    }
+
     static class InMemoryTestDatabase extends Database {
         private static final Credentials CREDENTIALS = new Credentials("", 0, "", "", "");
         private static final ConnectionDetails CONNECTION_DETAILS = new ConnectionDetails(5000, 300000, 600000, 2, 10, 0);

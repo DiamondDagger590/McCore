@@ -4,7 +4,10 @@ import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.builder.item.impl.ItemBuilder;
 import com.diamonddagger590.mccore.exception.builder.item.InvalidItemBuilderException;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.PatternReplacementResult;
+import net.kyori.adventure.text.TextReplacementConfig;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -13,6 +16,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -1263,6 +1268,147 @@ class BaseItemBuilderTest {
             assertSame(builder, builder.removeEnchantment(mockEnchant));
 
             verify(mockItem).removeEnchantment(mockEnchant);
+        }
+    }
+
+    @Nested
+    @DisplayName("Placeholder Config Generation")
+    class PlaceholderConfigTests {
+
+        @SuppressWarnings("unchecked")
+        private List<TextReplacementConfig> invokeGetPlaceholdersAsConfig(ItemBuilder builder) {
+            try {
+                Method method = BaseItemBuilder.class.getDeclaredMethod("getPlaceholdersAsConfig");
+                method.setAccessible(true);
+                return (List<TextReplacementConfig>) method.invoke(builder);
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Test
+        @DisplayName("Given no placeholders, when getPlaceholdersAsConfig, then returns empty list")
+        void getPlaceholdersAsConfig_returnsEmptyList_whenNoPlaceholders() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            List<TextReplacementConfig> configs = invokeGetPlaceholdersAsConfig(builder);
+            assertNotNull(configs);
+            assertTrue(configs.isEmpty());
+        }
+
+        @Test
+        @DisplayName("Given one placeholder, when getPlaceholdersAsConfig, then returns one config")
+        void getPlaceholdersAsConfig_returnsOneConfig_whenOnePlaceholder() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            builder.addPlaceholder("level", "5");
+            List<TextReplacementConfig> configs = invokeGetPlaceholdersAsConfig(builder);
+            assertEquals(1, configs.size());
+        }
+
+        @Test
+        @DisplayName("Given multiple placeholders, when getPlaceholdersAsConfig, then returns matching number of configs")
+        void getPlaceholdersAsConfig_returnsMatchingCount_whenMultiplePlaceholders() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            builder.addPlaceholder("level", "5");
+            builder.addPlaceholder("name", "Sword");
+            builder.addPlaceholder("rarity", "Rare");
+            List<TextReplacementConfig> configs = invokeGetPlaceholdersAsConfig(builder);
+            assertEquals(3, configs.size());
+        }
+
+        @Test
+        @DisplayName("Given a placeholder, when applying config to component, then placeholder is replaced")
+        void getPlaceholdersAsConfig_replacesPlaceholderInComponent_whenApplied() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            builder.addPlaceholder("level", "10");
+            List<TextReplacementConfig> configs = invokeGetPlaceholdersAsConfig(builder);
+
+            Component original = Component.text("Level: <level>");
+            Component result = original;
+            for (TextReplacementConfig config : configs) {
+                result = result.replaceText(config);
+            }
+            String plain = PlainTextComponentSerializer.plainText().serialize(result);
+            assertEquals("Level: 10", plain);
+        }
+    }
+
+    @Nested
+    @DisplayName("Component Parsing")
+    class ParseComponentTests {
+
+        private Component invokeParseComponent(ItemBuilder builder, Component message) {
+            try {
+                Method method = BaseItemBuilder.class.getDeclaredMethod("parseComponent", Component.class);
+                method.setAccessible(true);
+                return (Component) method.invoke(builder, message);
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Test
+        @DisplayName("Given no placeholders, when parseComponent, then returns component unchanged")
+        void parseComponent_returnsUnchanged_whenNoPlaceholders() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            Component input = Component.text("Hello World");
+            Component result = invokeParseComponent(builder, input);
+            String plain = PlainTextComponentSerializer.plainText().serialize(result);
+            assertEquals("Hello World", plain);
+        }
+
+        @Test
+        @DisplayName("Given a placeholder, when parseComponent with matching tag, then replaces the tag")
+        void parseComponent_replacesTag_whenPlaceholderMatches() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            builder.addPlaceholder("damage", "50");
+            Component input = Component.text("Damage: <damage>");
+            Component result = invokeParseComponent(builder, input);
+            String plain = PlainTextComponentSerializer.plainText().serialize(result);
+            assertEquals("Damage: 50", plain);
+        }
+
+        @Test
+        @DisplayName("Given multiple placeholders, when parseComponent, then replaces all matching tags")
+        void parseComponent_replacesAllTags_whenMultiplePlaceholders() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            builder.addPlaceholder("min", "1");
+            builder.addPlaceholder("max", "10");
+            Component input = Component.text("<min> to <max>");
+            Component result = invokeParseComponent(builder, input);
+            String plain = PlainTextComponentSerializer.plainText().serialize(result);
+            assertEquals("1 to 10", plain);
+        }
+    }
+
+    @Nested
+    @DisplayName("Replacement Condition")
+    class ReplacementConditionTests {
+
+        private TextReplacementConfig.Condition invokeGetReplacementCondition(ItemBuilder builder) {
+            try {
+                Method method = BaseItemBuilder.class.getDeclaredMethod("getReplacementCondition");
+                method.setAccessible(true);
+                return (TextReplacementConfig.Condition) method.invoke(builder);
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Test
+        @DisplayName("Given a builder, when getReplacementCondition, then returns non-null condition")
+        void getReplacementCondition_returnsNonNull() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            TextReplacementConfig.Condition condition = invokeGetReplacementCondition(builder);
+            assertNotNull(condition);
+        }
+
+        @Test
+        @DisplayName("Given the replacement condition, when applying, then always returns REPLACE")
+        void getReplacementCondition_alwaysReturnsReplace() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            TextReplacementConfig.Condition condition = invokeGetReplacementCondition(builder);
+            PatternReplacementResult result = condition.shouldReplace(null, 0, 0);
+            assertEquals(PatternReplacementResult.REPLACE, result);
         }
     }
 }
