@@ -54,6 +54,28 @@ class CorePlayerTest {
         }
     }
 
+    private static class NotAfkPluginHook extends PluginHook<CorePlugin> implements AfkPluginHook {
+        NotAfkPluginHook() {
+            super(null);
+        }
+
+        @Override
+        public boolean isAfk(CorePlayer corePlayer) {
+            return false;
+        }
+    }
+
+    private static class AlwaysAfkPluginHook extends PluginHook<CorePlugin> implements AfkPluginHook {
+        AlwaysAfkPluginHook() {
+            super(null);
+        }
+
+        @Override
+        public boolean isAfk(CorePlayer corePlayer) {
+            return true;
+        }
+    }
+
     private UUID testUUID;
     private TestCorePlayer player;
 
@@ -136,6 +158,22 @@ class CorePlayerTest {
     @Test
     @DisplayName("Given an AfkPluginHook that returns false, when calling isAfk, then returns false")
     void isAfk_returnsFalse_whenRegisteredHookReturnsFalse() {
+        RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(new TestAfkPluginHook(false));
+        assertFalse(player.isAfk());
+    }
+
+    @Test
+    @DisplayName("Given multiple AfkPluginHooks where first returns false and second returns true, when calling isAfk, then returns true")
+    void isAfk_returnsTrue_whenAnyRegisteredHookReturnsTrue() {
+        RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(new NotAfkPluginHook());
+        RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(new AlwaysAfkPluginHook());
+        assertTrue(player.isAfk());
+    }
+
+    @Test
+    @DisplayName("Given multiple AfkPluginHooks that all return false, when calling isAfk, then returns false")
+    void isAfk_returnsFalse_whenAllRegisteredHooksReturnFalse() {
+        RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(new NotAfkPluginHook());
         RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(new TestAfkPluginHook(false));
         assertFalse(player.isAfk());
     }
