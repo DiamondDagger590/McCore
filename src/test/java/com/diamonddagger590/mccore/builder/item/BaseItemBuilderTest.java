@@ -1265,4 +1265,355 @@ class BaseItemBuilderTest {
             verify(mockItem).removeEnchantment(mockEnchant);
         }
     }
+
+    @Nested
+    @DisplayName("withType")
+    class WithTypeTests {
+
+        @Test
+        @DisplayName("Given a builder with existing itemStack, when withType is called, then does not replace itemStack and returns builder")
+        void withType_doesNotReplaceItemStack_whenItemStackExists() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack originalItem = getItemStack(builder);
+
+            @SuppressWarnings("DataFlowIssue")
+            ItemBuilder result = builder.withType(null, 5);
+
+            assertSame(builder, result);
+            assertSame(originalItem, getItemStack(builder));
+        }
+    }
+
+    @Nested
+    @DisplayName("setColor")
+    class SetColorTests {
+
+        @Test
+        @DisplayName("Given a map item, when setColor with named color, then sets MAP_COLOR data")
+        void setColor_setsMapColor_whenItemIsMap() {
+            ItemBuilder builder = createBuilder(Material.FILLED_MAP);
+            ItemStack mockItem = getItemStack(builder);
+
+            assertSame(builder, builder.setColor("red"));
+
+            verify(mockItem).setData(
+                    org.mockito.ArgumentMatchers.eq(io.papermc.paper.datacomponent.DataComponentTypes.MAP_COLOR),
+                    org.mockito.ArgumentMatchers.any(io.papermc.paper.datacomponent.item.MapItemColor.class)
+            );
+        }
+
+        @Test
+        @DisplayName("Given a leather armor item, when setColor with named color, then sets DYED_COLOR data")
+        void setColor_setsDyedColor_whenItemIsLeatherArmor() {
+            ItemBuilder builder = createBuilder(Material.LEATHER_CHESTPLATE);
+            ItemStack mockItem = getItemStack(builder);
+
+            assertSame(builder, builder.setColor("blue"));
+
+            verify(mockItem).setData(
+                    org.mockito.ArgumentMatchers.eq(io.papermc.paper.datacomponent.DataComponentTypes.DYED_COLOR),
+                    org.mockito.ArgumentMatchers.any(io.papermc.paper.datacomponent.item.DyedItemColor.class)
+            );
+        }
+
+        @Test
+        @DisplayName("Given a potion item, when setColor with named color, then sets DYED_COLOR data")
+        void setColor_setsDyedColor_whenItemIsPotion() {
+            ItemBuilder builder = createBuilder(Material.POTION);
+            ItemStack mockItem = getItemStack(builder);
+
+            builder.setColor("green");
+
+            verify(mockItem).setData(
+                    org.mockito.ArgumentMatchers.eq(io.papermc.paper.datacomponent.DataComponentTypes.DYED_COLOR),
+                    org.mockito.ArgumentMatchers.any(io.papermc.paper.datacomponent.item.DyedItemColor.class)
+            );
+        }
+
+        @Test
+        @DisplayName("Given a shield item, when setColor with named color, then sets BASE_COLOR data")
+        void setColor_setsBaseColor_whenItemIsShield() {
+            ItemBuilder builder = createBuilder(Material.SHIELD);
+            ItemStack mockItem = getItemStack(builder);
+
+            builder.setColor("red");
+
+            verify(mockItem).setData(
+                    org.mockito.ArgumentMatchers.eq(io.papermc.paper.datacomponent.DataComponentTypes.BASE_COLOR),
+                    org.mockito.ArgumentMatchers.any(org.bukkit.DyeColor.class)
+            );
+        }
+
+        @Test
+        @DisplayName("Given a non-colorable item, when setColor is called, then no data is set")
+        void setColor_doesNothing_whenItemIsNotColorable() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+
+            builder.setColor("red");
+
+            verify(mockItem, never()).setData(
+                    org.mockito.ArgumentMatchers.eq(io.papermc.paper.datacomponent.DataComponentTypes.MAP_COLOR),
+                    org.mockito.ArgumentMatchers.any(io.papermc.paper.datacomponent.item.MapItemColor.class)
+            );
+            verify(mockItem, never()).setData(
+                    org.mockito.ArgumentMatchers.eq(io.papermc.paper.datacomponent.DataComponentTypes.DYED_COLOR),
+                    org.mockito.ArgumentMatchers.any(io.papermc.paper.datacomponent.item.DyedItemColor.class)
+            );
+            verify(mockItem, never()).setData(
+                    org.mockito.ArgumentMatchers.eq(io.papermc.paper.datacomponent.DataComponentTypes.BASE_COLOR),
+                    org.mockito.ArgumentMatchers.any(org.bukkit.DyeColor.class)
+            );
+        }
+
+        @Test
+        @DisplayName("Given a leather armor item, when setColor with RGB string, then sets DYED_COLOR data")
+        void setColor_setsDyedColor_whenRgbStringProvided() {
+            ItemBuilder builder = createBuilder(Material.LEATHER_BOOTS);
+            ItemStack mockItem = getItemStack(builder);
+
+            builder.setColor("255,0,0");
+
+            verify(mockItem).setData(
+                    org.mockito.ArgumentMatchers.eq(io.papermc.paper.datacomponent.DataComponentTypes.DYED_COLOR),
+                    org.mockito.ArgumentMatchers.any(io.papermc.paper.datacomponent.item.DyedItemColor.class)
+            );
+        }
+    }
+
+    @Nested
+    @DisplayName("getPlainName")
+    class GetPlainNameTests {
+
+        @Test
+        @DisplayName("Given an item with ITEM_NAME data, when getPlainName is called, then returns serialized name")
+        void getPlainName_returnsSerializedName_whenItemNameDataPresent() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_NAME)).thenReturn(true);
+            when(mockItem.getData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_NAME)).thenReturn(Component.text("My Item"));
+
+            String name = builder.getPlainName();
+
+            assertEquals("My Item", name);
+        }
+
+        @Test
+        @DisplayName("Given an item with CUSTOM_NAME data but no ITEM_NAME, when getPlainName is called, then returns custom name")
+        void getPlainName_returnsCustomName_whenOnlyCustomNamePresent() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_NAME)).thenReturn(false);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.CUSTOM_NAME)).thenReturn(true);
+            when(mockItem.getData(io.papermc.paper.datacomponent.DataComponentTypes.CUSTOM_NAME)).thenReturn(Component.text("Custom Name"));
+
+            String name = builder.getPlainName();
+
+            assertEquals("Custom Name", name);
+        }
+
+        @Test
+        @DisplayName("Given an item with no name data, when getPlainName is called, then returns empty string")
+        void getPlainName_returnsEmpty_whenNoNameDataPresent() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_NAME)).thenReturn(false);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.CUSTOM_NAME)).thenReturn(false);
+
+            String name = builder.getPlainName();
+
+            assertEquals("", name);
+        }
+
+        @Test
+        @DisplayName("Given an item with ITEM_NAME returning null, when getPlainName is called, then returns empty string")
+        void getPlainName_returnsEmpty_whenItemNameReturnsNull() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_NAME)).thenReturn(true);
+            when(mockItem.getData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_NAME)).thenReturn(null);
+
+            String name = builder.getPlainName();
+
+            assertEquals("", name);
+        }
+    }
+
+    @Nested
+    @DisplayName("getPlainLore")
+    class GetPlainLoreTests {
+
+        @Test
+        @DisplayName("Given an item with LORE data, when getPlainLore is called, then returns serialized lines")
+        void getPlainLore_returnsSerializedLines_whenLoreDataPresent() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.LORE)).thenReturn(true);
+            io.papermc.paper.datacomponent.item.ItemLore mockLore = mock(io.papermc.paper.datacomponent.item.ItemLore.class);
+            when(mockLore.lines()).thenReturn(List.of(Component.text("Line 1"), Component.text("Line 2")));
+            when(mockItem.getData(io.papermc.paper.datacomponent.DataComponentTypes.LORE)).thenReturn(mockLore);
+
+            List<String> lore = builder.getPlainLore();
+
+            assertEquals(2, lore.size());
+            assertEquals("Line 1", lore.get(0));
+            assertEquals("Line 2", lore.get(1));
+        }
+
+        @Test
+        @DisplayName("Given an item with no LORE data, when getPlainLore is called, then returns empty list")
+        void getPlainLore_returnsEmptyList_whenNoLoreDataPresent() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.LORE)).thenReturn(false);
+
+            List<String> lore = builder.getPlainLore();
+
+            assertTrue(lore.isEmpty());
+        }
+
+        @Test
+        @DisplayName("Given an item with LORE data returning null, when getPlainLore is called, then returns empty list")
+        void getPlainLore_returnsEmptyList_whenLoreDataReturnsNull() {
+            ItemBuilder builder = createBuilder(Material.STONE);
+            ItemStack mockItem = getItemStack(builder);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.LORE)).thenReturn(true);
+            when(mockItem.getData(io.papermc.paper.datacomponent.DataComponentTypes.LORE)).thenReturn(null);
+
+            List<String> lore = builder.getPlainLore();
+
+            assertTrue(lore.isEmpty());
+        }
+    }
+
+    @Nested
+    @DisplayName("addEnchantment(Enchantment, int)")
+    class AddEnchantmentTests {
+
+        @Test
+        @DisplayName("Given a regular item with no enchantments, when addEnchantment is called, then sets ENCHANTMENTS data")
+        void addEnchantment_setsEnchantmentsData_whenNoExistingEnchantments() {
+            ItemBuilder builder = createBuilder(Material.DIAMOND_SWORD);
+            ItemStack mockItem = getItemStack(builder);
+            org.bukkit.enchantments.Enchantment mockEnchant = mock(org.bukkit.enchantments.Enchantment.class);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.ENCHANTMENTS)).thenReturn(false);
+
+            assertSame(builder, builder.addEnchantment(mockEnchant, 3));
+
+            verify(mockItem).setData(
+                    org.mockito.ArgumentMatchers.eq(io.papermc.paper.datacomponent.DataComponentTypes.ENCHANTMENTS),
+                    org.mockito.ArgumentMatchers.any(io.papermc.paper.datacomponent.item.ItemEnchantments.class)
+            );
+        }
+
+        @Test
+        @DisplayName("Given a regular item with existing enchantments, when addEnchantment is called, then preserves existing and adds new")
+        void addEnchantment_preservesExistingAndAddsNew_whenEnchantmentsExist() {
+            ItemBuilder builder = createBuilder(Material.DIAMOND_SWORD);
+            ItemStack mockItem = getItemStack(builder);
+            org.bukkit.enchantments.Enchantment mockEnchant = mock(org.bukkit.enchantments.Enchantment.class);
+            io.papermc.paper.datacomponent.item.ItemEnchantments existingEnchantments = mock(io.papermc.paper.datacomponent.item.ItemEnchantments.class);
+            when(existingEnchantments.enchantments()).thenReturn(Map.of());
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.ENCHANTMENTS)).thenReturn(true);
+            when(mockItem.getData(io.papermc.paper.datacomponent.DataComponentTypes.ENCHANTMENTS)).thenReturn(existingEnchantments);
+
+            builder.addEnchantment(mockEnchant, 5);
+
+            verify(mockItem).setData(
+                    org.mockito.ArgumentMatchers.eq(io.papermc.paper.datacomponent.DataComponentTypes.ENCHANTMENTS),
+                    org.mockito.ArgumentMatchers.any(io.papermc.paper.datacomponent.item.ItemEnchantments.class)
+            );
+        }
+
+        @Test
+        @DisplayName("Given an enchanted book with no stored enchantments, when addEnchantment is called, then sets STORED_ENCHANTMENTS data")
+        void addEnchantment_setsStoredEnchantments_whenEnchantedBookWithNoExisting() {
+            ItemBuilder builder = createBuilder(Material.ENCHANTED_BOOK);
+            ItemStack mockItem = getItemStack(builder);
+            org.bukkit.enchantments.Enchantment mockEnchant = mock(org.bukkit.enchantments.Enchantment.class);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.STORED_ENCHANTMENTS)).thenReturn(false);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.ENCHANTMENTS)).thenReturn(false);
+
+            builder.addEnchantment(mockEnchant, 1);
+
+            verify(mockItem).setData(
+                    org.mockito.ArgumentMatchers.eq(io.papermc.paper.datacomponent.DataComponentTypes.STORED_ENCHANTMENTS),
+                    org.mockito.ArgumentMatchers.any(io.papermc.paper.datacomponent.item.ItemEnchantments.class)
+            );
+        }
+
+        @Test
+        @DisplayName("Given an enchanted book with existing stored enchantments, when addEnchantment is called, then preserves and adds")
+        void addEnchantment_preservesExistingStoredEnchantments_whenEnchantedBookWithExisting() {
+            ItemBuilder builder = createBuilder(Material.ENCHANTED_BOOK);
+            ItemStack mockItem = getItemStack(builder);
+            org.bukkit.enchantments.Enchantment mockEnchant = mock(org.bukkit.enchantments.Enchantment.class);
+            io.papermc.paper.datacomponent.item.ItemEnchantments storedEnchantments = mock(io.papermc.paper.datacomponent.item.ItemEnchantments.class);
+            when(storedEnchantments.enchantments()).thenReturn(Map.of());
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.STORED_ENCHANTMENTS)).thenReturn(true);
+            when(mockItem.getData(io.papermc.paper.datacomponent.DataComponentTypes.STORED_ENCHANTMENTS)).thenReturn(storedEnchantments);
+
+            builder.addEnchantment(mockEnchant, 2);
+
+            verify(mockItem).setData(
+                    org.mockito.ArgumentMatchers.eq(io.papermc.paper.datacomponent.DataComponentTypes.STORED_ENCHANTMENTS),
+                    org.mockito.ArgumentMatchers.any(io.papermc.paper.datacomponent.item.ItemEnchantments.class)
+            );
+        }
+
+        @Test
+        @DisplayName("Given an enchanted book with null stored enchantments data, when addEnchantment is called, then still sets data")
+        void addEnchantment_handlesNullStoredEnchantments_whenEnchantedBookReturnsNull() {
+            ItemBuilder builder = createBuilder(Material.ENCHANTED_BOOK);
+            ItemStack mockItem = getItemStack(builder);
+            org.bukkit.enchantments.Enchantment mockEnchant = mock(org.bukkit.enchantments.Enchantment.class);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.STORED_ENCHANTMENTS)).thenReturn(true);
+            when(mockItem.getData(io.papermc.paper.datacomponent.DataComponentTypes.STORED_ENCHANTMENTS)).thenReturn(null);
+
+            builder.addEnchantment(mockEnchant, 1);
+
+            verify(mockItem).setData(
+                    org.mockito.ArgumentMatchers.eq(io.papermc.paper.datacomponent.DataComponentTypes.STORED_ENCHANTMENTS),
+                    org.mockito.ArgumentMatchers.any(io.papermc.paper.datacomponent.item.ItemEnchantments.class)
+            );
+        }
+
+        @Test
+        @DisplayName("Given a regular item with null enchantments data, when addEnchantment is called, then still sets data")
+        void addEnchantment_handlesNullEnchantments_whenRegularItemReturnsNull() {
+            ItemBuilder builder = createBuilder(Material.DIAMOND_SWORD);
+            ItemStack mockItem = getItemStack(builder);
+            org.bukkit.enchantments.Enchantment mockEnchant = mock(org.bukkit.enchantments.Enchantment.class);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.ENCHANTMENTS)).thenReturn(true);
+            when(mockItem.getData(io.papermc.paper.datacomponent.DataComponentTypes.ENCHANTMENTS)).thenReturn(null);
+
+            builder.addEnchantment(mockEnchant, 3);
+
+            verify(mockItem).setData(
+                    org.mockito.ArgumentMatchers.eq(io.papermc.paper.datacomponent.DataComponentTypes.ENCHANTMENTS),
+                    org.mockito.ArgumentMatchers.any(io.papermc.paper.datacomponent.item.ItemEnchantments.class)
+            );
+        }
+
+        @Test
+        @DisplayName("Given an enchanted book without stored enchantments but with regular enchantments, when addEnchantment is called, then falls through to ENCHANTMENTS branch and sets STORED_ENCHANTMENTS")
+        void addEnchantment_fallsThroughToEnchantmentsBranch_whenEnchantedBookWithoutStoredButWithRegular() {
+            ItemBuilder builder = createBuilder(Material.ENCHANTED_BOOK);
+            ItemStack mockItem = getItemStack(builder);
+            org.bukkit.enchantments.Enchantment mockEnchant = mock(org.bukkit.enchantments.Enchantment.class);
+            io.papermc.paper.datacomponent.item.ItemEnchantments existingEnchantments = mock(io.papermc.paper.datacomponent.item.ItemEnchantments.class);
+            when(existingEnchantments.enchantments()).thenReturn(Map.of());
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.STORED_ENCHANTMENTS)).thenReturn(false);
+            when(mockItem.hasData(io.papermc.paper.datacomponent.DataComponentTypes.ENCHANTMENTS)).thenReturn(true);
+            when(mockItem.getData(io.papermc.paper.datacomponent.DataComponentTypes.ENCHANTMENTS)).thenReturn(existingEnchantments);
+
+            builder.addEnchantment(mockEnchant, 2);
+
+            verify(mockItem).setData(
+                    org.mockito.ArgumentMatchers.eq(io.papermc.paper.datacomponent.DataComponentTypes.STORED_ENCHANTMENTS),
+                    org.mockito.ArgumentMatchers.any(io.papermc.paper.datacomponent.item.ItemEnchantments.class)
+            );
+        }
+    }
+
 }

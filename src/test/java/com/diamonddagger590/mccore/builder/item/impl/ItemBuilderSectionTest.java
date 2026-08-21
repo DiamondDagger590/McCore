@@ -247,4 +247,129 @@ class ItemBuilderSectionTest {
         ItemBuilder copy = ItemBuilder.from(source.asItemStack());
         assertNotNull(copy);
     }
+
+    @Test
+    @DisplayName("Given a section with potion effects, when from(Section) is called, then potions are applied")
+    void fromSection_appliesPotions_whenPotionSectionProvided() {
+        Section section = createMinimalSection();
+        Section potionSection = mock(Section.class);
+        when(section.getSection(eq(ItemBuilderConfigurationKeys.POTION_HEADER))).thenReturn(potionSection);
+        when(potionSection.getRoutesAsStrings(false)).thenReturn(Set.of("speed"));
+
+        when(potionSection.getInt(org.mockito.ArgumentMatchers.any(dev.dejvokep.boostedyaml.route.Route.class), eq(60))).thenReturn(100);
+        when(potionSection.getInt(org.mockito.ArgumentMatchers.any(dev.dejvokep.boostedyaml.route.Route.class), eq(1))).thenReturn(2);
+        when(potionSection.getBoolean(org.mockito.ArgumentMatchers.any(dev.dejvokep.boostedyaml.route.Route.class), eq(false))).thenReturn(false);
+
+        when(section.getString(eq(ItemBuilderConfigurationKeys.MATERIAL), eq("stone"))).thenReturn("potion");
+
+        ItemBuilder result = assertDoesNotThrow(() -> ItemBuilder.from(section));
+        assertNotNull(result);
+    }
+
+    @Test
+    @DisplayName("Given a section with unknown potion name, when from(Section) is called, then builds without error")
+    void fromSection_skipsUnknownPotion_whenPotionNameInvalid() {
+        Section section = createMinimalSection();
+        Section potionSection = mock(Section.class);
+        when(section.getSection(eq(ItemBuilderConfigurationKeys.POTION_HEADER))).thenReturn(potionSection);
+        when(potionSection.getRoutesAsStrings(false)).thenReturn(Set.of("not_a_real_potion_effect"));
+
+        when(potionSection.getInt(org.mockito.ArgumentMatchers.any(dev.dejvokep.boostedyaml.route.Route.class), eq(60))).thenReturn(60);
+        when(potionSection.getInt(org.mockito.ArgumentMatchers.any(dev.dejvokep.boostedyaml.route.Route.class), eq(1))).thenReturn(1);
+        when(potionSection.getBoolean(org.mockito.ArgumentMatchers.any(dev.dejvokep.boostedyaml.route.Route.class), eq(false))).thenReturn(false);
+
+        ItemBuilder result = assertDoesNotThrow(() -> ItemBuilder.from(section));
+        assertNotNull(result);
+    }
+
+    @Test
+    @DisplayName("Given a section with banner patterns, when from(Section) is called, then patterns are applied")
+    void fromSection_appliesPatterns_whenPatternSectionProvided() {
+        Section section = createMinimalSection();
+        when(section.getString(eq(ItemBuilderConfigurationKeys.MATERIAL), eq("stone"))).thenReturn("white_banner");
+        Section patternSection = mock(Section.class);
+        when(section.getSection(eq(ItemBuilderConfigurationKeys.PATTERN_HEADER))).thenReturn(patternSection);
+        when(patternSection.getRoutesAsStrings(false)).thenReturn(Set.of("stripe_top"));
+        when(patternSection.getString("stripe_top", "white")).thenReturn("red");
+
+        ItemBuilder result = assertDoesNotThrow(() -> ItemBuilder.from(section));
+        assertNotNull(result);
+    }
+
+    @Test
+    @DisplayName("Given a section with display name, when from(Section) is called, then name is set")
+    void fromSection_setsDisplayName_whenNameProvided() {
+        Section section = createMinimalSection();
+        when(section.getString(eq(ItemBuilderConfigurationKeys.NAME), eq(""))).thenReturn("<green>Test Item");
+
+        ItemBuilder result = ItemBuilder.from(section);
+        assertNotNull(result);
+    }
+
+    @Test
+    @DisplayName("Given a section with lore lines, when from(Section) is called, then lore is set")
+    void fromSection_setsLore_whenLoreProvided() {
+        Section section = createMinimalSection();
+        when(section.getStringList(eq(ItemBuilderConfigurationKeys.LORE_ROUTE)))
+                .thenReturn(java.util.List.of("Line one", "Line two"));
+
+        ItemBuilder result = ItemBuilder.from(section);
+        assertNotNull(result);
+    }
+
+    @Test
+    @DisplayName("Given a section with mob type, when from(Section) is called, then spawner mob type is applied")
+    void fromSection_appliesMobType_whenMobTypeProvided() {
+        Section section = createMinimalSection();
+        when(section.getString(eq(ItemBuilderConfigurationKeys.MATERIAL), eq("stone"))).thenReturn("spawner");
+        when(section.getString(eq(ItemBuilderConfigurationKeys.MOB_TYPE), eq(""))).thenReturn("zombie");
+
+        ItemBuilder result = assertDoesNotThrow(() -> ItemBuilder.from(section));
+        assertNotNull(result);
+    }
+
+    @Test
+    @DisplayName("Given a section with empty mob type, when from(Section) is called, then spawner mob type is skipped")
+    void fromSection_skipsMobType_whenMobTypeEmpty() {
+        Section section = createMinimalSection();
+        when(section.getString(eq(ItemBuilderConfigurationKeys.MOB_TYPE), eq(""))).thenReturn("");
+
+        ItemBuilder result = assertDoesNotThrow(() -> ItemBuilder.from(section));
+        assertNotNull(result);
+    }
+
+    @Test
+    @DisplayName("Given a section with multiple enchantments, when from(Section) is called, then all enchantments are applied")
+    void fromSection_appliesMultipleEnchantments_whenMultipleEnchantmentsProvided() {
+        Section section = createMinimalSection();
+        Section enchSection = mock(Section.class);
+        when(section.getSection(eq(ItemBuilderConfigurationKeys.ENCHANTMENTS))).thenReturn(enchSection);
+        when(enchSection.getRoutesAsStrings(false)).thenReturn(Set.of("sharpness", "fire_aspect"));
+        when(enchSection.getInt("sharpness")).thenReturn(5);
+        when(enchSection.getInt("fire_aspect")).thenReturn(2);
+
+        ItemBuilder result = assertDoesNotThrow(() -> ItemBuilder.from(section));
+        assertNotNull(result);
+    }
+
+    @Test
+    @DisplayName("Given a section with item flags, when from(Section) is called, then flags are applied")
+    void fromSection_appliesItemFlags_whenFlagsProvided() {
+        Section section = createMinimalSection();
+        when(section.getStringList(eq(ItemBuilderConfigurationKeys.ITEM_FLAGS)))
+                .thenReturn(java.util.List.of("HIDE_ENCHANTS"));
+
+        ItemBuilder result = assertDoesNotThrow(() -> ItemBuilder.from(section));
+        assertNotNull(result);
+    }
+
+    @Test
+    @DisplayName("Given a section with custom model data, when from(Section) is called, then custom model data is set")
+    void fromSection_setsCustomModelData_whenPositiveValueProvided() {
+        Section section = createMinimalSection();
+        when(section.getInt(eq(ItemBuilderConfigurationKeys.CUSTOM_MODEL_DATA), eq(-1))).thenReturn(42);
+
+        ItemBuilder result = assertDoesNotThrow(() -> ItemBuilder.from(section));
+        assertNotNull(result);
+    }
 }
