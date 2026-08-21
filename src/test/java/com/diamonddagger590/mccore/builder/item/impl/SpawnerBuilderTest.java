@@ -178,4 +178,133 @@ class SpawnerBuilderTest {
         assertFalse(itemStack.getItemMeta() instanceof BlockStateMeta,
                 "Non-spawner item should not have BlockStateMeta");
     }
+
+    @Test
+    @DisplayName("Given a SpawnerBuilder with entityType and all positive values, when build is called with mocked CreatureSpawner meta, then all spawner properties are set")
+    void build_setsAllProperties_whenCreatureSpawnerMetaAndAllPositiveValues() {
+        ItemStack mockItem = org.mockito.Mockito.mock(ItemStack.class);
+        CreatureSpawnerMeta mockMeta = org.mockito.Mockito.mock(CreatureSpawnerMeta.class);
+
+        org.mockito.Mockito.doAnswer(invocation -> {
+            java.util.function.Consumer<org.bukkit.inventory.meta.ItemMeta> consumer = invocation.getArgument(0);
+            consumer.accept(mockMeta);
+            return null;
+        }).when(mockItem).editMeta(org.mockito.ArgumentMatchers.any());
+
+        SpawnerBuilder builder = new SpawnerBuilder(mockItem);
+
+        builder.withEntityType(EntityType.ZOMBIE)
+                .withSpawnCount(4)
+                .withSpawnDelay(10)
+                .withSpawnRange(8)
+                .build();
+
+        org.mockito.Mockito.verify(mockMeta).setSpawnCount(4);
+        org.mockito.Mockito.verify(mockMeta).setDelay(10);
+        org.mockito.Mockito.verify(mockMeta).setSpawnRange(8);
+        org.mockito.Mockito.verify(mockMeta).setSpawnedType(EntityType.ZOMBIE);
+    }
+
+    @Test
+    @DisplayName("Given a SpawnerBuilder with entityType but zero count/delay/range, when build is called with mocked CreatureSpawner, then only setSpawnedType is called")
+    void build_setsOnlyEntityType_whenCreatureSpawnerMetaAndZeroValues() {
+        ItemStack mockItem = org.mockito.Mockito.mock(ItemStack.class);
+        CreatureSpawnerMeta mockMeta = org.mockito.Mockito.mock(CreatureSpawnerMeta.class);
+
+        org.mockito.Mockito.doAnswer(invocation -> {
+            java.util.function.Consumer<org.bukkit.inventory.meta.ItemMeta> consumer = invocation.getArgument(0);
+            consumer.accept(mockMeta);
+            return null;
+        }).when(mockItem).editMeta(org.mockito.ArgumentMatchers.any());
+
+        SpawnerBuilder builder = new SpawnerBuilder(mockItem);
+
+        builder.withEntityType(EntityType.SKELETON)
+                .withSpawnCount(0)
+                .withSpawnDelay(0)
+                .withSpawnRange(0)
+                .build();
+
+        org.mockito.Mockito.verify(mockMeta, org.mockito.Mockito.never()).setSpawnCount(org.mockito.ArgumentMatchers.anyInt());
+        org.mockito.Mockito.verify(mockMeta, org.mockito.Mockito.never()).setDelay(org.mockito.ArgumentMatchers.anyInt());
+        org.mockito.Mockito.verify(mockMeta, org.mockito.Mockito.never()).setSpawnRange(org.mockito.ArgumentMatchers.anyInt());
+        org.mockito.Mockito.verify(mockMeta).setSpawnedType(EntityType.SKELETON);
+    }
+
+    @Test
+    @DisplayName("Given a SpawnerBuilder with entityType and only count > 0, when build is called with mocked CreatureSpawner, then only count and entityType are set")
+    void build_setsOnlyCountAndEntityType_whenOnlyCountIsPositive() {
+        ItemStack mockItem = org.mockito.Mockito.mock(ItemStack.class);
+        CreatureSpawnerMeta mockMeta = org.mockito.Mockito.mock(CreatureSpawnerMeta.class);
+
+        org.mockito.Mockito.doAnswer(invocation -> {
+            java.util.function.Consumer<org.bukkit.inventory.meta.ItemMeta> consumer = invocation.getArgument(0);
+            consumer.accept(mockMeta);
+            return null;
+        }).when(mockItem).editMeta(org.mockito.ArgumentMatchers.any());
+
+        SpawnerBuilder builder = new SpawnerBuilder(mockItem);
+
+        builder.withEntityType(EntityType.CREEPER)
+                .withSpawnCount(3)
+                .withSpawnDelay(0)
+                .withSpawnRange(0)
+                .build();
+
+        org.mockito.Mockito.verify(mockMeta).setSpawnCount(3);
+        org.mockito.Mockito.verify(mockMeta, org.mockito.Mockito.never()).setDelay(org.mockito.ArgumentMatchers.anyInt());
+        org.mockito.Mockito.verify(mockMeta, org.mockito.Mockito.never()).setSpawnRange(org.mockito.ArgumentMatchers.anyInt());
+        org.mockito.Mockito.verify(mockMeta).setSpawnedType(EntityType.CREEPER);
+    }
+
+    @Test
+    @DisplayName("Given a SpawnerBuilder with entityType and default delay of 3, when build is called with mocked CreatureSpawner, then only delay and entityType are set")
+    void build_setsDefaultDelay_whenDelayNotExplicitlySet() {
+        ItemStack mockItem = org.mockito.Mockito.mock(ItemStack.class);
+        CreatureSpawnerMeta mockMeta = org.mockito.Mockito.mock(CreatureSpawnerMeta.class);
+
+        org.mockito.Mockito.doAnswer(invocation -> {
+            java.util.function.Consumer<org.bukkit.inventory.meta.ItemMeta> consumer = invocation.getArgument(0);
+            consumer.accept(mockMeta);
+            return null;
+        }).when(mockItem).editMeta(org.mockito.ArgumentMatchers.any());
+
+        SpawnerBuilder builder = new SpawnerBuilder(mockItem);
+
+        builder.withEntityType(EntityType.SPIDER).build();
+
+        org.mockito.Mockito.verify(mockMeta).setDelay(3);
+        org.mockito.Mockito.verify(mockMeta).setSpawnedType(EntityType.SPIDER);
+        org.mockito.Mockito.verify(mockMeta, org.mockito.Mockito.never()).setSpawnCount(org.mockito.ArgumentMatchers.anyInt());
+        org.mockito.Mockito.verify(mockMeta, org.mockito.Mockito.never()).setSpawnRange(org.mockito.ArgumentMatchers.anyInt());
+    }
+
+    @Test
+    @DisplayName("Given a SpawnerBuilder with negative count/delay/range, when build is called with mocked CreatureSpawner, then only entityType is set")
+    void build_setsOnlyEntityType_whenNegativeValues() {
+        ItemStack mockItem = org.mockito.Mockito.mock(ItemStack.class);
+        CreatureSpawnerMeta mockMeta = org.mockito.Mockito.mock(CreatureSpawnerMeta.class);
+
+        org.mockito.Mockito.doAnswer(invocation -> {
+            java.util.function.Consumer<org.bukkit.inventory.meta.ItemMeta> consumer = invocation.getArgument(0);
+            consumer.accept(mockMeta);
+            return null;
+        }).when(mockItem).editMeta(org.mockito.ArgumentMatchers.any());
+
+        SpawnerBuilder builder = new SpawnerBuilder(mockItem);
+
+        builder.withEntityType(EntityType.ZOMBIE)
+                .withSpawnCount(-1)
+                .withSpawnDelay(-5)
+                .withSpawnRange(-3)
+                .build();
+
+        org.mockito.Mockito.verify(mockMeta).setSpawnedType(EntityType.ZOMBIE);
+        org.mockito.Mockito.verify(mockMeta, org.mockito.Mockito.never()).setSpawnCount(org.mockito.ArgumentMatchers.anyInt());
+        org.mockito.Mockito.verify(mockMeta, org.mockito.Mockito.never()).setDelay(org.mockito.ArgumentMatchers.anyInt());
+        org.mockito.Mockito.verify(mockMeta, org.mockito.Mockito.never()).setSpawnRange(org.mockito.ArgumentMatchers.anyInt());
+    }
+
+    interface CreatureSpawnerMeta extends org.bukkit.inventory.meta.ItemMeta, CreatureSpawner {
+    }
 }
