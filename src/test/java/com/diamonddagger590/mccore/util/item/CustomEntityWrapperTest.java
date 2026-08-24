@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockbukkit.mockbukkit.MockBukkit;
 
 import java.lang.reflect.Field;
 import java.util.Optional;
@@ -24,6 +25,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class CustomEntityWrapperTest {
 
@@ -390,6 +393,276 @@ class CustomEntityWrapperTest {
             RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(new TestCustomEntityPluginHook());
             CustomEntityWrapper wrapper = customEntityWrapper("mythicmobs:fire_dragon");
             assertEquals("Fire Dragon", wrapper.entityName());
+        }
+
+        @Test
+        @DisplayName("Given vanilla entity type wrapper, when getting entityName, then returns lang tag")
+        void entityName_returnsLangTag_whenVanillaEntityType() {
+            MockBukkit.mock();
+            try {
+                CustomEntityWrapper wrapper = entityTypeWrapper(EntityType.ZOMBIE);
+                String name = wrapper.entityName();
+                assertTrue(name.startsWith("<lang:"), "Expected lang tag but got: " + name);
+                assertTrue(name.endsWith(">"), "Expected lang tag to end with > but got: " + name);
+            } finally {
+                MockBukkit.unmock();
+            }
+        }
+
+        @Test
+        @DisplayName("Given custom entity with hook that doesn't recognize it, when getting entityName, then returns Unknown")
+        void entityName_returnsUnknown_whenHookDoesNotRecognize() throws Exception {
+            RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(new TestCustomEntityPluginHook());
+            CustomEntityWrapper wrapper = customEntityWrapper("mythicmobs:unknown_entity");
+            assertEquals("Unknown", wrapper.entityName());
+        }
+    }
+
+    @Nested
+    @DisplayName("Constructor(Entity)")
+    class EntityConstructor {
+
+        @Test
+        @DisplayName("Given an entity with no hooks registered, when constructing, then uses entity type")
+        void constructor_usesEntityType_whenNoHooksRegistered() {
+            Entity mockEntity = mock(Entity.class);
+            when(mockEntity.getType()).thenReturn(EntityType.ZOMBIE);
+
+            CustomEntityWrapper wrapper = new CustomEntityWrapper(mockEntity);
+
+            assertTrue(wrapper.isVanilla());
+            assertFalse(wrapper.isCustom());
+            assertTrue(wrapper.entityType().isPresent());
+            assertEquals(EntityType.ZOMBIE, wrapper.entityType().get());
+        }
+
+        @Test
+        @DisplayName("Given an entity with hook that recognizes it and returns models, when constructing, then uses custom entity")
+        void constructor_usesCustomEntity_whenHookReturnsModels() {
+            Entity mockEntity = mock(Entity.class);
+            UUID uuid = UUID.randomUUID();
+            when(mockEntity.getUniqueId()).thenReturn(uuid);
+            ConfigurableEntityHook hook = new ConfigurableEntityHook(true, Optional.of(Set.of("mythicmobs:fire_dragon")));
+            RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(hook);
+
+            CustomEntityWrapper wrapper = new CustomEntityWrapper(mockEntity);
+
+            assertTrue(wrapper.isCustom());
+            assertFalse(wrapper.isVanilla());
+            assertTrue(wrapper.customEntity().isPresent());
+            assertEquals("mythicmobs:fire_dragon", wrapper.customEntity().get());
+        }
+
+        @Test
+        @DisplayName("Given an entity with hook that recognizes it but returns empty models, when constructing, then uses entity type")
+        void constructor_usesEntityType_whenHookReturnsEmptyModels() {
+            Entity mockEntity = mock(Entity.class);
+            UUID uuid = UUID.randomUUID();
+            when(mockEntity.getUniqueId()).thenReturn(uuid);
+            when(mockEntity.getType()).thenReturn(EntityType.CREEPER);
+            ConfigurableEntityHook hook = new ConfigurableEntityHook(true, Optional.of(Set.of()));
+            RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(hook);
+
+            CustomEntityWrapper wrapper = new CustomEntityWrapper(mockEntity);
+
+            assertTrue(wrapper.isVanilla());
+            assertEquals(EntityType.CREEPER, wrapper.entityType().get());
+        }
+
+        @Test
+        @DisplayName("Given an entity with hook that does not recognize it, when constructing, then uses entity type")
+        void constructor_usesEntityType_whenHookDoesNotRecognize() {
+            Entity mockEntity = mock(Entity.class);
+            UUID uuid = UUID.randomUUID();
+            when(mockEntity.getUniqueId()).thenReturn(uuid);
+            when(mockEntity.getType()).thenReturn(EntityType.SKELETON);
+            ConfigurableEntityHook hook = new ConfigurableEntityHook(false, Optional.empty());
+            RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(hook);
+
+            CustomEntityWrapper wrapper = new CustomEntityWrapper(mockEntity);
+
+            assertTrue(wrapper.isVanilla());
+            assertEquals(EntityType.SKELETON, wrapper.entityType().get());
+        }
+
+        @Test
+        @DisplayName("Given an entity with hook that returns empty optional for models, when constructing, then uses entity type")
+        void constructor_usesEntityType_whenHookReturnsEmptyOptional() {
+            Entity mockEntity = mock(Entity.class);
+            UUID uuid = UUID.randomUUID();
+            when(mockEntity.getUniqueId()).thenReturn(uuid);
+            when(mockEntity.getType()).thenReturn(EntityType.SPIDER);
+            ConfigurableEntityHook hook = new ConfigurableEntityHook(true, Optional.empty());
+            RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(hook);
+
+            CustomEntityWrapper wrapper = new CustomEntityWrapper(mockEntity);
+
+            assertTrue(wrapper.isVanilla());
+            assertEquals(EntityType.SPIDER, wrapper.entityType().get());
+        }
+    }
+
+    @Nested
+    @DisplayName("equals(Entity)")
+    class EqualsEntity {
+
+        @Test
+        @DisplayName("Given vanilla wrapper and entity with matching type, when comparing, then returns true")
+        void equalsEntity_returnsTrue_whenEntityTypeMatches() {
+            Entity mockEntity = mock(Entity.class);
+            when(mockEntity.getType()).thenReturn(EntityType.ZOMBIE);
+            CustomEntityWrapper wrapper = entityTypeWrapper(EntityType.ZOMBIE);
+
+            assertTrue(wrapper.equals(mockEntity));
+        }
+
+        @Test
+        @DisplayName("Given vanilla wrapper and entity with different type, when comparing, then returns false")
+        void equalsEntity_returnsFalse_whenEntityTypeDiffers() {
+            Entity mockEntity = mock(Entity.class);
+            when(mockEntity.getType()).thenReturn(EntityType.SKELETON);
+            CustomEntityWrapper wrapper = entityTypeWrapper(EntityType.ZOMBIE);
+
+            assertFalse(wrapper.equals(mockEntity));
+        }
+
+        @Test
+        @DisplayName("Given custom wrapper with hook that confirms type match, when comparing, then returns true")
+        void equalsEntity_returnsTrue_whenHookConfirmsMatch() throws Exception {
+            Entity mockEntity = mock(Entity.class);
+            UUID uuid = UUID.randomUUID();
+            when(mockEntity.getUniqueId()).thenReturn(uuid);
+            ConfigurableEntityHook hook = new ConfigurableEntityHook(uuid, "mythicmobs:fire_dragon");
+            RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(hook);
+            CustomEntityWrapper wrapper = customEntityWrapper("mythicmobs:fire_dragon");
+
+            assertTrue(wrapper.equals(mockEntity));
+        }
+
+        @Test
+        @DisplayName("Given custom wrapper with no hooks, when comparing with entity, then returns false")
+        void equalsEntity_returnsFalse_whenNoHooksRegistered() throws Exception {
+            Entity mockEntity = mock(Entity.class);
+            CustomEntityWrapper wrapper = customEntityWrapper("mythicmobs:fire_dragon");
+
+            assertFalse(wrapper.equals(mockEntity));
+        }
+
+        @Test
+        @DisplayName("Given custom wrapper with hook that denies match, when comparing, then returns false")
+        void equalsEntity_returnsFalse_whenHookDeniesMatch() throws Exception {
+            Entity mockEntity = mock(Entity.class);
+            UUID uuid = UUID.randomUUID();
+            when(mockEntity.getUniqueId()).thenReturn(uuid);
+            ConfigurableEntityHook hook = new ConfigurableEntityHook(uuid, "mythicmobs:ice_dragon");
+            RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(hook);
+            CustomEntityWrapper wrapper = customEntityWrapper("mythicmobs:fire_dragon");
+
+            assertFalse(wrapper.equals(mockEntity));
+        }
+    }
+
+    @Nested
+    @DisplayName("customModels (static)")
+    class CustomModelsTests {
+
+        @Test
+        @DisplayName("Given no hooks registered, when getting customModels, then returns empty set in Optional")
+        void customModels_returnsEmptySet_whenNoHooksRegistered() {
+            Entity mockEntity = mock(Entity.class);
+            Optional<Set<String>> result = CustomEntityWrapper.customModels(mockEntity);
+
+            assertTrue(result.isPresent());
+            assertTrue(result.get().isEmpty());
+        }
+
+        @Test
+        @DisplayName("Given hook that returns models, when getting customModels, then returns those models")
+        void customModels_returnsModels_whenHookProvidesModels() {
+            Entity mockEntity = mock(Entity.class);
+            ConfigurableEntityHook hook = new ConfigurableEntityHook(false, Optional.of(Set.of("model_a", "model_b")));
+            RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(hook);
+
+            Optional<Set<String>> result = CustomEntityWrapper.customModels(mockEntity);
+
+            assertTrue(result.isPresent());
+            assertEquals(Set.of("model_a", "model_b"), result.get());
+        }
+
+        @Test
+        @DisplayName("Given hook that returns empty optional, when getting customModels, then returns empty set")
+        void customModels_returnsEmptySet_whenHookReturnsEmptyOptional() {
+            Entity mockEntity = mock(Entity.class);
+            ConfigurableEntityHook hook = new ConfigurableEntityHook(false, Optional.empty());
+            RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK).register(hook);
+
+            Optional<Set<String>> result = CustomEntityWrapper.customModels(mockEntity);
+
+            assertTrue(result.isPresent());
+            assertTrue(result.get().isEmpty());
+        }
+    }
+
+    static class ConfigurableEntityHook extends PluginHook<CorePlugin> implements CustomEntityHook {
+
+        private final boolean isCustomEntity;
+        private final Optional<Set<String>> entityModels;
+        private final UUID matchingUuid;
+        private final String matchingType;
+
+        ConfigurableEntityHook(boolean isCustomEntity, Optional<Set<String>> entityModels) {
+            super(null);
+            this.isCustomEntity = isCustomEntity;
+            this.entityModels = entityModels;
+            this.matchingUuid = null;
+            this.matchingType = null;
+        }
+
+        ConfigurableEntityHook(UUID matchingUuid, String matchingType) {
+            super(null);
+            this.isCustomEntity = false;
+            this.entityModels = Optional.empty();
+            this.matchingUuid = matchingUuid;
+            this.matchingType = matchingType;
+        }
+
+        @Override
+        public boolean isCustomEntity(@NotNull Entity entity) {
+            return isCustomEntity;
+        }
+
+        @Override
+        public boolean isCustomEntity(@NotNull UUID uuid) {
+            return isCustomEntity || (matchingUuid != null && matchingUuid.equals(uuid));
+        }
+
+        @Override
+        public boolean isCustomEntity(@NotNull String customEntity) {
+            return false;
+        }
+
+        @Override
+        public boolean isCustomEntityOfType(@NotNull Entity entity, @NotNull String customEntityType) {
+            return matchingType != null && matchingType.equals(customEntityType)
+                    && matchingUuid != null && matchingUuid.equals(entity.getUniqueId());
+        }
+
+        @Override
+        public boolean isCustomEntityOfType(@NotNull UUID uuid, @NotNull String customEntityType) {
+            return matchingType != null && matchingType.equals(customEntityType)
+                    && matchingUuid != null && matchingUuid.equals(uuid);
+        }
+
+        @NotNull
+        @Override
+        public Optional<Set<String>> entityModels(@NotNull Entity entity) {
+            return entityModels;
+        }
+
+        @NotNull
+        @Override
+        public String entityName(@NotNull CustomEntityWrapper customEntityWrapper) {
+            return "";
         }
     }
 }
