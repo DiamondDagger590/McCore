@@ -4,8 +4,13 @@ import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.testing.RegistryResetExtension;
 import com.diamonddagger590.mccore.testing.TestCorePlugin;
 import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.TooltipDisplay;
+import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.identity.Identity;
+import net.kyori.adventure.pointer.Pointers;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -130,11 +135,60 @@ class SkullBuilderTest {
     }
 
     @Test
+    @DisplayName("Given an Audience with a UUID, when withAudience(Audience) is called, then returns this builder")
+    void withAudienceAudience_returnsSelf_whenAudienceHasUuid() {
+        SkullBuilder builder = createBuilder();
+        UUID uuid = UUID.randomUUID();
+        Audience audience = new Audience() {
+            @Override
+            public @NotNull Pointers pointers() {
+                return Pointers.builder()
+                        .withStatic(Identity.UUID, uuid)
+                        .build();
+            }
+        };
+
+        SkullBuilder result = builder.withAudience(audience);
+
+        assertSame(builder, result);
+    }
+
+    @Test
+    @DisplayName("Given an Audience without a UUID, when withAudience(Audience) is called, then returns this builder")
+    void withAudienceAudience_returnsSelf_whenAudienceHasNoUuid() {
+        SkullBuilder builder = createBuilder();
+        Audience audience = Audience.empty();
+
+        SkullBuilder result = builder.withAudience(audience);
+
+        assertSame(builder, result);
+    }
+
+    @Test
     @DisplayName("Given a built builder, when hideSkullDynamicToolTip is called with no existing tooltip, then tooltip display is set")
     void hideSkullDynamicToolTip_setsTooltipDisplay_withNoExistingTooltip() {
         ItemStack itemStack = new ItemStack(Material.PLAYER_HEAD);
         SkullBuilder builder = new SkullBuilder(itemStack);
         builder.hideSkullDynamicToolTip();
         assertTrue(itemStack.hasData(DataComponentTypes.TOOLTIP_DISPLAY));
+    }
+
+    @Test
+    @DisplayName("Given an item with existing tooltip display, when hideSkullDynamicToolTip is called, then merges hidden components")
+    void hideSkullDynamicToolTip_mergesHiddenComponents_withExistingTooltip() {
+        ItemStack itemStack = new ItemStack(Material.PLAYER_HEAD);
+        itemStack.setData(DataComponentTypes.TOOLTIP_DISPLAY,
+                TooltipDisplay.tooltipDisplay()
+                        .addHiddenComponents(DataComponentTypes.MAX_STACK_SIZE)
+                        .build());
+
+        SkullBuilder builder = new SkullBuilder(itemStack);
+        builder.hideSkullDynamicToolTip();
+
+        assertTrue(itemStack.hasData(DataComponentTypes.TOOLTIP_DISPLAY));
+        TooltipDisplay tooltip = itemStack.getData(DataComponentTypes.TOOLTIP_DISPLAY);
+        assertNotNull(tooltip);
+        assertTrue(tooltip.hiddenComponents().contains(DataComponentTypes.PROFILE));
+        assertTrue(tooltip.hiddenComponents().contains(DataComponentTypes.MAX_STACK_SIZE));
     }
 }
