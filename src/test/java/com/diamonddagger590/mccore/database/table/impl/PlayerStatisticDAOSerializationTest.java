@@ -121,4 +121,73 @@ class PlayerStatisticDAOSerializationTest {
         Set<String> result = PlayerStatisticDAO.deserializeStringSet("[]");
         assertTrue(result.isEmpty());
     }
+
+    @DisplayName("Unquoted elements are parsed as a fallback path")
+    @Test
+    void unquotedElements_parsedGracefully() {
+        Set<String> result = PlayerStatisticDAO.deserializeStringSet("[alpha,beta,gamma]");
+        assertEquals(3, result.size());
+        assertTrue(result.contains("alpha"));
+        assertTrue(result.contains("beta"));
+        assertTrue(result.contains("gamma"));
+    }
+
+    @DisplayName("Single unquoted element without trailing comma is parsed")
+    @Test
+    void singleUnquotedElement_parsedGracefully() {
+        Set<String> result = PlayerStatisticDAO.deserializeStringSet("[solo]");
+        assertEquals(1, result.size());
+        assertTrue(result.contains("solo"));
+    }
+
+    @DisplayName("Whitespace between quoted elements is handled")
+    @Test
+    void whitespace_betweenQuotedElements() {
+        Set<String> result = PlayerStatisticDAO.deserializeStringSet("[\"alpha\" , \"beta\" , \"gamma\"]");
+        assertEquals(3, result.size());
+        assertTrue(result.contains("alpha"));
+        assertTrue(result.contains("beta"));
+        assertTrue(result.contains("gamma"));
+    }
+
+    @DisplayName("Leading whitespace before first quoted element is skipped")
+    @Test
+    void leadingWhitespace_beforeQuotedElement() {
+        Set<String> result = PlayerStatisticDAO.deserializeStringSet("[  \"spaced\"]");
+        assertEquals(1, result.size());
+        assertTrue(result.contains("spaced"));
+    }
+
+    @DisplayName("Unknown escape sequence preserves both characters")
+    @Test
+    void unknownEscapeSequence_preservesBothCharacters() {
+        Set<String> result = PlayerStatisticDAO.deserializeStringSet("[\"hello\\nworld\"]");
+        assertEquals(1, result.size());
+        assertTrue(result.contains("hello\\nworld"));
+    }
+
+    @DisplayName("Brackets-only inner with whitespace returns empty set")
+    @Test
+    void innerWhitespaceOnly_returnsEmptySet() {
+        Set<String> result = PlayerStatisticDAO.deserializeStringSet("[   ]");
+        assertTrue(result.isEmpty());
+    }
+
+    @DisplayName("Mixed quoted and unquoted elements are parsed")
+    @Test
+    void mixedQuotedAndUnquoted_parsed() {
+        Set<String> result = PlayerStatisticDAO.deserializeStringSet("[\"quoted\",unquoted]");
+        assertEquals(2, result.size());
+        assertTrue(result.contains("quoted"));
+        assertTrue(result.contains("unquoted"));
+    }
+
+    @DisplayName("Unquoted elements with surrounding whitespace are trimmed")
+    @Test
+    void unquotedElements_trimmed() {
+        Set<String> result = PlayerStatisticDAO.deserializeStringSet("[ alpha , beta ]");
+        assertEquals(2, result.size());
+        assertTrue(result.contains("alpha"));
+        assertTrue(result.contains("beta"));
+    }
 }
