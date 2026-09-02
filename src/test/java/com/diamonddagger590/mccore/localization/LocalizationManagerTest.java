@@ -22,11 +22,15 @@ import dev.dejvokep.boostedyaml.route.Route;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.bukkit.Bukkit;
+import org.bukkit.command.ConsoleCommandSender;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -38,8 +42,16 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import org.mockito.ArgumentCaptor;
 
 class LocalizationManagerTest {
 
@@ -786,5 +798,216 @@ class LocalizationManagerTest {
         TestCorePlayer player = createPlayerWithLocale(Locale.KOREAN);
 
         assertEquals("English fallback", localizationManager.getLocalizedMessage(player, testRoute));
+    }
+
+    // --- broadcastMessage(Route) ---
+
+    @Test
+    @DisplayName("broadcastMessage sends localized message to loaded player and console")
+    void broadcastMessage_route_sendsToLoadedPlayerAndConsole() {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getString(testRoute)).thenReturn("Broadcast hello");
+
+        PlayerManager<CorePlugin, TestCorePlayer> playerManager = new PlayerManager<>(mockPlugin);
+        RegistryAccess.registryAccess().registry(RegistryKey.MANAGER).register(playerManager);
+
+        UUID uuid = UUID.randomUUID();
+        Player bukkitPlayer = mock(Player.class);
+        when(bukkitPlayer.getUniqueId()).thenReturn(uuid);
+        when(bukkitPlayer.locale()).thenReturn(Locale.ENGLISH);
+        TestCorePlayer corePlayer = new TestCorePlayer(uuid, mockPlugin, bukkitPlayer);
+        playerManager.addPlayer(corePlayer);
+
+        ConsoleCommandSender consoleSender = mock(ConsoleCommandSender.class);
+
+        try (MockedStatic<Bukkit> bukkitStatic = mockStatic(Bukkit.class)) {
+            bukkitStatic.when(Bukkit::getOnlinePlayers).thenReturn((Collection) List.of(bukkitPlayer));
+            bukkitStatic.when(Bukkit::getConsoleSender).thenReturn(consoleSender);
+
+            localizationManager.broadcastMessage(testRoute);
+
+            verify(bukkitPlayer).sendMessage("Broadcast hello");
+            verify(consoleSender).sendMessage("Broadcast hello");
+        }
+    }
+
+    @Test
+    @DisplayName("broadcastMessage sends default locale message to unloaded player")
+    void broadcastMessage_route_sendsDefaultToUnloadedPlayer() {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getString(testRoute)).thenReturn("Default broadcast");
+
+        PlayerManager<CorePlugin, TestCorePlayer> playerManager = new PlayerManager<>(mockPlugin);
+        RegistryAccess.registryAccess().registry(RegistryKey.MANAGER).register(playerManager);
+
+        UUID uuid = UUID.randomUUID();
+        Player bukkitPlayer = mock(Player.class);
+        when(bukkitPlayer.getUniqueId()).thenReturn(uuid);
+        when(bukkitPlayer.locale()).thenReturn(Locale.ENGLISH);
+
+        ConsoleCommandSender consoleSender = mock(ConsoleCommandSender.class);
+
+        try (MockedStatic<Bukkit> bukkitStatic = mockStatic(Bukkit.class)) {
+            bukkitStatic.when(Bukkit::getOnlinePlayers).thenReturn((Collection) List.of(bukkitPlayer));
+            bukkitStatic.when(Bukkit::getConsoleSender).thenReturn(consoleSender);
+
+            localizationManager.broadcastMessage(testRoute);
+
+            verify(bukkitPlayer).sendMessage("Default broadcast");
+            verify(consoleSender).sendMessage("Default broadcast");
+        }
+    }
+
+    @Test
+    @DisplayName("broadcastMessage with no online players only sends to console")
+    void broadcastMessage_route_noPlayers_sendsOnlyToConsole() {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getString(testRoute)).thenReturn("Console only");
+
+        PlayerManager<CorePlugin, TestCorePlayer> playerManager = new PlayerManager<>(mockPlugin);
+        RegistryAccess.registryAccess().registry(RegistryKey.MANAGER).register(playerManager);
+
+        ConsoleCommandSender consoleSender = mock(ConsoleCommandSender.class);
+
+        try (MockedStatic<Bukkit> bukkitStatic = mockStatic(Bukkit.class)) {
+            bukkitStatic.when(Bukkit::getOnlinePlayers).thenReturn((Collection) List.of());
+            bukkitStatic.when(Bukkit::getConsoleSender).thenReturn(consoleSender);
+
+            localizationManager.broadcastMessage(testRoute);
+
+            verify(consoleSender).sendMessage("Console only");
+        }
+    }
+
+    @Test
+    @DisplayName("broadcastMessage sends to both loaded and unloaded players in a single call")
+    void broadcastMessage_route_sendsToMixedLoadedAndUnloadedPlayers() {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getString(testRoute)).thenReturn("Mixed broadcast");
+
+        PlayerManager<CorePlugin, TestCorePlayer> playerManager = new PlayerManager<>(mockPlugin);
+        RegistryAccess.registryAccess().registry(RegistryKey.MANAGER).register(playerManager);
+
+        UUID loadedUuid = UUID.randomUUID();
+        Player loadedBukkitPlayer = mock(Player.class);
+        when(loadedBukkitPlayer.getUniqueId()).thenReturn(loadedUuid);
+        when(loadedBukkitPlayer.locale()).thenReturn(Locale.ENGLISH);
+        TestCorePlayer loadedCorePlayer = new TestCorePlayer(loadedUuid, mockPlugin, loadedBukkitPlayer);
+        playerManager.addPlayer(loadedCorePlayer);
+
+        UUID unloadedUuid = UUID.randomUUID();
+        Player unloadedBukkitPlayer = mock(Player.class);
+        when(unloadedBukkitPlayer.getUniqueId()).thenReturn(unloadedUuid);
+        when(unloadedBukkitPlayer.locale()).thenReturn(Locale.ENGLISH);
+
+        ConsoleCommandSender consoleSender = mock(ConsoleCommandSender.class);
+
+        try (MockedStatic<Bukkit> bukkitStatic = mockStatic(Bukkit.class)) {
+            bukkitStatic.when(Bukkit::getOnlinePlayers).thenReturn((Collection) List.of(loadedBukkitPlayer, unloadedBukkitPlayer));
+            bukkitStatic.when(Bukkit::getConsoleSender).thenReturn(consoleSender);
+
+            localizationManager.broadcastMessage(testRoute);
+
+            verify(loadedBukkitPlayer).sendMessage("Mixed broadcast");
+            verify(unloadedBukkitPlayer).sendMessage("Mixed broadcast");
+            verify(consoleSender).sendMessage("Mixed broadcast");
+        }
+    }
+
+    // --- broadcastMessage(Route, Map<String, String>) ---
+
+    @Test
+    @DisplayName("broadcastMessage with placeholders sends resolved message to loaded player and console")
+    void broadcastMessage_routeWithPlaceholders_sendsToLoadedPlayerAndConsole() {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getString(testRoute)).thenReturn("Hello <name>");
+
+        PlayerManager<CorePlugin, TestCorePlayer> playerManager = new PlayerManager<>(mockPlugin);
+        RegistryAccess.registryAccess().registry(RegistryKey.MANAGER).register(playerManager);
+
+        UUID uuid = UUID.randomUUID();
+        Player bukkitPlayer = mock(Player.class);
+        when(bukkitPlayer.getUniqueId()).thenReturn(uuid);
+        when(bukkitPlayer.locale()).thenReturn(Locale.ENGLISH);
+        TestCorePlayer corePlayer = new TestCorePlayer(uuid, mockPlugin, bukkitPlayer);
+        playerManager.addPlayer(corePlayer);
+
+        ConsoleCommandSender consoleSender = mock(ConsoleCommandSender.class);
+
+        try (MockedStatic<Bukkit> bukkitStatic = mockStatic(Bukkit.class)) {
+            bukkitStatic.when(Bukkit::getOnlinePlayers).thenReturn((Collection) List.of(bukkitPlayer));
+            bukkitStatic.when(Bukkit::getConsoleSender).thenReturn(consoleSender);
+
+            localizationManager.broadcastMessage(testRoute, Map.of("name", "Steve"));
+
+            ArgumentCaptor<Component> playerCaptor = ArgumentCaptor.forClass(Component.class);
+            verify(bukkitPlayer).sendMessage(playerCaptor.capture());
+            assertEquals("Hello Steve", PlainTextComponentSerializer.plainText().serialize(playerCaptor.getValue()));
+
+            ArgumentCaptor<Component> consoleCaptor = ArgumentCaptor.forClass(Component.class);
+            verify(consoleSender).sendMessage(consoleCaptor.capture());
+            assertEquals("Hello Steve", PlainTextComponentSerializer.plainText().serialize(consoleCaptor.getValue()));
+        }
+    }
+
+    @Test
+    @DisplayName("broadcastMessage with placeholders sends default locale to unloaded player")
+    void broadcastMessage_routeWithPlaceholders_sendsDefaultToUnloadedPlayer() {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getString(testRoute)).thenReturn("Hi <name>");
+
+        PlayerManager<CorePlugin, TestCorePlayer> playerManager = new PlayerManager<>(mockPlugin);
+        RegistryAccess.registryAccess().registry(RegistryKey.MANAGER).register(playerManager);
+
+        UUID uuid = UUID.randomUUID();
+        Player bukkitPlayer = mock(Player.class);
+        when(bukkitPlayer.getUniqueId()).thenReturn(uuid);
+
+        ConsoleCommandSender consoleSender = mock(ConsoleCommandSender.class);
+
+        try (MockedStatic<Bukkit> bukkitStatic = mockStatic(Bukkit.class)) {
+            bukkitStatic.when(Bukkit::getOnlinePlayers).thenReturn((Collection) List.of(bukkitPlayer));
+            bukkitStatic.when(Bukkit::getConsoleSender).thenReturn(consoleSender);
+
+            localizationManager.broadcastMessage(testRoute, Map.of("name", "Alex"));
+
+            ArgumentCaptor<Component> playerCaptor = ArgumentCaptor.forClass(Component.class);
+            verify(bukkitPlayer).sendMessage(playerCaptor.capture());
+            assertEquals("Hi Alex", PlainTextComponentSerializer.plainText().serialize(playerCaptor.getValue()));
+
+            ArgumentCaptor<Component> consoleCaptor = ArgumentCaptor.forClass(Component.class);
+            verify(consoleSender).sendMessage(consoleCaptor.capture());
+            assertEquals("Hi Alex", PlainTextComponentSerializer.plainText().serialize(consoleCaptor.getValue()));
+        }
+    }
+
+    @Test
+    @DisplayName("broadcastMessage with placeholders and no online players only sends to console")
+    void broadcastMessage_routeWithPlaceholders_noPlayers_sendsOnlyToConsole() {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getString(testRoute)).thenReturn("Msg <name>");
+
+        PlayerManager<CorePlugin, TestCorePlayer> playerManager = new PlayerManager<>(mockPlugin);
+        RegistryAccess.registryAccess().registry(RegistryKey.MANAGER).register(playerManager);
+
+        ConsoleCommandSender consoleSender = mock(ConsoleCommandSender.class);
+
+        try (MockedStatic<Bukkit> bukkitStatic = mockStatic(Bukkit.class)) {
+            bukkitStatic.when(Bukkit::getOnlinePlayers).thenReturn((Collection) List.of());
+            bukkitStatic.when(Bukkit::getConsoleSender).thenReturn(consoleSender);
+
+            localizationManager.broadcastMessage(testRoute, Map.of("name", "Nobody"));
+
+            ArgumentCaptor<Component> consoleCaptor = ArgumentCaptor.forClass(Component.class);
+            verify(consoleSender).sendMessage(consoleCaptor.capture());
+            assertEquals("Msg Nobody", PlainTextComponentSerializer.plainText().serialize(consoleCaptor.getValue()));
+        }
     }
 }

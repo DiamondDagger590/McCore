@@ -121,4 +121,83 @@ class PlayerStatisticDAOSerializationTest {
         Set<String> result = PlayerStatisticDAO.deserializeStringSet("[]");
         assertTrue(result.isEmpty());
     }
+
+    @DisplayName("Unquoted elements are parsed correctly")
+    @Test
+    void unquotedElements_parsedCorrectly() {
+        Set<String> result = PlayerStatisticDAO.deserializeStringSet("[foo,bar,baz]");
+        assertEquals(3, result.size());
+        assertTrue(result.contains("foo"));
+        assertTrue(result.contains("bar"));
+        assertTrue(result.contains("baz"));
+    }
+
+    @DisplayName("Unquoted single element without trailing comma is parsed")
+    @Test
+    void unquotedSingleElement_parsed() {
+        Set<String> result = PlayerStatisticDAO.deserializeStringSet("[hello]");
+        assertEquals(1, result.size());
+        assertTrue(result.contains("hello"));
+    }
+
+    @DisplayName("Whitespace between quoted elements is skipped")
+    @Test
+    void whitespace_betweenQuotedElements_skipped() {
+        Set<String> result = PlayerStatisticDAO.deserializeStringSet("[\"alpha\" , \"beta\" , \"gamma\"]");
+        assertEquals(3, result.size());
+        assertTrue(result.contains("alpha"));
+        assertTrue(result.contains("beta"));
+        assertTrue(result.contains("gamma"));
+    }
+
+    @DisplayName("Leading whitespace before first element is skipped")
+    @Test
+    void leadingWhitespace_skipped() {
+        Set<String> result = PlayerStatisticDAO.deserializeStringSet("[   \"hello\"]");
+        assertEquals(1, result.size());
+        assertTrue(result.contains("hello"));
+    }
+
+    @DisplayName("Whitespace-only content after bracket removal returns empty set")
+    @Test
+    void whitespaceOnly_returnsEmpty() {
+        Set<String> result = PlayerStatisticDAO.deserializeStringSet("[   ]");
+        assertTrue(result.isEmpty());
+    }
+
+    @DisplayName("Unknown escape sequences are preserved literally")
+    @Test
+    void unknownEscapeSequence_preservedLiterally() {
+        String input = "[\"hello\\nworld\"]";
+        Set<String> result = PlayerStatisticDAO.deserializeStringSet(input);
+        assertEquals(1, result.size());
+        assertTrue(result.contains("hello\\nworld"));
+    }
+
+    @DisplayName("Multiple unknown escape sequences are preserved")
+    @Test
+    void multipleUnknownEscapes_preserved() {
+        String input = "[\"\\t\\r\\n\"]";
+        Set<String> result = PlayerStatisticDAO.deserializeStringSet(input);
+        assertEquals(1, result.size());
+        assertTrue(result.contains("\\t\\r\\n"));
+    }
+
+    @DisplayName("Unquoted elements with whitespace are trimmed")
+    @Test
+    void unquotedElements_trimmed() {
+        Set<String> result = PlayerStatisticDAO.deserializeStringSet("[ foo , bar ]");
+        assertEquals(2, result.size());
+        assertTrue(result.contains("foo"));
+        assertTrue(result.contains("bar"));
+    }
+
+    @DisplayName("Mixed quoted and unquoted is not produced by serializer but parses gracefully")
+    @Test
+    void mixedQuotedAndUnquoted_parsesGracefully() {
+        Set<String> result = PlayerStatisticDAO.deserializeStringSet("[\"quoted\",unquoted]");
+        assertEquals(2, result.size());
+        assertTrue(result.contains("quoted"));
+        assertTrue(result.contains("unquoted"));
+    }
 }
