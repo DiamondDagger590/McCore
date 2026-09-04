@@ -47,6 +47,7 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.isA;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -282,5 +283,68 @@ class PlayerUnloadTaskTest {
         // getConnection() wraps SQLException in RuntimeException, and the catch block in
         // runUnloadPlayerTask only catches SQLException, so RuntimeException propagates
         org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, task::onIntervalComplete);
+    }
+
+    @Test
+    @DisplayName("Given connection close throws SQLException, when onIntervalComplete, then exception is caught gracefully")
+    void onIntervalComplete_connectionCloseThrowsSqlException_caughtGracefully() throws SQLException {
+        when(mockDatabase.getConnection()).thenReturn(mockConnection);
+        when(mockCorePlayer.useMutex()).thenReturn(false);
+        lenient().doNothing().when(mockScheduler).cancelTask(anyInt());
+        lenient().when(mockScheduler.scheduleSyncDelayedTask(eq(mockPlugin), any(Runnable.class))).thenReturn(1);
+        org.mockito.Mockito.doThrow(new SQLException("Connection close failed")).when(mockConnection).close();
+
+        unloadPlayerResult = true;
+        PlayerUnloadTask task = createTask();
+        task.onIntervalComplete();
+
+        assertTrue(task.getResult().isDone());
+        assertTrue(task.getResult().join());
+    }
+
+    @Test
+    @DisplayName("Given task completed successfully, when onCancel is triggered, then result is not overwritten to false")
+    void onCancel_afterCompletion_doesNotOverwriteResult() throws SQLException {
+        when(mockDatabase.getConnection()).thenReturn(mockConnection);
+        when(mockCorePlayer.useMutex()).thenReturn(false);
+        lenient().doNothing().when(mockScheduler).cancelTask(anyInt());
+        lenient().when(mockScheduler.scheduleSyncDelayedTask(eq(mockPlugin), any(Runnable.class))).thenReturn(1);
+
+        unloadPlayerResult = true;
+        PlayerUnloadTask task = createTask();
+        task.onIntervalComplete();
+
+        assertTrue(task.getResult().isDone());
+        assertTrue(task.getResult().join());
+
+        task.run();
+
+        assertTrue(task.getResult().join());
+    }
+
+    @Test
+    @DisplayName("Given successful unload, when scheduleSyncDelayedTask callback executes, then PlayerUnloadEvent is fired")
+    void onPlayerUnloadSuccessfully_firesPlayerUnloadEvent() throws SQLException {
+        when(mockDatabase.getConnection()).thenReturn(mockConnection);
+        when(mockCorePlayer.useMutex()).thenReturn(false);
+        lenient().doNothing().when(mockScheduler).cancelTask(anyInt());
+
+        org.mockito.ArgumentCaptor<Runnable> runnableCaptor = org.mockito.ArgumentCaptor.forClass(Runnable.class);
+        when(mockScheduler.scheduleSyncDelayedTask(eq(mockPlugin), runnableCaptor.capture())).thenReturn(1);
+
+        org.bukkit.plugin.PluginManager mockPluginManager = org.mockito.Mockito.mock(org.bukkit.plugin.PluginManager.class);
+        bukkitStatic.when(Bukkit::getPluginManager).thenReturn(mockPluginManager);
+
+        unloadPlayerResult = true;
+        PlayerUnloadTask task = createTask();
+        task.onIntervalComplete();
+
+        assertTrue(task.getResult().isDone());
+
+        Runnable eventFiringRunnable = runnableCaptor.getValue();
+        assertNotNull(eventFiringRunnable);
+        eventFiringRunnable.run();
+
+        verify(mockPluginManager).callEvent(isA(com.diamonddagger590.mccore.event.player.PlayerUnloadEvent.class));
     }
 }
