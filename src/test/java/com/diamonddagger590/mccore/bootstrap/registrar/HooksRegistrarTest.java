@@ -5,6 +5,7 @@ import com.diamonddagger590.mccore.bootstrap.BootstrapContext;
 import com.diamonddagger590.mccore.bootstrap.StartupProfile;
 import com.diamonddagger590.mccore.external.citizens.CoreCitizensHook;
 import com.diamonddagger590.mccore.external.cmi.CoreCMIHook;
+import com.diamonddagger590.mccore.external.headdatabase.CoreHeadDatabaseHook;
 import com.diamonddagger590.mccore.external.itemsadder.CoreItemsAdderHook;
 import com.diamonddagger590.mccore.external.modelengine.CoreModelEngineHook;
 import com.diamonddagger590.mccore.external.mythicmobs.CoreMythicMobsHook;
@@ -23,7 +24,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.jetbrains.annotations.NotNull;
+import me.arcaniax.hdb.api.HeadDatabaseAPI;
 import org.mockito.Mock;
+import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -32,6 +35,7 @@ import java.util.logging.Logger;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
@@ -71,6 +75,7 @@ class HooksRegistrarTest {
     private void enableAllPlugins() {
         enablePlugin("Nexo");
         enablePlugin("ItemsAdder");
+        enablePlugin("HeadDatabase");
         enablePlugin("PlaceholderAPI");
         enablePlugin("ModelEngine");
         enablePlugin("MythicMobs");
@@ -89,6 +94,7 @@ class HooksRegistrarTest {
 
             assertFalse(hookRegistry.pluginHook(CorePluginHookKey.CORE_NEXO).isPresent());
             assertFalse(hookRegistry.pluginHook(CorePluginHookKey.CORE_ITEMS_ADDER).isPresent());
+            assertFalse(hookRegistry.pluginHook(CorePluginHookKey.CORE_HEAD_DATABASE).isPresent());
             assertFalse(hookRegistry.pluginHook(CorePluginHookKey.CORE_PAPI).isPresent());
             assertFalse(hookRegistry.pluginHook(CorePluginHookKey.CORE_MODEL_ENGINE).isPresent());
             assertFalse(hookRegistry.pluginHook(CorePluginHookKey.CORE_MYTHIC_MOBS).isPresent());
@@ -203,9 +209,26 @@ class HooksRegistrarTest {
     }
 
     @Test
-    @DisplayName("Given all testable plugins enabled, when registering hooks, then all 7 hooks are registered")
+    @DisplayName("Given HeadDatabase enabled, when registering hooks, then HeadDatabase hook is registered")
+    void register_registersHeadDatabaseHook_whenHeadDatabaseEnabled() {
+        try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class);
+             MockedConstruction<HeadDatabaseAPI> ignored = mockConstruction(HeadDatabaseAPI.class)) {
+            bukkit.when(Bukkit::getPluginManager).thenReturn(mockPluginManager);
+            when(mockPluginManager.isPluginEnabled(anyString())).thenReturn(false);
+            enablePlugin("HeadDatabase");
+
+            new HooksRegistrar<CorePlugin>().register(context());
+
+            assertTrue(hookRegistry.pluginHook(CorePluginHookKey.CORE_HEAD_DATABASE).isPresent());
+            assertTrue(hookRegistry.pluginHook(CorePluginHookKey.CORE_HEAD_DATABASE).get() instanceof CoreHeadDatabaseHook);
+        }
+    }
+
+    @Test
+    @DisplayName("Given all testable plugins enabled, when registering hooks, then all 8 hooks are registered")
     void register_registersAllHooks_whenAllPluginsEnabled() {
-        try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+        try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class);
+             MockedConstruction<HeadDatabaseAPI> ignored = mockConstruction(HeadDatabaseAPI.class)) {
             bukkit.when(Bukkit::getPluginManager).thenReturn(mockPluginManager);
             when(mockPluginManager.isPluginEnabled(anyString())).thenReturn(false);
             enableAllPlugins();
@@ -214,6 +237,7 @@ class HooksRegistrarTest {
 
             assertTrue(hookRegistry.pluginHook(CorePluginHookKey.CORE_NEXO).isPresent());
             assertTrue(hookRegistry.pluginHook(CorePluginHookKey.CORE_ITEMS_ADDER).isPresent());
+            assertTrue(hookRegistry.pluginHook(CorePluginHookKey.CORE_HEAD_DATABASE).isPresent());
             assertTrue(hookRegistry.pluginHook(CorePluginHookKey.CORE_PAPI).isPresent());
             assertTrue(hookRegistry.pluginHook(CorePluginHookKey.CORE_MODEL_ENGINE).isPresent());
             assertTrue(hookRegistry.pluginHook(CorePluginHookKey.CORE_MYTHIC_MOBS).isPresent());
@@ -236,6 +260,7 @@ class HooksRegistrarTest {
             assertTrue(hookRegistry.pluginHook(CorePluginHookKey.CORE_NEXO).isPresent());
             assertTrue(hookRegistry.pluginHook(CorePluginHookKey.CORE_CITIZENS).isPresent());
             assertFalse(hookRegistry.pluginHook(CorePluginHookKey.CORE_ITEMS_ADDER).isPresent());
+            assertFalse(hookRegistry.pluginHook(CorePluginHookKey.CORE_HEAD_DATABASE).isPresent());
             assertFalse(hookRegistry.pluginHook(CorePluginHookKey.CORE_PAPI).isPresent());
             assertFalse(hookRegistry.pluginHook(CorePluginHookKey.CORE_MODEL_ENGINE).isPresent());
             assertFalse(hookRegistry.pluginHook(CorePluginHookKey.CORE_MYTHIC_MOBS).isPresent());
