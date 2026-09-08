@@ -3,6 +3,7 @@ package com.diamonddagger590.mccore.localization;
 import com.diamonddagger590.mccore.CorePlugin;
 import com.diamonddagger590.mccore.configuration.ReloadableContent;
 import com.diamonddagger590.mccore.exception.localization.NoLocalizationContainsMessageException;
+import com.diamonddagger590.mccore.external.papi.CorePapiHook;
 import com.diamonddagger590.mccore.player.CorePlayer;
 import com.diamonddagger590.mccore.player.PlayerManager;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
@@ -10,6 +11,7 @@ import com.diamonddagger590.mccore.registry.RegistryKey;
 import com.diamonddagger590.mccore.registry.manager.CoreManagerKey;
 import com.diamonddagger590.mccore.registry.manager.ManagerKey;
 import com.diamonddagger590.mccore.registry.manager.ManagerRegistry;
+import com.diamonddagger590.mccore.registry.plugin.CorePluginHookKey;
 import com.diamonddagger590.mccore.registry.plugin.PluginHookRegistry;
 import com.diamonddagger590.mccore.configuration.ReloadableContentManager;
 import com.diamonddagger590.mccore.setting.PlayerSettingRegistry;
@@ -19,14 +21,19 @@ import com.diamonddagger590.mccore.util.LinkedNode;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
 import dev.dejvokep.boostedyaml.route.Route;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Bukkit;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -38,7 +45,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class LocalizationManagerTest {
@@ -142,6 +154,17 @@ class LocalizationManagerTest {
     private TestCorePlayer createPlayerWithoutBukkit() {
         UUID uuid = UUID.randomUUID();
         return new TestCorePlayer(uuid, mockPlugin, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    private CorePapiHook registerMockPapiHook() throws Exception {
+        CorePapiHook mockPapiHook = mock(CorePapiHook.class);
+        PluginHookRegistry hookRegistry = RegistryAccess.registryAccess().registry(RegistryKey.PLUGIN_HOOK);
+        Field hooksField = PluginHookRegistry.class.getDeclaredField("hooks");
+        hooksField.setAccessible(true);
+        Map<Class<?>, Object> hooks = (Map<Class<?>, Object>) hooksField.get(hookRegistry);
+        hooks.put(CorePapiHook.class, mockPapiHook);
+        return mockPapiHook;
     }
 
     // --- registerLanguageFile ---
@@ -786,5 +809,236 @@ class LocalizationManagerTest {
         TestCorePlayer player = createPlayerWithLocale(Locale.KOREAN);
 
         assertEquals("English fallback", localizationManager.getLocalizedMessage(player, testRoute));
+    }
+
+    // --- getLocalizedSection locale fallback ---
+
+    @Test
+    @DisplayName("Given player's locale is not registered, when getLocalizedSection(player, route), then falls back to English in chain")
+    void getLocalizedSection_player_unsupportedLocale_fallsBackToEnglish() {
+        registerEnglishDoc();
+        Section mockSection = mock(Section.class);
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getSection(testRoute)).thenReturn(mockSection);
+
+        TestCorePlayer player = createPlayerWithLocale(Locale.KOREAN);
+
+        assertEquals(mockSection, localizationManager.getLocalizedSection(player, testRoute));
+    }
+
+    // --- PAPI integration in getLocalizedMessage(player, route) ---
+
+    @Test
+    @DisplayName("Given PAPI hook is registered and player is online, when getLocalizedMessage(player, route), then message is processed through PAPI")
+    void getLocalizedMessage_player_withPapiHook_translatesMessage() throws Exception {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getString(testRoute)).thenReturn("Hello %player_name%");
+
+        CorePapiHook mockPapiHook = registerMockPapiHook();
+        when(mockPapiHook.translateMessage(any(), eq("Hello %player_name%")))
+                .thenReturn("Hello Steve");
+
+        TestCorePlayer player = createPlayerWithLocale(Locale.ENGLISH);
+
+        String result = localizationManager.getLocalizedMessage(player, testRoute);
+        assertEquals("Hello Steve", result);
+    }
+
+    @Test
+    @DisplayName("Given PAPI hook is registered but player has no Bukkit player, when getLocalizedMessage(player, route), then PAPI is not applied")
+    void getLocalizedMessage_player_withPapiHook_noBukkitPlayer_skipsPapi() throws Exception {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getString(testRoute)).thenReturn("Hello %player_name%");
+
+        CorePapiHook mockPapiHook = registerMockPapiHook();
+
+        TestCorePlayer player = createPlayerWithoutBukkit();
+
+        String result = localizationManager.getLocalizedMessage(player, testRoute);
+        assertEquals("Hello %player_name%", result);
+        verify(mockPapiHook, never()).translateMessage(any(), any());
+    }
+
+    // --- PAPI integration in getLocalizedMessages(player, route) ---
+
+    @Test
+    @DisplayName("Given PAPI hook is registered and player is online, when getLocalizedMessages(player, route), then each line is processed through PAPI")
+    void getLocalizedMessages_player_withPapiHook_translatesEachLine() throws Exception {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getStringList(testRoute)).thenReturn(List.of("Line %player_name%", "Score %player_level%"));
+
+        CorePapiHook mockPapiHook = registerMockPapiHook();
+        when(mockPapiHook.translateMessage(any(), eq("Line %player_name%")))
+                .thenReturn("Line Steve");
+        when(mockPapiHook.translateMessage(any(), eq("Score %player_level%")))
+                .thenReturn("Score 42");
+
+        TestCorePlayer player = createPlayerWithLocale(Locale.ENGLISH);
+
+        List<String> result = localizationManager.getLocalizedMessages(player, testRoute);
+        assertEquals(2, result.size());
+        assertEquals("Line Steve", result.get(0));
+        assertEquals("Score 42", result.get(1));
+    }
+
+    @Test
+    @DisplayName("Given PAPI hook is registered but player has no Bukkit player, when getLocalizedMessages(player, route), then PAPI is not applied to list")
+    void getLocalizedMessages_player_withPapiHook_noBukkitPlayer_skipsPapi() throws Exception {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getStringList(testRoute)).thenReturn(List.of("Line %player_name%"));
+
+        CorePapiHook mockPapiHook = registerMockPapiHook();
+
+        TestCorePlayer player = createPlayerWithoutBukkit();
+
+        List<String> result = localizationManager.getLocalizedMessages(player, testRoute);
+        assertEquals(1, result.size());
+        assertEquals("Line %player_name%", result.get(0));
+        verify(mockPapiHook, never()).translateMessage(any(), any());
+    }
+
+    // --- broadcastMessage(Route) ---
+
+    @Test
+    @DisplayName("Given loaded player with French locale and unloaded player, when broadcastMessage(route), then loaded gets French and unloaded gets English")
+    void broadcastMessage_route_loadedPlayerGetsLocaleMessage_unloadedGetsDefault() {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getString(testRoute)).thenReturn("English broadcast");
+
+        YamlDocument frenchDoc = mock(YamlDocument.class);
+        when(frenchDoc.contains(testRoute)).thenReturn(true);
+        when(frenchDoc.getString(testRoute)).thenReturn("Diffusion française");
+        Localization frenchLocalization = mock(Localization.class);
+        when(frenchLocalization.getLocale()).thenReturn(Locale.FRENCH);
+        when(frenchLocalization.getConfigurationFile()).thenReturn(frenchDoc);
+        localizationManager.registerLanguageFile(frenchLocalization);
+
+        UUID loadedUuid = UUID.randomUUID();
+        Player loadedBukkitPlayer = mock(Player.class);
+        when(loadedBukkitPlayer.getUniqueId()).thenReturn(loadedUuid);
+        when(loadedBukkitPlayer.locale()).thenReturn(Locale.FRENCH);
+        TestCorePlayer loadedCorePlayer = new TestCorePlayer(loadedUuid, mockPlugin, loadedBukkitPlayer);
+
+        UUID unloadedUuid = UUID.randomUUID();
+        Player unloadedBukkitPlayer = mock(Player.class);
+        when(unloadedBukkitPlayer.getUniqueId()).thenReturn(unloadedUuid);
+
+        PlayerManager<CorePlugin, TestCorePlayer> playerManager = new PlayerManager<>(mockPlugin);
+        playerManager.addPlayer(loadedCorePlayer);
+        RegistryAccess.registryAccess().registry(RegistryKey.MANAGER).register(playerManager);
+
+        ConsoleCommandSender consoleSender = mock(ConsoleCommandSender.class);
+
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class)) {
+            mockedBukkit.when(Bukkit::getOnlinePlayers)
+                    .thenReturn(List.of(loadedBukkitPlayer, unloadedBukkitPlayer));
+            mockedBukkit.when(Bukkit::getConsoleSender).thenReturn(consoleSender);
+
+            localizationManager.broadcastMessage(testRoute);
+
+            verify(loadedBukkitPlayer).sendMessage("Diffusion française");
+            verify(unloadedBukkitPlayer).sendMessage("English broadcast");
+            verify(consoleSender).sendMessage("English broadcast");
+        }
+    }
+
+    @Test
+    @DisplayName("Given no online players, when broadcastMessage(route), then only console receives the message")
+    void broadcastMessage_route_noOnlinePlayers_onlyConsoleReceives() {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getString(testRoute)).thenReturn("Console only");
+
+        PlayerManager<CorePlugin, TestCorePlayer> playerManager = new PlayerManager<>(mockPlugin);
+        RegistryAccess.registryAccess().registry(RegistryKey.MANAGER).register(playerManager);
+
+        ConsoleCommandSender consoleSender = mock(ConsoleCommandSender.class);
+
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class)) {
+            mockedBukkit.when(Bukkit::getOnlinePlayers).thenReturn(List.of());
+            mockedBukkit.when(Bukkit::getConsoleSender).thenReturn(consoleSender);
+
+            localizationManager.broadcastMessage(testRoute);
+
+            verify(consoleSender).sendMessage("Console only");
+        }
+    }
+
+    // --- broadcastMessage(Route, Map) ---
+
+    @Test
+    @DisplayName("Given loaded player with French locale and unloaded player, when broadcastMessage(route, placeholders), then loaded gets French Component and unloaded gets English Component")
+    void broadcastMessage_routeWithPlaceholders_sendsComponentToAll() {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getString(testRoute)).thenReturn("Hello <name>");
+
+        YamlDocument frenchDoc = mock(YamlDocument.class);
+        when(frenchDoc.contains(testRoute)).thenReturn(true);
+        when(frenchDoc.getString(testRoute)).thenReturn("Bonjour <name>");
+        Localization frenchLocalization = mock(Localization.class);
+        when(frenchLocalization.getLocale()).thenReturn(Locale.FRENCH);
+        when(frenchLocalization.getConfigurationFile()).thenReturn(frenchDoc);
+        localizationManager.registerLanguageFile(frenchLocalization);
+
+        UUID loadedUuid = UUID.randomUUID();
+        Player loadedBukkitPlayer = mock(Player.class);
+        when(loadedBukkitPlayer.getUniqueId()).thenReturn(loadedUuid);
+        when(loadedBukkitPlayer.locale()).thenReturn(Locale.FRENCH);
+        TestCorePlayer loadedCorePlayer = new TestCorePlayer(loadedUuid, mockPlugin, loadedBukkitPlayer);
+
+        UUID unloadedUuid = UUID.randomUUID();
+        Player unloadedBukkitPlayer = mock(Player.class);
+        when(unloadedBukkitPlayer.getUniqueId()).thenReturn(unloadedUuid);
+
+        PlayerManager<CorePlugin, TestCorePlayer> playerManager = new PlayerManager<>(mockPlugin);
+        playerManager.addPlayer(loadedCorePlayer);
+        RegistryAccess.registryAccess().registry(RegistryKey.MANAGER).register(playerManager);
+
+        ConsoleCommandSender consoleSender = mock(ConsoleCommandSender.class);
+
+        Component expectedFrench = mockPlugin.getMiniMessage().deserialize("Bonjour <name>",
+                net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.parsed("name", "World"));
+        Component expectedEnglish = mockPlugin.getMiniMessage().deserialize("Hello <name>",
+                net.kyori.adventure.text.minimessage.tag.resolver.Placeholder.parsed("name", "World"));
+
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class)) {
+            mockedBukkit.when(Bukkit::getOnlinePlayers)
+                    .thenReturn(List.of(loadedBukkitPlayer, unloadedBukkitPlayer));
+            mockedBukkit.when(Bukkit::getConsoleSender).thenReturn(consoleSender);
+
+            localizationManager.broadcastMessage(testRoute, Map.of("name", "World"));
+
+            verify(loadedBukkitPlayer).sendMessage(expectedFrench.decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false));
+            verify(unloadedBukkitPlayer).sendMessage(expectedEnglish.decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false));
+            verify(consoleSender).sendMessage(expectedEnglish.decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false));
+        }
+    }
+
+    @Test
+    @DisplayName("Given no online players, when broadcastMessage(route, placeholders), then only console receives Component")
+    void broadcastMessage_routeWithPlaceholders_noOnlinePlayers_onlyConsoleReceives() {
+        registerEnglishDoc();
+        when(englishDoc.contains(testRoute)).thenReturn(true);
+        when(englishDoc.getString(testRoute)).thenReturn("Hello <name>");
+
+        PlayerManager<CorePlugin, TestCorePlayer> playerManager = new PlayerManager<>(mockPlugin);
+        RegistryAccess.registryAccess().registry(RegistryKey.MANAGER).register(playerManager);
+
+        ConsoleCommandSender consoleSender = mock(ConsoleCommandSender.class);
+
+        try (MockedStatic<Bukkit> mockedBukkit = mockStatic(Bukkit.class)) {
+            mockedBukkit.when(Bukkit::getOnlinePlayers).thenReturn(List.of());
+            mockedBukkit.when(Bukkit::getConsoleSender).thenReturn(consoleSender);
+
+            localizationManager.broadcastMessage(testRoute, Map.of("name", "World"));
+
+            verify(consoleSender).sendMessage(any(Component.class));
+        }
     }
 }
