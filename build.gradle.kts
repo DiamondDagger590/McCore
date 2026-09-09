@@ -92,6 +92,7 @@ dependencies {
 
     val headDatabaseVersion = "1.3.1"
     compileOnly("com.arcaniax:HeadDatabase-API:$headDatabaseVersion")
+    testImplementation("com.arcaniax:HeadDatabase-API:$headDatabaseVersion")
 
     // Custom items
     val itemsAdderVersion = "4.0.10"
