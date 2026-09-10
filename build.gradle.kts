@@ -92,20 +92,27 @@ dependencies {
 
     val headDatabaseVersion = "1.3.1"
     compileOnly("com.arcaniax:HeadDatabase-API:$headDatabaseVersion")
+    testImplementation("com.arcaniax:HeadDatabase-API:$headDatabaseVersion")
 
     // Custom items
     val itemsAdderVersion = "4.0.10"
     compileOnly("dev.lone:api-itemsadder:$itemsAdderVersion")
+    testImplementation("dev.lone:api-itemsadder:$itemsAdderVersion")
     val nexoVersion = "1.16.0"
     compileOnly("com.nexomc:nexo:$nexoVersion") {
         exclude(group = "net.byteflux")
     }
+    testImplementation("com.nexomc:nexo:$nexoVersion") {
+        isTransitive = false
+    }
 
     val mythicMobsVersion = "5.6.1"
     compileOnly("io.lumine:Mythic-Dist:$mythicMobsVersion")
+    testImplementation("io.lumine:Mythic-Dist:$mythicMobsVersion")
 
     val modelEngineVersion = "R4.0.4"
     compileOnly("com.ticxo.modelengine:ModelEngine:$modelEngineVersion")
+    testImplementation("com.ticxo.modelengine:ModelEngine:$modelEngineVersion")
 
     // Command annotations
     val cloudMinecraftVersion = "2.0.0-beta.14"
@@ -133,6 +140,9 @@ dependencies {
 
     val citizensVersion = "2.0.39-SNAPSHOT"
     compileOnly("net.citizensnpcs:citizens-main:$citizensVersion") {
+        exclude(group = "*", module = "*")
+    }
+    testImplementation("net.citizensnpcs:citizens-main:$citizensVersion") {
         exclude(group = "*", module = "*")
     }
 
