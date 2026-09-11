@@ -35,6 +35,7 @@ java {
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
     maven("https://jitpack.io")
 
@@ -100,6 +101,10 @@ dependencies {
     compileOnly("com.nexomc:nexo:$nexoVersion") {
         exclude(group = "net.byteflux")
     }
+    testImplementation("com.nexomc:nexo:$nexoVersion") {
+        isTransitive = false
+    }
+    testImplementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.0")
 
     val mythicMobsVersion = "5.6.1"
     compileOnly("io.lumine:Mythic-Dist:$mythicMobsVersion")

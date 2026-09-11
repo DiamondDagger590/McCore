@@ -106,6 +106,90 @@ public class CoreNexoHook extends PluginHook<CorePlugin> implements CustomItemHo
     }
 
     /**
+     * Gets the {@link CustomBlockMechanic} for the block at the given location.
+     *
+     * @param location The location to look up.
+     * @return The {@link CustomBlockMechanic}, or {@code null} if no custom block is at the location.
+     */
+    @Nullable
+    protected CustomBlockMechanic customBlockMechanic(@NotNull Location location) {
+        return NexoBlocks.customBlockMechanic(location);
+    }
+
+    /**
+     * Attempts to remove the Nexo block at the given location.
+     *
+     * @param location The location of the block to remove.
+     * @return {@code true} if the block was successfully removed.
+     */
+    protected boolean removeNexoBlock(@NotNull Location location) {
+        return NexoBlocks.remove(location);
+    }
+
+    /**
+     * Places a Nexo block at the given location.
+     *
+     * @param blockId  The Nexo block ID to place.
+     * @param location The location to place the block at.
+     */
+    protected void placeNexoBlock(@NotNull String blockId, @NotNull Location location) {
+        NexoBlocks.place(blockId, location);
+    }
+
+    /**
+     * Gets the {@link ItemBuilder} for the given Nexo item ID.
+     *
+     * @param itemId The Nexo item ID.
+     * @return The {@link ItemBuilder}, or {@code null} if no item exists with that ID.
+     */
+    @Nullable
+    protected ItemBuilder nexoItemBuilder(@NotNull String itemId) {
+        return NexoItems.itemFromId(itemId);
+    }
+
+    /**
+     * Resolves the player-friendly display name from a Nexo item's {@link ItemBuilder}.
+     * Prefers {@link ItemBuilder#getItemName()} when set, falling back to
+     * {@link ItemBuilder#getCustomName()}. Returns {@code null} if no usable name is found.
+     *
+     * @param itemId The Nexo item ID to look up.
+     * @return The resolved display name, or {@code null} if no name could be resolved.
+     */
+    @Nullable
+    protected String resolveNexoItemName(@NotNull String itemId) {
+        ItemBuilder nexoItem = nexoItemBuilder(itemId);
+        if (nexoItem != null) {
+            Component nameComponent = Boolean.TRUE.equals(nexoItem.hasItemName())
+                ? nexoItem.getItemName()
+                : nexoItem.getCustomName();
+            if (nameComponent != null) {
+                String name = PlainTextComponentSerializer.plainText().serialize(nameComponent);
+                if (!name.isEmpty()) {
+                    return name;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Plays the custom block break sound for the given mechanic, if block sounds are configured.
+     *
+     * @param block     The block being broken.
+     * @param mechanic  The custom block mechanic.
+     * @return {@code true} if a custom sound was played, {@code false} if vanilla fallback should be used.
+     */
+    protected boolean playCustomBlockSound(@NotNull Block block, @NotNull CustomBlockMechanic mechanic) {
+        if (mechanic.hasBlockSounds()) {
+            BlockSounds blockSounds = mechanic.getBlockSounds();
+            assert (blockSounds != null);
+            block.getWorld().playSound(block.getLocation(), blockSounds.getBreakSound(), blockSounds.getBreakVolume(), blockSounds.getBreakPitch());
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Checks to see if the provided {@link Block} currently has the itemId provided.
      *
      * @param block           The block to validate.
@@ -114,14 +198,14 @@ public class CoreNexoHook extends PluginHook<CorePlugin> implements CustomItemHo
      */
     @Override
     public boolean isCustomBlockOfType(@NotNull Block block, @NotNull String customBlockType) {
-        var customMechanic = NexoBlocks.customBlockMechanic(block.getLocation());
+        var customMechanic = customBlockMechanic(block.getLocation());
         return isCustomBlock(block) && customMechanic != null && customMechanic.getItemID().equalsIgnoreCase(customBlockType);
     }
 
     @NotNull
     @Override
     public Optional<Set<String>> blockModels(@NotNull Block block) {
-        CustomBlockMechanic customBlockMechanic = NexoBlocks.customBlockMechanic(block.getLocation());
+        CustomBlockMechanic customBlockMechanic = customBlockMechanic(block.getLocation());
         if (customBlockMechanic == null) {
             return Optional.empty();
         }
@@ -133,14 +217,14 @@ public class CoreNexoHook extends PluginHook<CorePlugin> implements CustomItemHo
         if (!isCustomBlock(blockId)) {
             throw new IllegalArgumentException("Block " + blockId + " is not a valid Nexo block.");
         }
-        NexoBlocks.place(blockId, location);
+        placeNexoBlock(blockId, location);
     }
 
     @NotNull
     @Override
     public List<ItemStack> drops(@NotNull Block block, @NotNull ItemStack itemToBreakWith, @Nullable Entity entityBreaking) {
         if (isCustomBlock(block)) {
-            CustomBlockMechanic customBlockMechanic = NexoBlocks.customBlockMechanic(block.getLocation());
+            CustomBlockMechanic customBlockMechanic = customBlockMechanic(block.getLocation());
             if (customBlockMechanic != null && entityBreaking instanceof Player player) {
                 Breakable breakable = customBlockMechanic.getBreakable();
                 List<Loot> lootDrops = breakable.getDrop().lootToDrop(player);
@@ -156,8 +240,8 @@ public class CoreNexoHook extends PluginHook<CorePlugin> implements CustomItemHo
     @Override
     public void removeBlock(@NotNull Block block) {
         if (isCustomBlock(block)) {
-            if (!NexoBlocks.remove(block.getLocation())) {
-                var customMechanic = NexoBlocks.customBlockMechanic(block.getLocation());
+            if (!removeNexoBlock(block.getLocation())) {
+                var customMechanic = customBlockMechanic(block.getLocation());
                 throw new IllegalStateException("Failed to remove Nexo block " + customMechanic.getItemID() + " at block " + block.getLocation());
             }
         } else {
@@ -168,11 +252,8 @@ public class CoreNexoHook extends PluginHook<CorePlugin> implements CustomItemHo
     @Override
     public void playBlockDropEffects(@NotNull Block block) {
         if (isCustomBlock(block)) {
-            var customMechanic = NexoBlocks.customBlockMechanic(block.getLocation());
-            if (customMechanic != null && customMechanic.hasBlockSounds()) {
-                BlockSounds blockSounds = customMechanic.getBlockSounds();
-                assert(blockSounds != null);
-                block.getWorld().playSound(block.getLocation(), blockSounds.getBreakSound(), blockSounds.getBreakVolume(), blockSounds.getBreakPitch());
+            var customMechanic = customBlockMechanic(block.getLocation());
+            if (customMechanic != null && playCustomBlockSound(block, customMechanic)) {
                 return;
             }
         }
@@ -207,17 +288,9 @@ public class CoreNexoHook extends PluginHook<CorePlugin> implements CustomItemHo
         if (customItemWrapper.customItem().isPresent()) {
             String itemId = customItemWrapper.customItem().get();
             if (isItem(itemId)) {
-                ItemBuilder nexoItem = NexoItems.itemFromId(itemId);
-                if (nexoItem != null) {
-                    Component nameComponent = Boolean.TRUE.equals(nexoItem.hasItemName())
-                        ? nexoItem.getItemName()
-                        : nexoItem.getCustomName();
-                    if (nameComponent != null) {
-                        String name = PlainTextComponentSerializer.plainText().serialize(nameComponent);
-                        if (!name.isEmpty()) {
-                            return name;
-                        }
-                    }
+                String name = resolveNexoItemName(itemId);
+                if (name != null) {
+                    return name;
                 }
             }
             return formatBlockId(itemId);
@@ -243,18 +316,9 @@ public class CoreNexoHook extends PluginHook<CorePlugin> implements CustomItemHo
         if (customBlockWrapper.customBlock().isPresent()) {
             String blockId = customBlockWrapper.customBlock().get();
             if (isCustomBlock(blockId)) {
-                ItemBuilder nexoItem = NexoItems.itemFromId(blockId);
-                if (nexoItem != null) {
-                    // Prefer itemName (ITEM_NAME / static non-italic name), fall back to customName (CUSTOM_NAME)
-                    Component nameComponent = Boolean.TRUE.equals(nexoItem.hasItemName())
-                        ? nexoItem.getItemName()
-                        : nexoItem.getCustomName();
-                    if (nameComponent != null) {
-                        String name = PlainTextComponentSerializer.plainText().serialize(nameComponent);
-                        if (!name.isEmpty()) {
-                            return name;
-                        }
-                    }
+                String name = resolveNexoItemName(blockId);
+                if (name != null) {
+                    return name;
                 }
             }
             return formatBlockId(blockId);
