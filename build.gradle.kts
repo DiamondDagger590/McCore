@@ -103,9 +103,11 @@ dependencies {
 
     val mythicMobsVersion = "5.6.1"
     compileOnly("io.lumine:Mythic-Dist:$mythicMobsVersion")
+    testImplementation("io.lumine:Mythic-Dist:$mythicMobsVersion")
 
     val modelEngineVersion = "R4.0.4"
     compileOnly("com.ticxo.modelengine:ModelEngine:$modelEngineVersion")
+    testImplementation("com.ticxo.modelengine:ModelEngine:$modelEngineVersion")
 
     // Command annotations
     val cloudMinecraftVersion = "2.0.0-beta.14"
