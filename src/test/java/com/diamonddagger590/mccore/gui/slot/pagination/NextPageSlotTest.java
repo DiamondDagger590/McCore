@@ -164,6 +164,21 @@ class NextPageSlotTest {
         verify(paginatedGui).refreshGUI();
     }
 
+    @SuppressWarnings("unchecked")
+    @Test
+    @DisplayName("Given a non-paginated gui, when onClick, then no page change occurs")
+    void onClick_nonPaginatedGui_noPageChange() {
+        CorePlayer corePlayer = mock(CorePlayer.class);
+        com.diamonddagger590.mccore.gui.BaseGui<CorePlayer> nonPaginatedGui = mock(com.diamonddagger590.mccore.gui.BaseGui.class);
+
+        when(mockGuiManager.getOpenedGui(corePlayer)).thenReturn(Optional.of(nonPaginatedGui));
+
+        boolean result = slot.onClick(corePlayer, ClickType.LEFT);
+
+        assertTrue(result);
+        verify(nonPaginatedGui, never()).refreshGUI();
+    }
+
     @Test
     @DisplayName("Given a valid gui types set, then set is immutable")
     void getValidGuiTypes_isImmutable() {

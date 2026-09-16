@@ -293,4 +293,49 @@ class PlayerLoadTaskTest {
         // runLoadPlayerTask only catches SQLException, so RuntimeException propagates
         org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, task::onIntervalComplete);
     }
+
+    @Test
+    @DisplayName("Given task already completed, when onIntervalComplete is called again, then exits early")
+    void onIntervalComplete_alreadyCompleted_exitsEarly() throws SQLException {
+        when(mockPlayerManager.getPlayer(playerUUID)).thenReturn(Optional.empty());
+        when(mockDatabase.getConnection()).thenReturn(mockConnection);
+        when(mockCorePlayer.useMutex()).thenReturn(false);
+        lenient().doNothing().when(mockScheduler).cancelTask(anyInt());
+        lenient().when(mockScheduler.scheduleSyncDelayedTask(eq(mockPlugin), any(Runnable.class))).thenReturn(1);
+
+        loadPlayerResult = true;
+        PlayerLoadTask task = createTask();
+
+        // First call completes the task
+        task.onIntervalComplete();
+        assertTrue(task.getResult().isDone());
+        assertTrue(task.getResult().join());
+
+        // Second call should hit the completed early return
+        task.onIntervalComplete();
+
+        // Result is still the same (no double-completion)
+        assertTrue(task.getResult().isDone());
+        assertTrue(task.getResult().join());
+    }
+
+    @Test
+    @DisplayName("Given connection close throws SQLException, when onIntervalComplete completes, then exception is caught gracefully")
+    void onIntervalComplete_connectionCloseThrowsSqlException_caughtGracefully() throws SQLException {
+        when(mockPlayerManager.getPlayer(playerUUID)).thenReturn(Optional.empty());
+        when(mockDatabase.getConnection()).thenReturn(mockConnection);
+        when(mockCorePlayer.useMutex()).thenReturn(false);
+        lenient().doNothing().when(mockScheduler).cancelTask(anyInt());
+        lenient().when(mockScheduler.scheduleSyncDelayedTask(eq(mockPlugin), any(Runnable.class))).thenReturn(1);
+        // Connection.close() is called by try-with-resources and throws SQLException
+        org.mockito.Mockito.doThrow(new SQLException("Connection close failed")).when(mockConnection).close();
+
+        loadPlayerResult = true;
+        PlayerLoadTask task = createTask();
+        task.onIntervalComplete();
+
+        // Despite the close() exception, the task completed before close was called
+        assertTrue(task.getResult().isDone());
+        assertTrue(task.getResult().join());
+    }
 }

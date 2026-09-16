@@ -22,12 +22,14 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -272,6 +274,38 @@ class PlayerSettingDAOTest {
 
             assertNotNull(settings);
             assertTrue(settings.isEmpty());
+        }
+
+        @SuppressWarnings("unchecked")
+        @Test
+        @DisplayName("Given a setting key with no matching setting, when getPlayerSettings is called, then the key is skipped")
+        void getPlayerSettings_skipsKey_whenSettingOptionalIsEmpty() throws Exception {
+            PlayerSettingRegistry registry = RegistryAccess.registryAccess().registry(RegistryKey.PLAYER_SETTING);
+
+            // Use reflection to insert a key that maps to null into the settings map,
+            // causing getSetting() to return Optional.empty() for that key
+            Field settingsField = PlayerSettingRegistry.class.getDeclaredField("settings");
+            settingsField.setAccessible(true);
+            Map<NamespacedKey, PlayerSetting> internalSettings =
+                    (Map<NamespacedKey, PlayerSetting>) settingsField.get(registry);
+            NamespacedKey orphanKey = new NamespacedKey("mccore", "orphan_setting");
+            internalSettings.put(orphanKey, null);
+
+            try {
+                when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
+                when(mockStatement.executeQuery()).thenReturn(mockResultSet);
+                // Return true for the first real setting, false to end
+                when(mockResultSet.next()).thenReturn(true, false);
+                when(mockResultSet.getString("setting_value")).thenReturn("OFF");
+
+                Set<PlayerSetting> settings = PlayerSettingDAO.getPlayerSettings(mockConnection, TEST_UUID);
+
+                // Should still return the valid setting and skip the orphan
+                assertFalse(settings.isEmpty());
+            } finally {
+                // Clean up: remove the orphan key
+                internalSettings.remove(orphanKey);
+            }
         }
     }
 
