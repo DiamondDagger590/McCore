@@ -96,6 +96,7 @@ dependencies {
     // Custom items
     val itemsAdderVersion = "4.0.10"
     compileOnly("dev.lone:api-itemsadder:$itemsAdderVersion")
+    testImplementation("dev.lone:api-itemsadder:$itemsAdderVersion")
     val nexoVersion = "1.16.0"
     compileOnly("com.nexomc:nexo:$nexoVersion") {
         exclude(group = "net.byteflux")
@@ -130,9 +131,13 @@ dependencies {
 
     val cmiVersion = "9.7.14.3"
     compileOnly("com.github.Zrips:CMI-API:$cmiVersion")
+    testImplementation("com.github.Zrips:CMI-API:$cmiVersion")
 
     val citizensVersion = "2.0.39-SNAPSHOT"
     compileOnly("net.citizensnpcs:citizens-main:$citizensVersion") {
+        exclude(group = "*", module = "*")
+    }
+    testImplementation("net.citizensnpcs:citizens-main:$citizensVersion") {
         exclude(group = "*", module = "*")
     }
 
