@@ -35,8 +35,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -338,6 +340,20 @@ class CoreItemsAdderHookTest {
 
             assertThrows(IllegalArgumentException.class,
                 () -> hook.placeCustomBlock(location, "invalid_block"));
+        }
+
+        @Test
+        @DisplayName("Places block via CustomBlock.place when blockId passes validation")
+        void placeCustomBlock_placesBlock_whenBlockIsValid() {
+            Location location = mock(Location.class);
+            CoreItemsAdderHook spyHook = spy(hook);
+            doReturn(true).when(spyHook).isCustomBlock("ns:valid_block");
+
+            try (MockedStatic<CustomBlock> mocked = mockStatic(CustomBlock.class)) {
+                spyHook.placeCustomBlock(location, "ns:valid_block");
+
+                mocked.verify(() -> CustomBlock.place("ns:valid_block", location));
+            }
         }
     }
 
