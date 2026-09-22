@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class UpdateCoreTablesFunctionTest {
@@ -88,5 +89,28 @@ class UpdateCoreTablesFunctionTest {
         result.get(5, TimeUnit.SECONDS);
         assertTrue(result.isDone());
         assertFalse(result.isCompletedExceptionally());
+    }
+
+    @Test
+    @DisplayName("Given a valid database, when updateTables completes, then connection is closed")
+    void updateTables_closesConnection_whenComplete() throws Exception {
+        Database mockDatabase = mock(Database.class);
+        Connection mockConnection = mock(Connection.class);
+        PreparedStatement mockStatement = mock(PreparedStatement.class);
+        ResultSet mockResultSet = mock(ResultSet.class);
+
+        when(mockDatabase.getDatabaseExecutorService()).thenReturn(executor);
+        when(mockDatabase.getConnection()).thenReturn(mockConnection);
+        when(mockConnection.prepareStatement(any(String.class))).thenReturn(mockStatement);
+        when(mockStatement.executeQuery()).thenReturn(mockResultSet);
+        when(mockStatement.executeUpdate()).thenReturn(1);
+        when(mockResultSet.next()).thenReturn(false);
+
+        UpdateTableFunction function = UpdateCoreTablesFunction.getUpdateCoreTablesFunction();
+
+        CompletableFuture<Void> result = function.updateTables(mockDatabase);
+        result.get(5, TimeUnit.SECONDS);
+
+        verify(mockConnection).close();
     }
 }

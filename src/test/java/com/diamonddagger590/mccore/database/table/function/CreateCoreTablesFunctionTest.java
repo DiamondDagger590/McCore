@@ -83,4 +83,44 @@ class CreateCoreTablesFunctionTest {
         assertTrue(result.isDone());
         assertFalse(result.isCompletedExceptionally());
     }
+
+    @Test
+    @DisplayName("Given a valid database, when createTables completes, then connection is closed")
+    void createTables_closesConnection_whenComplete() throws Exception {
+        Database mockDatabase = mock(Database.class);
+        Connection mockConnection = mock(Connection.class);
+
+        when(mockDatabase.getDatabaseExecutorService()).thenReturn(executor);
+        when(mockDatabase.getConnection()).thenReturn(mockConnection);
+        when(mockDatabase.tableExists(eq(mockConnection), any(String.class))).thenReturn(true);
+
+        CreateTableFunction function = CreateCoreTablesFunction.getCreateCoreTablesFunction();
+
+        CompletableFuture<Void> result = function.createTables(mockDatabase);
+        result.get(5, TimeUnit.SECONDS);
+
+        org.mockito.Mockito.verify(mockConnection).close();
+    }
+
+    @Test
+    @DisplayName("Given tables do not exist, when createTables is called, then creates tables and completes successfully")
+    void createTables_createsTables_whenTablesDoNotExist() throws Exception {
+        Database mockDatabase = mock(Database.class);
+        Connection mockConnection = mock(Connection.class);
+        java.sql.PreparedStatement mockStatement = mock(java.sql.PreparedStatement.class);
+
+        when(mockDatabase.getDatabaseExecutorService()).thenReturn(executor);
+        when(mockDatabase.getConnection()).thenReturn(mockConnection);
+        when(mockDatabase.tableExists(eq(mockConnection), any(String.class))).thenReturn(false);
+        when(mockConnection.prepareStatement(any(String.class))).thenReturn(mockStatement);
+
+        CreateTableFunction function = CreateCoreTablesFunction.getCreateCoreTablesFunction();
+
+        CompletableFuture<Void> result = function.createTables(mockDatabase);
+        assertNotNull(result);
+
+        result.get(5, TimeUnit.SECONDS);
+        assertTrue(result.isDone());
+        assertFalse(result.isCompletedExceptionally());
+    }
 }
