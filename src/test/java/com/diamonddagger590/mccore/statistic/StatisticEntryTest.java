@@ -9,6 +9,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -142,5 +143,43 @@ class StatisticEntryTest {
         StatisticEntry b = new StatisticEntry(TEST_KEY, StatisticType.INT, 1);
         assertEquals(a, b);
         assertEquals(a.hashCode(), b.hashCode());
+    }
+
+    @Test
+    @DisplayName("Given a SET_STRING entry with an empty set, when getAsSetString is called, then returns an empty unmodifiable set")
+    void getAsSetString_returnsEmptyUnmodifiableSet_whenSetIsEmpty() {
+        Set<String> emptySet = new LinkedHashSet<>();
+        StatisticEntry entry = new StatisticEntry(TEST_KEY, StatisticType.SET_STRING, emptySet);
+
+        Set<String> result = entry.getAsSetString();
+        assertTrue(result.isEmpty());
+        assertNotSame(emptySet, result);
+        assertThrows(UnsupportedOperationException.class, () -> result.add("x"));
+    }
+
+    @Test
+    @DisplayName("Given two entries with different keys, when equals is called, then returns false")
+    void equals_returnsFalse_whenKeysDiffer() {
+        @SuppressWarnings("deprecation")
+        NamespacedKey otherKey = new NamespacedKey("mccore", "other_stat");
+        StatisticEntry a = new StatisticEntry(TEST_KEY, StatisticType.INT, 1);
+        StatisticEntry b = new StatisticEntry(otherKey, StatisticType.INT, 1);
+        assertNotEquals(a, b);
+    }
+
+    @Test
+    @DisplayName("Given two entries with different types, when equals is called, then returns false")
+    void equals_returnsFalse_whenTypesDiffer() {
+        StatisticEntry a = new StatisticEntry(TEST_KEY, StatisticType.INT, 1);
+        StatisticEntry b = new StatisticEntry(TEST_KEY, StatisticType.LONG, 1L);
+        assertNotEquals(a, b);
+    }
+
+    @Test
+    @DisplayName("Given two entries with different values, when equals is called, then returns false")
+    void equals_returnsFalse_whenValuesDiffer() {
+        StatisticEntry a = new StatisticEntry(TEST_KEY, StatisticType.INT, 1);
+        StatisticEntry b = new StatisticEntry(TEST_KEY, StatisticType.INT, 2);
+        assertNotEquals(a, b);
     }
 }

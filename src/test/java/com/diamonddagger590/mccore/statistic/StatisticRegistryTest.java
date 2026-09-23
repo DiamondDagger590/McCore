@@ -40,27 +40,31 @@ class StatisticRegistryTest {
     }
 
     @Test
-    void registerSucceedsForNewKey() {
+    @DisplayName("Given a new statistic, when registering, then the registry reports it as registered")
+    void register_succeeds_whenKeyIsNew() {
         Statistic stat = new SimpleStatistic(key("test", "kills"), StatisticType.INT, 0, "Kills", "Total kills");
         registry().register(stat);
         assertTrue(registry().registered(stat));
     }
 
     @Test
-    void registerThrowsForDuplicateKey() {
+    @DisplayName("Given an already-registered statistic, when registering the same key again, then throws IllegalArgumentException")
+    void register_throwsIllegalArgument_whenKeyIsDuplicate() {
         Statistic stat = new SimpleStatistic(key("test", "kills"), StatisticType.INT, 0, "Kills", "Total kills");
         registry().register(stat);
         assertThrows(IllegalArgumentException.class, () -> registry().register(stat));
     }
 
     @Test
-    void registeredReturnsFalseForUnregistered() {
+    @DisplayName("Given a statistic that was never registered, when checking registered, then returns false")
+    void registered_returnsFalse_whenStatisticNotRegistered() {
         Statistic stat = new SimpleStatistic(key("test", "unknown"), StatisticType.INT, 0, "Unknown", "Unknown stat");
         assertFalse(registry().registered(stat));
     }
 
     @Test
-    void getStatisticReturnsRegisteredStatistic() {
+    @DisplayName("Given a registered statistic, when getting by key, then returns the statistic")
+    void getStatistic_returnsStatistic_whenKeyIsRegistered() {
         NamespacedKey key = key("test", "kills");
         Statistic stat = new SimpleStatistic(key, StatisticType.INT, 0, "Kills", "Total kills");
         registry().register(stat);
@@ -69,12 +73,14 @@ class StatisticRegistryTest {
     }
 
     @Test
-    void getStatisticReturnsEmptyForUnregistered() {
+    @DisplayName("Given no registered statistic for a key, when getting by that key, then returns empty Optional")
+    void getStatistic_returnsEmpty_whenKeyIsNotRegistered() {
         assertFalse(registry().getStatistic(key("test", "none")).isPresent());
     }
 
     @Test
-    void getRegisteredStatisticsReturnsAllStats() {
+    @DisplayName("Given two registered statistics, when getting all registered statistics, then returns both")
+    void getRegisteredStatistics_returnsAll_whenMultipleRegistered() {
         Statistic stat1 = new SimpleStatistic(key("test", "a"), StatisticType.INT, 0, "A", "Stat A");
         Statistic stat2 = new SimpleStatistic(key("test", "b"), StatisticType.LONG, 0L, "B", "Stat B");
         registry().register(stat1);
@@ -83,21 +89,22 @@ class StatisticRegistryTest {
     }
 
     @Test
-    void registerThrowsForMismatchedDefaultType() {
-        // INT stat with a String default should fail validation
+    @DisplayName("Given an INT statistic with a String default, when registering, then throws IllegalArgumentException")
+    void register_throwsIllegalArgument_whenIntStatHasStringDefault() {
         assertThrows(IllegalArgumentException.class, () ->
                 registry().register(new SimpleStatistic(key("test", "bad"), StatisticType.INT, "wrong", "Bad", "Mismatched default")));
     }
 
     @Test
-    void registerThrowsForLongDefaultOnIntStat() {
-        // INT stat with a Long default should fail
+    @DisplayName("Given an INT statistic with a Long default, when registering, then throws IllegalArgumentException")
+    void register_throwsIllegalArgument_whenIntStatHasLongDefault() {
         assertThrows(IllegalArgumentException.class, () ->
                 registry().register(new SimpleStatistic(key("test", "bad"), StatisticType.INT, 5L, "Bad", "Long for INT")));
     }
 
     @Test
-    void registerSucceedsForSetStringWithValidDefault() {
+    @DisplayName("Given a SET_STRING statistic with an empty Set default, when registering, then succeeds")
+    void register_succeeds_whenSetStringStatHasEmptySetDefault() {
         Set<String> defaultSet = new LinkedHashSet<>();
         Statistic stat = new SimpleStatistic(key("test", "set"), StatisticType.SET_STRING, defaultSet, "Set", "A set stat");
         registry().register(stat);
@@ -105,7 +112,8 @@ class StatisticRegistryTest {
     }
 
     @Test
-    void getRegisteredStatisticKeysReturnsAllKeys() {
+    @DisplayName("Given two registered statistics, when getting all keys, then returns both keys")
+    void getRegisteredStatisticKeys_returnsAllKeys_whenMultipleRegistered() {
         Statistic stat1 = new SimpleStatistic(key("test", "a"), StatisticType.INT, 0, "A", "Stat A");
         Statistic stat2 = new SimpleStatistic(key("other", "b"), StatisticType.LONG, 0L, "B", "Stat B");
         registry().register(stat1);
