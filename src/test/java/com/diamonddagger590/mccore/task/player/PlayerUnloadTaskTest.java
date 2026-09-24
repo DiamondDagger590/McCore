@@ -25,6 +25,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import org.bukkit.plugin.PluginManager;
+import org.mockito.ArgumentCaptor;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Clock;
@@ -32,6 +35,8 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Optional;
 import java.util.UUID;
+
+import com.diamonddagger590.mccore.event.player.PlayerUnloadEvent;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -42,7 +47,9 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -282,5 +289,70 @@ class PlayerUnloadTaskTest {
         // getConnection() wraps SQLException in RuntimeException, and the catch block in
         // runUnloadPlayerTask only catches SQLException, so RuntimeException propagates
         org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, task::onIntervalComplete);
+    }
+
+    @Test
+    @DisplayName("Given successful unload, when event dispatch Runnable executes, then PlayerUnloadEvent is fired with correct player")
+    void onPlayerUnloadSuccessfully_eventDispatchRunnable_firesPlayerUnloadEvent() throws SQLException {
+        when(mockDatabase.getConnection()).thenReturn(mockConnection);
+        when(mockCorePlayer.useMutex()).thenReturn(false);
+        doNothing().when(mockScheduler).cancelTask(anyInt());
+
+        PluginManager mockPluginManager = mock(PluginManager.class);
+        bukkitStatic.when(Bukkit::getPluginManager).thenReturn(mockPluginManager);
+
+        ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
+        when(mockScheduler.scheduleSyncDelayedTask(eq(mockPlugin), runnableCaptor.capture())).thenReturn(1);
+
+        unloadPlayerResult = true;
+        PlayerUnloadTask task = createTask();
+        task.onIntervalComplete();
+
+        assertTrue(task.getResult().isDone());
+        assertTrue(task.getResult().join());
+
+        runnableCaptor.getValue().run();
+
+        ArgumentCaptor<PlayerUnloadEvent> eventCaptor = ArgumentCaptor.forClass(PlayerUnloadEvent.class);
+        verify(mockPluginManager).callEvent(eventCaptor.capture());
+        assertSame(mockCorePlayer, eventCaptor.getValue().getCorePlayer());
+    }
+
+    @Test
+    @DisplayName("Given task completed successfully, when run triggers onCancel, then result remains true")
+    void onCancel_alreadyCompleted_resultRemainsTrue() throws SQLException {
+        when(mockDatabase.getConnection()).thenReturn(mockConnection);
+        when(mockCorePlayer.useMutex()).thenReturn(false);
+        doNothing().when(mockScheduler).cancelTask(anyInt());
+        when(mockScheduler.scheduleSyncDelayedTask(eq(mockPlugin), any(Runnable.class))).thenReturn(1);
+
+        unloadPlayerResult = true;
+        PlayerUnloadTask task = createTask();
+        task.onIntervalComplete();
+
+        assertTrue(task.getResult().isDone());
+        assertTrue(task.getResult().join());
+
+        task.run();
+
+        assertTrue(task.getResult().isDone());
+        assertTrue(task.getResult().join());
+    }
+
+    @Test
+    @DisplayName("Given connection close throws SQLException, when onIntervalComplete, then exception is caught gracefully")
+    void onIntervalComplete_sqlExceptionOnClose_caughtGracefully() throws SQLException {
+        when(mockDatabase.getConnection()).thenReturn(mockConnection);
+        when(mockCorePlayer.useMutex()).thenReturn(false);
+        doNothing().when(mockScheduler).cancelTask(anyInt());
+        when(mockScheduler.scheduleSyncDelayedTask(eq(mockPlugin), any(Runnable.class))).thenReturn(1);
+        doThrow(new SQLException("Connection close failed")).when(mockConnection).close();
+
+        unloadPlayerResult = true;
+        PlayerUnloadTask task = createTask();
+        task.onIntervalComplete();
+
+        assertTrue(task.getResult().isDone());
+        assertTrue(task.getResult().join());
     }
 }
