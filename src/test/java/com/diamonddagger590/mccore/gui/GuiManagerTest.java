@@ -1,8 +1,10 @@
 package com.diamonddagger590.mccore.gui;
 
 import com.diamonddagger590.mccore.CorePlugin;
+import com.diamonddagger590.mccore.event.gui.CoreGuiOpenEvent;
 import com.diamonddagger590.mccore.player.CorePlayer;
 import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
@@ -10,6 +12,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
 import java.util.Optional;
@@ -19,6 +24,7 @@ import java.util.logging.Logger;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -329,5 +335,106 @@ class GuiManagerTest {
         guiManager.trackPlayerGui(playerUUID, gui);
 
         verify(mockPluginManager).callEvent(any());
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T extends Gui<CorePlayer> & KeyedGui> T createMockKeyedGui(@NotNull NamespacedKey key) {
+        T gui = (T) mock(Gui.class, org.mockito.Mockito.withSettings().extraInterfaces(KeyedGui.class));
+        when(gui.getUUID()).thenReturn(UUID.randomUUID());
+        when(((KeyedGui) gui).getGuiKey()).thenReturn(Optional.of(key));
+        return gui;
+    }
+
+    @Test
+    @DisplayName("Given a KeyedGui, when trackPlayerGui, then CoreGuiOpenEvent contains the gui key")
+    void trackPlayerGui_eventContainsGuiKey_whenGuiIsKeyed() {
+        UUID playerUUID = UUID.randomUUID();
+        NamespacedKey expectedKey = new NamespacedKey("test", "my_gui");
+        Gui<CorePlayer> gui = createMockKeyedGui(expectedKey);
+
+        guiManager.trackPlayerGui(playerUUID, gui);
+
+        ArgumentCaptor<CoreGuiOpenEvent> captor = ArgumentCaptor.forClass(CoreGuiOpenEvent.class);
+        verify(mockPluginManager).callEvent(captor.capture());
+        CoreGuiOpenEvent event = captor.getValue();
+
+        assertEquals(playerUUID, event.getPlayerUUID());
+        assertTrue(event.getGuiKey().isPresent());
+        assertEquals(expectedKey, event.getGuiKey().get());
+    }
+
+    @Test
+    @DisplayName("Given a non-KeyedGui, when trackPlayerGui, then CoreGuiOpenEvent has empty gui key")
+    void trackPlayerGui_eventHasEmptyKey_whenGuiIsNotKeyed() {
+        UUID playerUUID = UUID.randomUUID();
+        Gui<CorePlayer> gui = createMockGui();
+
+        guiManager.trackPlayerGui(playerUUID, gui);
+
+        ArgumentCaptor<CoreGuiOpenEvent> captor = ArgumentCaptor.forClass(CoreGuiOpenEvent.class);
+        verify(mockPluginManager).callEvent(captor.capture());
+        CoreGuiOpenEvent event = captor.getValue();
+
+        assertFalse(event.getGuiKey().isPresent());
+    }
+
+    @Test
+    @DisplayName("Given a gui with multiple online viewers, when refreshGui, then updates inventory for all")
+    void refreshGui_updatesAllViewers_whenMultipleOnline() {
+        UUID player1UUID = UUID.randomUUID();
+        UUID player2UUID = UUID.randomUUID();
+        UUID player3UUID = UUID.randomUUID();
+        Gui<CorePlayer> gui = createMockGui();
+        Player onlinePlayer1 = mock(Player.class);
+        Player onlinePlayer2 = mock(Player.class);
+        Player onlinePlayer3 = mock(Player.class);
+
+        guiManager.trackPlayerGui(player1UUID, gui);
+        guiManager.trackPlayerGui(player2UUID, gui);
+        guiManager.trackPlayerGui(player3UUID, gui);
+
+        when(mockServer.getPlayer(player1UUID)).thenReturn(onlinePlayer1);
+        when(mockServer.getPlayer(player2UUID)).thenReturn(onlinePlayer2);
+        when(mockServer.getPlayer(player3UUID)).thenReturn(onlinePlayer3);
+
+        guiManager.refreshGui(gui);
+
+        verify(onlinePlayer1).updateInventory();
+        verify(onlinePlayer2).updateInventory();
+        verify(onlinePlayer3).updateInventory();
+    }
+
+    @Test
+    @DisplayName("Given a gui with mixed online/offline viewers, when refreshGui, then only updates online viewers")
+    void refreshGui_updatesOnlyOnlineViewers_whenMixedOnlineOffline() {
+        UUID onlineUUID = UUID.randomUUID();
+        UUID offlineUUID = UUID.randomUUID();
+        Gui<CorePlayer> gui = createMockGui();
+        Player onlinePlayer = mock(Player.class);
+
+        guiManager.trackPlayerGui(onlineUUID, gui);
+        guiManager.trackPlayerGui(offlineUUID, gui);
+
+        when(mockServer.getPlayer(onlineUUID)).thenReturn(onlinePlayer);
+        when(mockServer.getPlayer(offlineUUID)).thenReturn(null);
+
+        guiManager.refreshGui(gui);
+
+        verify(onlinePlayer).updateInventory();
+    }
+
+    @Test
+    @DisplayName("Given trackPlayerGui fired event, then event carries the correct gui instance")
+    void trackPlayerGui_eventCarriesGuiInstance_always() {
+        UUID playerUUID = UUID.randomUUID();
+        Gui<CorePlayer> gui = createMockGui();
+
+        guiManager.trackPlayerGui(playerUUID, gui);
+
+        ArgumentCaptor<CoreGuiOpenEvent> captor = ArgumentCaptor.forClass(CoreGuiOpenEvent.class);
+        verify(mockPluginManager).callEvent(captor.capture());
+        CoreGuiOpenEvent event = captor.getValue();
+
+        assertSame(gui, event.getGui());
     }
 }

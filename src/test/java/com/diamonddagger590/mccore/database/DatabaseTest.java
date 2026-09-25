@@ -26,6 +26,7 @@ import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -394,6 +395,63 @@ class DatabaseTest {
             database.shutdown();
             RegistryResetExtension.resetRegistry();
         }
+    }
+
+    @Test
+    @DisplayName("Given a configured data source that throws SQLException, when getConnection is called, then wraps in RuntimeException")
+    void getConnection_throwsRuntimeException_whenDataSourceThrowsSQLException() {
+        RegistryResetExtension.setupRegistry();
+        try {
+            DriverRegistry driverRegistry = new DriverRegistry();
+            RegistryAccess.registryAccess().register(driverRegistry);
+
+            DatabaseDriver mockDriver = mock(DatabaseDriver.class);
+            when(mockDriver.tryDriver()).thenReturn(true);
+            when(mockDriver.getDriverType()).thenReturn(DatabaseDriverType.SQLITE);
+            when(mockDriver.getDatabaseDriverClass()).thenReturn("org.sqlite.JDBC");
+            when(mockDriver.getConnectionUrl(any())).thenReturn("jdbc:sqlite::memory:");
+            when(mockDriver.getDataSourceProperties()).thenReturn(List.of());
+            driverRegistry.register(mockDriver);
+
+            when(mockPlugin.registryAccess()).thenReturn(RegistryAccess.registryAccess());
+
+            TestDatabase testDb = new TestDatabase(mockPlugin, DatabaseDriverType.SQLITE);
+
+            HikariDataSource mockDataSource = mock(HikariDataSource.class);
+            try {
+                when(mockDataSource.getConnection()).thenThrow(new SQLException("Pool exhausted"));
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+
+            try {
+                var field = Database.class.getDeclaredField("dataSource");
+                field.setAccessible(true);
+                field.set(testDb, mockDataSource);
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException(e);
+            }
+
+            RuntimeException ex = assertThrows(RuntimeException.class, testDb::getConnection);
+            assertInstanceOf(SQLException.class, ex.getCause());
+            assertEquals("Pool exhausted", ex.getCause().getMessage());
+
+            testDb.getDatabaseExecutorService().shutdownNow();
+        } finally {
+            RegistryResetExtension.resetRegistry();
+        }
+    }
+
+    @Test
+    @DisplayName("Given getTables throws SQLException inside tableExists lambda, when checking tableExists, then returns false")
+    void tableExists_returnsFalse_whenGetTablesThrowsSQLException() throws SQLException {
+        Connection mockConnection = mock(Connection.class);
+        DatabaseMetaData mockMetaData = mock(DatabaseMetaData.class);
+
+        when(mockConnection.getMetaData()).thenReturn(mockMetaData);
+        when(mockMetaData.getTables(null, null, null, new String[]{"TABLE"})).thenThrow(new SQLException("getTables failed"));
+
+        assertFalse(database.tableExists(mockConnection, "any_table"));
     }
 
     static class TestDatabase extends Database {
