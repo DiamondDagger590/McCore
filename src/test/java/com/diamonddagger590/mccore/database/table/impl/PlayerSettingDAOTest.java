@@ -43,6 +43,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -167,6 +168,20 @@ class PlayerSettingDAOTest {
             when(mockResultSet.getInt("table_version")).thenReturn(1);
 
             PlayerSettingDAO.updateTable(mockConnection);
+        }
+
+        @Test
+        @DisplayName("Given the table is above current version, when updateTable is called, then no updates are performed")
+        void updateTable_performsNoUpdate_whenVersionIsAboveCurrent() throws SQLException {
+            when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
+            when(mockStatement.executeQuery()).thenReturn(mockResultSet);
+            when(mockResultSet.next()).thenReturn(true, false);
+            when(mockResultSet.getInt("table_version")).thenReturn(5);
+
+            PlayerSettingDAO.updateTable(mockConnection);
+
+            verify(mockStatement).setString(1, "player_settings");
+            verify(mockStatement, never()).executeUpdate();
         }
 
         @Test

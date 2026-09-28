@@ -100,6 +100,20 @@ class MutexDAOTest {
         }
 
         @Test
+        @DisplayName("Given the table is above current version, when updateTable is called, then no updates are performed")
+        void updateTable_performsNoUpdate_whenVersionIsAboveCurrent() throws SQLException {
+            when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
+            when(mockStatement.executeQuery()).thenReturn(mockResultSet);
+            when(mockResultSet.next()).thenReturn(true, false);
+            when(mockResultSet.getInt("table_version")).thenReturn(5);
+
+            MutexDAO.updateTable(mockConnection);
+
+            verify(mockStatement).setString(1, "player_mutex");
+            verify(mockStatement, never()).executeUpdate();
+        }
+
+        @Test
         @DisplayName("Given the table is at version 0, when updateTable is called, then it updates to version 1")
         void updateTable_updatesToVersion1_whenVersionIsZero() throws SQLException {
             PreparedStatement selectStatement = org.mockito.Mockito.mock(PreparedStatement.class);
