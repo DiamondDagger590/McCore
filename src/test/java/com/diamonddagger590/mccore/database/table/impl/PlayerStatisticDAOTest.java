@@ -398,6 +398,125 @@ class PlayerStatisticDAOTest {
         }
 
         @Test
+        @DisplayName("Given LONG statistic exists, when getPlayerStatistic, then returns long value")
+        void returnsLongStatistic_whenExists() throws SQLException {
+            when(connection.prepareStatement(anyString())).thenReturn(statement);
+            when(statement.executeQuery()).thenReturn(resultSet);
+            when(resultSet.next()).thenReturn(true);
+            when(resultSet.getString("stat_type")).thenReturn("LONG");
+            when(resultSet.getLong("long_value")).thenReturn(123456789L);
+
+            Optional<StatisticEntry> result = PlayerStatisticDAO.getPlayerStatistic(connection, playerUUID, key);
+
+            assertTrue(result.isPresent());
+            assertEquals(StatisticType.LONG, result.get().type());
+            assertEquals(123456789L, result.get().value());
+        }
+
+        @Test
+        @DisplayName("Given DOUBLE statistic exists, when getPlayerStatistic, then returns double value")
+        void returnsDoubleStatistic_whenExists() throws SQLException {
+            when(connection.prepareStatement(anyString())).thenReturn(statement);
+            when(statement.executeQuery()).thenReturn(resultSet);
+            when(resultSet.next()).thenReturn(true);
+            when(resultSet.getString("stat_type")).thenReturn("DOUBLE");
+            when(resultSet.getDouble("double_value")).thenReturn(2.718);
+
+            Optional<StatisticEntry> result = PlayerStatisticDAO.getPlayerStatistic(connection, playerUUID, key);
+
+            assertTrue(result.isPresent());
+            assertEquals(StatisticType.DOUBLE, result.get().type());
+            assertEquals(2.718, result.get().value());
+        }
+
+        @Test
+        @DisplayName("Given STRING statistic exists, when getPlayerStatistic, then returns string value")
+        void returnsStringStatistic_whenExists() throws SQLException {
+            when(connection.prepareStatement(anyString())).thenReturn(statement);
+            when(statement.executeQuery()).thenReturn(resultSet);
+            when(resultSet.next()).thenReturn(true);
+            when(resultSet.getString("stat_type")).thenReturn("STRING");
+            when(resultSet.getString("string_value")).thenReturn("test_value");
+
+            Optional<StatisticEntry> result = PlayerStatisticDAO.getPlayerStatistic(connection, playerUUID, key);
+
+            assertTrue(result.isPresent());
+            assertEquals(StatisticType.STRING, result.get().type());
+            assertEquals("test_value", result.get().value());
+        }
+
+        @Test
+        @DisplayName("Given STRING statistic with null value, when getPlayerStatistic, then returns empty string")
+        void returnsEmptyString_whenStringValueIsNull() throws SQLException {
+            when(connection.prepareStatement(anyString())).thenReturn(statement);
+            when(statement.executeQuery()).thenReturn(resultSet);
+            when(resultSet.next()).thenReturn(true);
+            when(resultSet.getString("stat_type")).thenReturn("STRING");
+            when(resultSet.getString("string_value")).thenReturn(null);
+
+            Optional<StatisticEntry> result = PlayerStatisticDAO.getPlayerStatistic(connection, playerUUID, key);
+
+            assertTrue(result.isPresent());
+            assertEquals(StatisticType.STRING, result.get().type());
+            assertEquals("", result.get().value());
+        }
+
+        @Test
+        @DisplayName("Given TIMESTAMP statistic exists, when getPlayerStatistic, then returns Instant value")
+        void returnsTimestampStatistic_whenExists() throws SQLException {
+            long epochMillis = 1718000000000L;
+            when(connection.prepareStatement(anyString())).thenReturn(statement);
+            when(statement.executeQuery()).thenReturn(resultSet);
+            when(resultSet.next()).thenReturn(true);
+            when(resultSet.getString("stat_type")).thenReturn("TIMESTAMP");
+            when(resultSet.getLong("timestamp_value")).thenReturn(epochMillis);
+
+            Optional<StatisticEntry> result = PlayerStatisticDAO.getPlayerStatistic(connection, playerUUID, key);
+
+            assertTrue(result.isPresent());
+            assertEquals(StatisticType.TIMESTAMP, result.get().type());
+            assertEquals(Instant.ofEpochMilli(epochMillis), result.get().value());
+        }
+
+        @Test
+        @DisplayName("Given SET_STRING statistic exists, when getPlayerStatistic, then returns deserialized set")
+        void returnsSetStringStatistic_whenExists() throws SQLException {
+            when(connection.prepareStatement(anyString())).thenReturn(statement);
+            when(statement.executeQuery()).thenReturn(resultSet);
+            when(resultSet.next()).thenReturn(true);
+            when(resultSet.getString("stat_type")).thenReturn("SET_STRING");
+            when(resultSet.getString("string_value")).thenReturn("[\"one\",\"two\"]");
+
+            Optional<StatisticEntry> result = PlayerStatisticDAO.getPlayerStatistic(connection, playerUUID, key);
+
+            assertTrue(result.isPresent());
+            assertEquals(StatisticType.SET_STRING, result.get().type());
+            @SuppressWarnings("unchecked")
+            Set<String> set = (Set<String>) result.get().value();
+            assertEquals(2, set.size());
+            assertTrue(set.contains("one"));
+            assertTrue(set.contains("two"));
+        }
+
+        @Test
+        @DisplayName("Given SET_STRING statistic with null value, when getPlayerStatistic, then returns empty set")
+        void returnsEmptySet_whenSetStringValueIsNull() throws SQLException {
+            when(connection.prepareStatement(anyString())).thenReturn(statement);
+            when(statement.executeQuery()).thenReturn(resultSet);
+            when(resultSet.next()).thenReturn(true);
+            when(resultSet.getString("stat_type")).thenReturn("SET_STRING");
+            when(resultSet.getString("string_value")).thenReturn(null);
+
+            Optional<StatisticEntry> result = PlayerStatisticDAO.getPlayerStatistic(connection, playerUUID, key);
+
+            assertTrue(result.isPresent());
+            assertEquals(StatisticType.SET_STRING, result.get().type());
+            @SuppressWarnings("unchecked")
+            Set<String> set = (Set<String>) result.get().value();
+            assertTrue(set.isEmpty());
+        }
+
+        @Test
         @DisplayName("Given statistic does not exist, when getPlayerStatistic, then returns empty")
         void returnsEmpty_whenNotExists() throws SQLException {
             when(connection.prepareStatement(anyString())).thenReturn(statement);

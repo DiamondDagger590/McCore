@@ -121,4 +121,62 @@ class PlayerStatisticDAOSerializationTest {
         Set<String> result = PlayerStatisticDAO.deserializeStringSet("[]");
         assertTrue(result.isEmpty());
     }
+
+    @DisplayName("Given unquoted elements, when deserializing, then parses them correctly")
+    @Test
+    void unquotedElements_parsedCorrectly() {
+        Set<String> result = PlayerStatisticDAO.deserializeStringSet("[hello,world]");
+        assertEquals(2, result.size());
+        assertTrue(result.contains("hello"));
+        assertTrue(result.contains("world"));
+    }
+
+    @DisplayName("Given single unquoted element, when deserializing, then parses it correctly")
+    @Test
+    void singleUnquotedElement_parsedCorrectly() {
+        Set<String> result = PlayerStatisticDAO.deserializeStringSet("[hello]");
+        assertEquals(1, result.size());
+        assertTrue(result.contains("hello"));
+    }
+
+    @DisplayName("Given backslash followed by non-special character, when deserializing, then preserves both characters")
+    @Test
+    void unknownEscapeSequence_preservesBothCharacters() {
+        Set<String> result = PlayerStatisticDAO.deserializeStringSet("[\"hello\\nworld\"]");
+        assertEquals(1, result.size());
+        assertTrue(result.contains("hello\\nworld"));
+    }
+
+    @DisplayName("Given elements with leading whitespace, when deserializing, then trims whitespace")
+    @Test
+    void elementsWithWhitespace_trimmedCorrectly() {
+        Set<String> result = PlayerStatisticDAO.deserializeStringSet("[\"alpha\", \"beta\"]");
+        assertEquals(2, result.size());
+        assertTrue(result.contains("alpha"));
+        assertTrue(result.contains("beta"));
+    }
+
+    @DisplayName("Given brackets with only whitespace, when deserializing, then returns empty set")
+    @Test
+    void bracketsWithWhitespace_returnsEmptySet() {
+        Set<String> result = PlayerStatisticDAO.deserializeStringSet("[   ]");
+        assertTrue(result.isEmpty());
+    }
+
+    @DisplayName("Given unquoted elements with whitespace, when deserializing, then trims values")
+    @Test
+    void unquotedElementsWithWhitespace_trimmed() {
+        Set<String> result = PlayerStatisticDAO.deserializeStringSet("[ alpha , beta ]");
+        assertEquals(2, result.size());
+        assertTrue(result.contains("alpha"));
+        assertTrue(result.contains("beta"));
+    }
+
+    @DisplayName("Given backslash at end of quoted element, when deserializing, then treats as literal backslash")
+    @Test
+    void backslashAtEndOfQuotedElement_treatedAsLiteralEnd() {
+        Set<String> result = PlayerStatisticDAO.deserializeStringSet("[\"test\\\\\"]");
+        assertEquals(1, result.size());
+        assertTrue(result.contains("test\\"));
+    }
 }

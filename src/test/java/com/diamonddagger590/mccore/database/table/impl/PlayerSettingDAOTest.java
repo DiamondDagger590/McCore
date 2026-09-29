@@ -102,6 +102,45 @@ class PlayerSettingDAOTest {
         }
     }
 
+    private enum AnotherTestSetting implements PlayerSetting {
+        ENABLED,
+        DISABLED;
+
+        private static final NamespacedKey KEY = new NamespacedKey("mccore", "another_test_setting");
+
+        @Override
+        @NotNull
+        public NamespacedKey getSettingKey() {
+            return KEY;
+        }
+
+        @Override
+        @NotNull
+        public LinkedNode<AnotherTestSetting> getFirstSetting() {
+            return new LinkedNode<>(ENABLED, new LinkedNode<>(DISABLED, null));
+        }
+
+        @Override
+        @NotNull
+        public LinkedNode<AnotherTestSetting> getNextSetting() {
+            return this == ENABLED ? new LinkedNode<>(DISABLED, null) : new LinkedNode<>(ENABLED, null);
+        }
+
+        @Override
+        public void onSettingChange(@NotNull CorePlayer player, @NotNull Optional<PlayerSetting> oldSetting) {
+        }
+
+        @Override
+        @NotNull
+        public Optional<AnotherTestSetting> fromString(@NotNull String setting) {
+            try {
+                return Optional.of(AnotherTestSetting.valueOf(setting));
+            } catch (IllegalArgumentException e) {
+                return Optional.empty();
+            }
+        }
+    }
+
     @Nested
     @DisplayName("attemptCreateTable")
     class AttemptCreateTable {
@@ -272,6 +311,25 @@ class PlayerSettingDAOTest {
 
             assertNotNull(settings);
             assertTrue(settings.isEmpty());
+        }
+
+        @Test
+        @DisplayName("Given multiple settings registered, when getPlayerSettings is called, then returns one result per registered setting")
+        void getPlayerSettings_returnsAllSettings_whenMultipleRegistered() throws SQLException {
+            PlayerSettingRegistry registry = RegistryAccess.registryAccess().registry(RegistryKey.PLAYER_SETTING);
+            registry.register(AnotherTestSetting.ENABLED);
+
+            when(mockConnection.prepareStatement(anyString())).thenReturn(mockStatement);
+            // Both settings default (no saved values) - iteration order doesn't matter
+            when(mockStatement.executeQuery()).thenReturn(mockResultSet);
+            when(mockResultSet.next()).thenReturn(false);
+
+            Set<PlayerSetting> settings = PlayerSettingDAO.getPlayerSettings(mockConnection, TEST_UUID);
+
+            assertEquals(2, settings.size());
+            // Both should return their defaults: ON for TestSetting, ENABLED for AnotherTestSetting
+            assertTrue(settings.stream().anyMatch(s -> s.name().equals("ON")));
+            assertTrue(settings.stream().anyMatch(s -> s.name().equals("ENABLED")));
         }
     }
 
